@@ -34,4 +34,8 @@ class AuthService(BaseService):
             return True, token
         
         return False, None
-    
+    def isExistEmail(self, email): 
+        user = self.repository.get_user_by_email(email)
+        if user:
+            return True
+        return False

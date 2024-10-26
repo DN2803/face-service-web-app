@@ -14,30 +14,34 @@ const FaceSearchPage = Loadable(lazy(() => import('views/main-functions/face/sea
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const FaceDemoRoutes = {
-    path: 'face-demo', 
+    path: '/', 
     element: <FaceDemoLayout />,
     children: [
       {
-        path: 'detection', 
+        index: true,
+        element: <FaceDetectionPage />
+      },
+      {
+        path: 'face-demo/detection', 
         element: (
           
           <FaceDetectionPage/>
         )
       },
       {
-        path: 'comparison', 
+        path: 'face-demo/comparison', 
         element: (
           <FaceComparisonPage/>
         )
       },
       {
-        path: 'liveness', 
+        path: 'face-demo/liveness', 
         element: (
           <FaceLivenessPage/>
         )
       },
       {
-        path: 'search', 
+        path: 'face-demo/search', 
         element: (
           <FaceSearchPage/>
         )

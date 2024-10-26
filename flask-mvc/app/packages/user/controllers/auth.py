@@ -26,3 +26,13 @@ def login():
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
+    
+@auth_bp.route('/api/email_exist', methods=['POST'])
+def isExistEmail():
+    data = request.json  
+    if not data or 'email' not in data:
+        return jsonify({"error": "Missing email"}), 400
+    if AuthService().isExistEmail(data['email']) : 
+        return jsonify({"message": "Email exists"}), 200
+    else:
+        return jsonify({"error": "Email does not exist"}), 404   
