@@ -1,0 +1,69 @@
+// assets
+import { IconKey, IconCode } from '@tabler/icons';
+import PersonIcon from '@mui/icons-material/Person';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
+
+// constant
+const icons = {
+  IconKey, 
+  PersonIcon,
+  FolderSharedIcon, 
+  IconCode
+};
+
+// ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
+
+const pages = {
+  id: 'pages',
+  title: 'Pages',
+  caption: 'Pages Caption',
+  type: 'group',
+  children: [
+    {
+      id: 'authentication',
+      title: 'Authentication',
+      type: 'collapse',
+      icon: icons.IconKey,
+
+      children: [
+        {
+          id: 'login3',
+          title: 'Login',
+          type: 'item',
+          url: '/pages/login/login3',
+          target: true
+        },
+        {
+          id: 'register3',
+          title: 'Register',
+          type: 'item',
+          url: '/pages/register/register3',
+          target: true
+        }
+      ]
+    },
+    {
+      id: 'person', 
+      title: 'Persons',
+      type: 'item', 
+      url: 'pages/poi-management',
+      icon: icons.PersonIcon
+    },
+    {
+      id: 'collection', 
+      title: 'Collections',
+      type: 'item', 
+      url: 'pages/collection-management',
+      icon: icons.FolderSharedIcon
+    },
+    {
+      id: 'developer', 
+      title: 'Developers',
+      type: 'item', 
+      url: 'pages/app/developer-keys',
+      icon: icons.IconCode
+    }
+  ]
+};
+
+export default pages;
