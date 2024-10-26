@@ -20,6 +20,8 @@ const FaceComparisonPage = () => {
             // Example: Perform the comparison (this is where you could call an API)
             const randomScore = Math.floor(Math.random() * 100); // Random match score for now
             setComparisonResult(randomScore); // Set the comparison result
+            
+            
         } else {
             alert('Please upload both images.');
         }

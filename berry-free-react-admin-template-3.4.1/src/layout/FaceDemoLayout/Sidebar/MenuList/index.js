@@ -13,7 +13,7 @@ const MenuList = () => {
     const [expandedCard, setExpandedCard] = useState(null);
     const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 768);
     const navigate = useNavigate();
-    const links = ['comparison', 'liveness', 'search', 'detection'];
+    const links = ['face-demo/comparison', 'face-demo/liveness', 'face-demo/search', 'face-demo/detection'];
 
     const iconComponents = [
         ComparisonIcon,

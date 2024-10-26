@@ -106,12 +106,13 @@ const FaceDetectionPage = () => {
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
                                 {itemData.map((item) => (
-                                    <ImageListItem key={item.img}>
+                                    <ImageListItem key={item.img}  onClick={() => handleDetection(item.img)}>
                                         <img
                                             srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                                             src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
                                             alt={item.title}
                                             loading="lazy"
+                                            // onClick={() => setUploadedImage(item.img)}
                                         />
                                     </ImageListItem>
                                 ))}
@@ -138,7 +139,7 @@ const FaceDetectionPage = () => {
                             }}
                         >
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <ImageUpload handleUpload={handleDetection} uploadedImage={uploadedImage} />
+                                <ImageUpload handleUpload={handleDetection} uploadedImage={uploadedImage} sizeAccept={{width: 800, height: 800}} />
                                 <Box sx={{ mt: 2, width: '75%' }}>
                                     <AnimateButton>
                                         <Button
