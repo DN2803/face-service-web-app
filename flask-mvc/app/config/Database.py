@@ -1,18 +1,13 @@
-# from pymongo import MongoClient
+from app import app
+from app.config.DeployConfig import config
 
-# # Kết nối đến MongoDB (thay đổi URL nếu cần)
-# client = MongoClient('mongodb://localhost:27017/')
+from flask_sqlalchemy import SQLAlchemy
 
-# # Lựa chọn database
-# db = client['demo-app-react-face-auth']
+app.config['SECRET_KEY'] = config.SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-import mysql.connector
+db = SQLAlchemy(app)
 
-connection = mysql.connector(
-    host = "localhost",
-    user = "root",
-    password = ""
-)
-
-cursor = connection.cursor()
-
+from flask_migrate import Migrate
+Migrate(app,db)

@@ -4,9 +4,9 @@ class Hash:
 
     def __init__(self):
         pass
-
-    def checkHash(self, pHash, password):
-        return check_password_hash(pHash, password)
+       
+    def cekHash(self, pwHash, password):
+        return check_password_hash(pwHash, password)
 
     def getHash(self, password):
-        return generate_password_hash(password)
+        self.pasHash = generate_password_hash(password)
