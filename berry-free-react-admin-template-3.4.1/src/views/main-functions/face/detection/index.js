@@ -7,7 +7,6 @@ import MainCard from 'ui-component/cards/MainCard';
 
 import AnimateButton from 'ui-component/extended/AnimateButton';
 
-
 // Image 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
@@ -17,6 +16,7 @@ import ImageUpload from 'ui-component/ImageUpload';
 
 const FaceDetectionPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
+    const [imageResult, setImageResult] = useState(null);
     const [numPeople, setNumPeople] = useState("0");
 
     // list Image Sample 
@@ -81,10 +81,21 @@ const FaceDetectionPage = () => {
         // 3. Triggering another event
         const detectedPeopleCount = Math.floor(Math.random() * 10); // Replace with actual face detection logic
         setNumPeople(detectedPeopleCount.toString());
+        // Create a white image in base64 format and set it
+        const canvas = document.createElement('canvas');
+        canvas.width = 300;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const whiteImageData = canvas.toDataURL(); // Get base64 of the white image
+        setImageResult(whiteImageData)
+        console.log(imageResult)
     };
     const handleReset = () => {
         // Reset the uploaded image to allow re-upload
         setUploadedImage(null);
+        setImageResult(null);
     };
     return (
         <>
@@ -106,13 +117,13 @@ const FaceDetectionPage = () => {
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
                                 {itemData.map((item) => (
-                                    <ImageListItem key={item.img}  onClick={() => handleDetection(item.img)}>
+                                    <ImageListItem key={item.img} onClick={() => handleDetection(item.img)}>
                                         <img
                                             srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                                             src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
                                             alt={item.title}
                                             loading="lazy"
-                                            // onClick={() => setUploadedImage(item.img)}
+                                        // onClick={() => setUploadedImage(item.img)}
                                         />
                                     </ImageListItem>
                                 ))}
@@ -139,7 +150,18 @@ const FaceDetectionPage = () => {
                             }}
                         >
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <ImageUpload handleUpload={handleDetection} uploadedImage={uploadedImage} sizeAccept={{width: 800, height: 800}} />
+                                <>
+                                    {imageResult ? (
+                                        <ImageListItem src={imageResult} />
+                                    ) : (
+                                        <ImageUpload
+                                            handleUpload={handleDetection}
+                                            uploadedImage={uploadedImage}
+                                            sizeAccept={{ width: 800, height: 800 }}
+                                        />
+                                    )}
+                                </>
+
                                 <Box sx={{ mt: 2, width: '75%' }}>
                                     <AnimateButton>
                                         <Button

@@ -1,30 +1,66 @@
-import React, { useState } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SearchIcon from '@mui/icons-material/Search';
 import DialogForm from '../DialogForm';
 import PersonForm from '../forms/person-form';
+import { callAPI } from 'utils/api_caller';
+import FaceSearchForm from '../forms/face-search-form';
 
 const PersonManagement = () => {
     const [search, setSearch] = useState('');
-    const [open, setOpen] = useState(false);
-    const persons = []; // For demonstration, no persons are added, which will display the "No Person Found" message.
+    const [openSeach, setOpenSearch] = useState(false);
+    const [openAdd, setOpenAdd] = useState(false);
+    // For demonstration, no persons are added, which will display the "No Person Found" message.
+
+    const [persons, setPersons] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [totalRows, setTotalRows] = useState(0);
+
+    // Function to load persons from the server
+    const loadPersons = async (page, rowsPerPage) => {
+        const data = await callAPI("/get_persons", "GET", {pageIndex: page, maxCount: rowsPerPage });
+        setPersons(data.persons);
+        setTotalRows(data.totalCount);
+    };
+    useEffect(() => {
+        loadPersons(page, rowsPerPage);
+    }, [page, rowsPerPage]);
+
+    const handlePageChange = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0); // Reset to the first page
+    };
     // Function to handle dialog open
-    const handleOpen = () => {
-        setOpen(true);
+    const handleOpenSearch = () => {
+        setOpenSearch(true);
+    };
+    const handleOpenAdd = () => {
+        setOpenAdd(true);
     };
 
     // Function to handle dialog close
-    const handleClose = () => {
-        setOpen(false);
+    const handleCloseSearch = () => {
+        setOpenSearch(false);
+    };
+    const handleCloseAdd = () => {
+        setOpenAdd(false);
     };
 
     const handleSubmit = async (values) => {
         // Handle the form submission logic here
         console.log(values);
-        handleClose(); // Close dialog after submission
+        handleCloseAdd(); // Close dialog after submission
     };
-
+    const handleSearchFace = () => {
+        console.log ("call backend")
+        handleCloseSearch();
+    }
 
     return (
         <Box sx={{ padding: '20px' }}>
@@ -76,19 +112,24 @@ const PersonManagement = () => {
                             color="warning"
                             startIcon={<PersonAddIcon />}
                             sx={{ marginRight: '10px' }}
-                            onClick={handleOpen} 
+                            onClick={handleOpenAdd} 
                         >
                             Add Person
                         </Button>
-                        <Button variant="contained" color="error" startIcon={<SearchIcon />}>
+                        <Button variant="contained" color="error" startIcon={<SearchIcon />} onClick={handleOpenSearch} >
                             Face Search
                         </Button>
                     </Box>
                 </Box>
             </Box>
-            <DialogForm open={open} onClose={handleClose} title="Add person details">
+            <DialogForm open={openAdd} onClose={handleCloseAdd} title="Add person details">
                 <PersonForm onSubmit={handleSubmit}/>
             </DialogForm>
+            
+            <DialogForm open={openSeach} onClose={handleCloseSearch} title="Search Face">
+                <FaceSearchForm onSubmit={handleSearchFace}/>
+            </DialogForm>
+
             {/* Table Section */}
             <TableContainer component={Paper}>
                 <Table>
@@ -127,6 +168,15 @@ const PersonManagement = () => {
                         )}
                     </TableBody>
                 </Table>
+                <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={totalRows}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                />
             </TableContainer>
         </Box >
     );
