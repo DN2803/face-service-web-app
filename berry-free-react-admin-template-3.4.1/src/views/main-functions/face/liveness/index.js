@@ -17,7 +17,8 @@ import ImageUpload from 'ui-component/ImageUpload';
 
 const FaceLivenessPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
-
+    const [approved, setApproved] = useState(false);
+    const [result, setResult] = useState(false)
     // list Image Sample 
     const itemData = [
         {
@@ -69,11 +70,13 @@ const FaceLivenessPage = () => {
             title: 'Bike',
         },
     ];
-    const handleDetection = (file, imageData) => {
+    const handleLiveness = (file, imageData) => {
         // Perform actions with the uploaded file or imageData (base64)
         console.log('File:', file);
         console.log('Image Data (base64):', imageData);
 
+        setApproved(false);
+        setResult(true);
         // You can add your own logic here, such as:
         // 1. Uploading to a server
         // 2. Storing the file for later use
@@ -81,7 +84,9 @@ const FaceLivenessPage = () => {
     };
     const handleReset = () => {
         // Reset the uploaded image to allow re-upload
-        setUploadedImage(null);
+        setUploadedImage(null)
+        setApproved(false)
+        setResult(false)
     };
     return (
         <>
@@ -103,7 +108,7 @@ const FaceLivenessPage = () => {
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
                                 {itemData.map((item) => (
-                                    <ImageListItem key={item.img}>
+                                    <ImageListItem key={item.img} onClick = {()=> handleLiveness(item.img)}>
                                         <img
                                             srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                                             src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
@@ -122,6 +127,7 @@ const FaceLivenessPage = () => {
                         <MuiTypography variant="subtitle1" gutterBottom> Liveness Result</MuiTypography>
                         <MuiTypography variant="body1" gutterBottom>
                             {"result here"}
+                            {result && (approved? (<p>real</p>):(<p>fake</p>))}
                         </MuiTypography>
                         <Box
                             sx={{
@@ -133,7 +139,9 @@ const FaceLivenessPage = () => {
                             }}
                         >
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <ImageUpload handleUpload={handleDetection} uploadedImage={uploadedImage} />
+                                {
+                                    !result && (<ImageUpload handleUpload={handleLiveness} uploadedImage={uploadedImage} sizeAccept={{ width: 800, height: 800 }}/>)
+                                }
                                 <Box sx={{ mt: 2, width: '75%' }}>
                                     <AnimateButton>
                                         <Button
