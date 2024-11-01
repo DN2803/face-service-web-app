@@ -58,18 +58,31 @@ const FirebaseRegister = ({ ...others }) => {
   const handleRegister = async (name, email, password) => {
     console.error('Register:', name, email, password);
     try {
-      const response = await callAPI("/register", "POST", {name, email, password})
-      const data = await response.data;
-      if (response) {
-        console.log('Đăng kí thành công:', data);
-        navigate('/');
+      const responseCheckEmail = await callAPI("/register/check-email", "POST", { email });
+      if (responseCheckEmail) {
+        try {
+          const responseSubmit = await callAPI("/register/sumbit", "POST", { name, email, password });
+          const data = responseSubmit.data;
+          if (responseSubmit) {
+            console.log("Đăng ký thành công:", data);
+            alert("Đăng ký thành công!"); // Hiển thị thông báo thành công
+            navigate("/");
+          } else {
+            console.error("Lỗi đăng ký:", data.message);
+            alert("Lỗi đăng ký: " + data.message); // Hiển thị thông báo lỗi từ phản hồi
+          }
+        } catch (error) {
+          console.error("Lỗi khi gửi yêu cầu đăng ký:", error);
+          alert("Lỗi khi gửi yêu cầu đăng ký!"); // Thông báo lỗi khi gửi yêu cầu
+        }
       } else {
-        console.error('Lỗi đăng kí:', data.message);
-        setErrorSignUp(true)
+        setErrorSignUp(true);
+        alert("Email đã tồn tại!"); // Thông báo nếu email đã tồn tại
       }
     } catch (error) {
-      console.error('Lỗi khi gửi request:', error);
-      setErrorSignUp(true)
+      setErrorSignUp(true);
+      console.error("Lỗi khi kiểm tra email:", error);
+      alert("Lỗi khi kiểm tra email!"); // Thông báo lỗi kiểm tra email
     }
   };
 

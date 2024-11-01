@@ -4,24 +4,19 @@ from app.config.Database import db
 
 class UserRepo(BaseRepository):
     def __init__(self):
-        print('User Authentication Repository')
         super().__init__(User, db.session)
 
     def add_user(self, **kwargs):
-        # self.__getattribute__
-        # if (self._get_by('email',kwargs['email'])):
-        #     raise Exception('There is an account using this email!')
-
-        # #TODO: check face exists?
-        # self._create(**kwargs)
-
         try:
-            self._create(**kwargs)
+            return self._create(**kwargs)
         except Exception as e:
             raise e
+
+    def get_user_by_id(self, id):
+        return self._get_by('id', id)
 
     def get_user_by_email(self, email):
         return self._get_by('email', email)
 
-    def add_face_embed(self, embed_id):
-        pass
+    def add_face_embed(self, user_id, embed_id):
+        self._update_by_id(id=user_id, verified=True, face_embed_id=embed_id)

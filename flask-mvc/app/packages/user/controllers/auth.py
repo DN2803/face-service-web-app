@@ -1,38 +1,62 @@
 from flask import Blueprint, request, jsonify
-from app.packages.user.services.AuthService import AuthService
+from flask import session as flask_session
+from app.packages.user.services.UserService import UserService
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/api/register', methods=['POST'])
+@auth_bp.route('/api/register/check-email', methods=['POST'])
+def check_email():
+    try:
+        data = request.json
+        user_id = UserService().check_email(data['email'])
+        
+        if user_id == 0:
+            return jsonify({"message": "This email is available for registration!"}), 200
+        else:
+            raise Exception('This email already exists!')
+    except Exception as e:
+        print(e)
+        return jsonify(error = str(e)), 400
+
+@auth_bp.route('/api/register/sumbit', methods=['POST']) #request input: see UserSchema
 def register():
     try:
         data = request.json
-        AuthService().register(**data)
+        user_id = UserService().register(**data)
+        print(f'User {user_id} registered sucessfully')
         return jsonify({"message": "User registered successfully."}), 201
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify(error = str(e)), 400
 
-@auth_bp.route('/api/login', methods=['POST'])
-def login():
+@auth_bp.route('/api/login/identify', methods=['POST']) #request input: email
+def indentify():
     try:
         data = request.json
-        is_valid, token = AuthService().validate_login(data['email'], data['password'])
+
+        user_id = UserService().check_email(data['email'])
+        
+        if user_id != 0:
+            flask_session['user_id'] = user_id
+            return jsonify({"message": "Email exists"}), 200
+        else:
+            raise Exception('This email does not exist')
+    except Exception as e:
+        print(e)
+        return jsonify(error = str(e)), 400
+    
+@auth_bp.route('/api/login/validate', methods=['POST']) #request input: pw
+def validate():
+    try:
+        data = request.json
+        user_id = flask_session.get('user_id')
+        is_valid = UserService().validate_login(user_id, data['password'])
 
         if is_valid:
-            return jsonify(message="Login successful.", token=token), 200
+            flask_session.pop('user_id', None)
+            return jsonify(message="Login successful."), 200
         else:
             return jsonify({"error": "Invalid credentials."}), 401
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
-    
-@auth_bp.route('/api/email_exist', methods=['POST'])
-def isExistEmail():
-    data = request.json  
-    if not data or 'email' not in data:
-        return jsonify({"error": "Missing email"}), 400
-    if AuthService().isExistEmail(data['email']) : 
-        return jsonify({"message": "Email exists"}), 200
-    else:
-        return jsonify({"error": "Email does not exist"}), 404   
+        return jsonify(error = str(e)), 400

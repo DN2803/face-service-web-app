@@ -58,7 +58,7 @@ const FirebaseLogin = ({ ...others }) => {
   const checkEmailExistence = async (email) => {
     try {
       // Kiểm tra sự tồn tại của email
-      const response = await callAPI("/email_exist", "POST", { email });
+      const response = await callAPI("/login/identify", "POST", { email });
       const data = response.data;
   
       if (data) {
@@ -98,7 +98,7 @@ const FirebaseLogin = ({ ...others }) => {
   const handleLogin = async (email, password) => {
     console.error('Login:', email, password);
     try {
-      const response = await callAPI("/login", "POST", {email: email, password: password})
+      const response = await callAPI("/login/validate", "POST", {email: email, password: password})
       const data = await response.data;
       if (response) {
         console.log('Đăng nhập thành công:', data);

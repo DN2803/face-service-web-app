@@ -1,31 +1,33 @@
 from flask import Blueprint, request, jsonify
-from app.packages.user.services.AuthService import AuthService
-
+from app.packages.user.services.UserService import UserService
 face_auth_bp = Blueprint('face_auth', __name__)
 
 @face_auth_bp.route('/api/register-face-id', methods=['POST'])
 def register_face_id(): 
-    """
-    add face id for exist user
-    """
     try:
         data = request.json
-        AuthService().register(**data)
-        return jsonify({"message": "User registered successfully."}), 201
+        message = UserService().add_face_id(data['email'], data['image'])
+
+        return jsonify(message=message), 200
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
 
-@face_auth_bp.route('/api/login', methods=['POST'])
+@face_auth_bp.route('/api/login-face-id', methods=['POST'])
 def login_by_face_id():
     try:
         data = request.json
-        is_valid, token = AuthService().validate_login(data['email'], data['password'])
+        is_valid = False
+
+        if data['email'] and data['image']:
+            is_valid = UserService().validate_face_login(data['email'], data['image'])
+        else:
+            return jsonify(error="Invalid face login syntax"), 400
 
         if is_valid:
-            return jsonify(message="Login successful.", token=token), 200
+            return jsonify(message="Login successful."), 200
         else:
-            return jsonify({"error": "Invalid credentials."}), 401
+            return jsonify(error="Invalid credentials."), 401
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify(error=str(e)), 400
