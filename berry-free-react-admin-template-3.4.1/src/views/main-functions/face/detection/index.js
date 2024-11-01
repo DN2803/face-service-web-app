@@ -12,71 +12,63 @@ import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageUpload from 'ui-component/ImageUpload';
 
+
+import detection_demo_img from 'assets/images/data_test_image/detection'
+import { callAPI } from 'utils/api_caller';
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceDetectionPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageResult, setImageResult] = useState(null);
     const [numPeople, setNumPeople] = useState("0");
-
     // list Image Sample 
-    const itemData = [
-        {
-            img: 'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e',
-            title: 'Breakfast',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d',
-            title: 'Burger',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1522770179533-24471fcdba45',
-            title: 'Camera',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1444418776041-9c7e33cc5a9c',
-            title: 'Coffee',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1533827432537-70133748f5c8',
-            title: 'Hats',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62',
-            title: 'Honey',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1516802273409-68526ee1bdd6',
-            title: 'Basketball',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1518756131217-31eb79b20e8f',
-            title: 'Fern',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1597645587822-e99fa5d45d25',
-            title: 'Mushrooms',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1567306301408-9b74779a11af',
-            title: 'Tomato basil',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1471357674240-e1a485acb3e1',
-            title: 'Sea star',
-        },
-        {
-            img: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6',
-            title: 'Bike',
-        },
-    ];
-    const handleDetection = (file, imageData) => {
-        // Perform actions with the uploaded file or imageData (base64)
-        console.log('File:', file);
+    const convert2base64 = async (file) => {
+        // Kiểm tra xem có tệp không và xem nó có phải là Blob không
+        const fullPath = `${window.location.origin}${file}`;
+        try {
+            const response = await fetch(fullPath);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+    
+            const blob = await response.blob(); // Chuyển đổi phản hồi thành Blob
+            const reader = new FileReader();
+    
+            reader.onloadend = () => {
+                const base64data = reader.result; // Dữ liệu hình ảnh ở dạng base64
+                // Ở đây bạn có thể thêm logic xử lý dữ liệu base64
+                handleDetection(base64data)
+            };
+    
+            // Bắt đầu đọc Blob dưới dạng base64
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Error fetching image:', error);
+        }
+    }
+    
+    const handleDetection = async (imageData) => {
+        
         console.log('Image Data (base64):', imageData);
 
         // You can add your own logic here, such as:
         // 1. Uploading to a server
+
+        try {
+            const response = await callAPI("/demo-detection", "POST", {image: imageData})
+            // const data = await response.data;
+            if (response) {
+                // setNumPeople(data.numPeople.toString());
+                // setImageResult(data.resultImage);
+            }
+            else {
+                console.error("Erorr")
+            }
+        }
+        catch {
+            console.error("Erorr")
+        }
+       
         // 2. Storing the file for later use
         // 3. Triggering another event
         const detectedPeopleCount = Math.floor(Math.random() * 10); // Replace with actual face detection logic
@@ -116,13 +108,21 @@ const FaceDetectionPage = () => {
                         </MuiTypography>
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
-                                {itemData.map((item) => (
-                                    <ImageListItem key={item.img} onClick={() => handleDetection(item.img)}>
+                                {detection_demo_img.map((item) => (
+                                    <ImageListItem key={item.img} onClick={() => convert2base64(item.path)}
+                                    style={{
+                                        border: '1px solid #ccc', // Đường viền
+                                        borderRadius: '8px', // Góc bo tròn
+                                        overflow: 'hidden', // Ẩn phần ảnh bị tràn
+                                        cursor: 'pointer', // Đổi con trỏ khi di chuột
+                                        transition: 'transform 0.2s', // Hiệu ứng khi hover
+                                      }}>
                                         <img
-                                            srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-                                            src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
+                                            srcSet={`{${item.path}}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
+                                            src={item.path}
                                             alt={item.title}
                                             loading="lazy"
+                                            
                                         // onClick={() => setUploadedImage(item.img)}
                                         />
                                     </ImageListItem>

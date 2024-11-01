@@ -14,9 +14,44 @@ const FaceComparisonPage = () => {
     const [uploadedImage2, setUploadedImage2] = useState(null);
     const [comparisonResult, setComparisonResult] = useState(null); // Store the comparison result
     const [result, setResult] = useState(false);
-    const handleCompare = () => {
+    const toBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+    const handleCompare = async () => {
         // Simulate face comparison process
         if (uploadedImage1 && uploadedImage2) {
+
+            try {
+                // Convert files to base64
+                const base64Image1 = await toBase64(uploadedImage1);
+                const base64Image2 = await toBase64(uploadedImage2);
+
+                console.log("1:", base64Image1);
+                console.log("2:", base64Image2);
+
+                const response = await callAPI("/demo-comparison", "POST", {
+                    image1: base64Image1,
+                    image2: base64Image2
+                });
+                // const data = await response.data;
+                if (response) {
+                    // setNumPeople(data.numPeople.toString());
+                    // setImageResult(data.resultImage);
+                }
+                else {
+                    console.error("Erorr")
+                }
+            }
+            catch {
+                console.error("Erorr")
+            }
+           
+
             // Example: Perform the comparison (this is where you could call an API)
             const randomScore = Math.floor(Math.random() * 100); // Random match score for now
             setComparisonResult(randomScore); // Set the comparison result
