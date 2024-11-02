@@ -24,6 +24,7 @@ const FaceLivenessPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [approved, setApproved] = useState(false);
     const [result, setResult] = useState(false)
+    // const [score, setScore] = useState(null)
     // list Image Sample 
     const convert2base64 = async (file) => {
         // Kiểm tra xem có tệp không và xem nó có phải là Blob không
@@ -54,9 +55,18 @@ const FaceLivenessPage = () => {
         // Perform actions with the uploaded file or imageData (base64)
         console.log('Image Data (base64):', imageData);
         try {
-            const response = await callAPI("/demo-liveness", "POST", {image: imageData})
+            const response = await callAPI("/demo/anti-spoofing", "POST", {image: imageData})
             if (response) {
+                console.log(response.data)
                 setResult(true);
+                if (response.data["result"]["is_real"]){
+                    setApproved(true)
+                }
+                else {
+                    setApproved(false)
+                }
+
+                    
             }
             else {
                 console.error("Erorr")

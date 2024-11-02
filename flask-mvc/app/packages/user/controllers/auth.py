@@ -10,10 +10,10 @@ def check_email():
         data = request.json
         user_id = UserService().check_email(data['email'])
         
-        if user_id == 0:
-            return jsonify({"message": "This email is available for registration!"}), 200
-        else:
+        if user_id:            
             raise Exception('This email already exists!')
+        else:            
+            return jsonify({"message": "This email is available for registration!"}), 200
     except Exception as e:
         print(e)
         return jsonify(error = str(e)), 400
@@ -33,10 +33,9 @@ def register():
 def indentify():
     try:
         data = request.json
-
         user_id = UserService().check_email(data['email'])
         
-        if user_id != 0:
+        if user_id:
             flask_session['user_id'] = user_id
             return jsonify({"message": "Email exists"}), 200
         else:

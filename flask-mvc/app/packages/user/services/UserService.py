@@ -18,7 +18,7 @@ class UserService(BaseService):
         if user:
             return user.id
         else:
-            return 0
+            return None
 
     def register(self, **kwargs):
         validated_data = self.schema.load(data=kwargs)
@@ -75,8 +75,8 @@ class UserService(BaseService):
         if user.face_embed_id:
             face_service = UserImageService()
             embed_service = UserEmbeddingService()
-            face_img = face_service.extract_face(img)
-            embedding = embed_service.encode(face_img)
+            face_objs = face_service.extract_face(img, only_one=True)
+            embedding = embed_service.encode(face_objs[0]['face'])
             user_embedding = embed_service.get_embedding(user.face_embed_id)
 
             similarity = np.dot(embedding, user_embedding) #cos_sim for two normalized vector

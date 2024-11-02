@@ -1,94 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // material-ui
 import { Grid, Divider, Box, Button } from '@mui/material';
 import MuiTypography from '@mui/material/Typography';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
-
 import AnimateButton from 'ui-component/extended/AnimateButton';
-
-// Image 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageUpload from 'ui-component/ImageUpload';
-
-
-import detection_demo_img from 'assets/images/data_test_image/detection'
+import detection_demo_img from 'assets/images/data_test_image/detection';
 import { callAPI } from 'utils/api_caller';
-// ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceDetectionPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageResult, setImageResult] = useState(null);
     const [numPeople, setNumPeople] = useState("0");
-    // list Image Sample 
+    const [landmarks, setLandmarks] = useState([]); // State to store landmarks
+    const canvasRef = useRef(null); // Reference to the canvas
+
     const convert2base64 = async (file) => {
-        // Kiểm tra xem có tệp không và xem nó có phải là Blob không
-        const fullPath = `${window.location.origin}${file}`;
         try {
-            const response = await fetch(fullPath);
+            const response = await fetch(file);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-    
-            const blob = await response.blob(); // Chuyển đổi phản hồi thành Blob
+            const blob = await response.blob();
             const reader = new FileReader();
-    
+
             reader.onloadend = () => {
-                const base64data = reader.result; // Dữ liệu hình ảnh ở dạng base64
-                // Ở đây bạn có thể thêm logic xử lý dữ liệu base64
-                handleDetection(base64data)
+                const base64data = reader.result;
+                handleDetection(base64data);
             };
-    
-            // Bắt đầu đọc Blob dưới dạng base64
             reader.readAsDataURL(blob);
         } catch (error) {
             console.error('Error fetching image:', error);
         }
-    }
-    
-    const handleDetection = async (imageData) => {
-        
-        console.log('Image Data (base64):', imageData);
-
-        // You can add your own logic here, such as:
-        // 1. Uploading to a server
-
-        try {
-            const response = await callAPI("/demo-detection", "POST", {image: imageData})
-            // const data = await response.data;
-            if (response) {
-                // setNumPeople(data.numPeople.toString());
-                // setImageResult(data.resultImage);
-            }
-            else {
-                console.error("Erorr")
-            }
-        }
-        catch {
-            console.error("Erorr")
-        }
-       
-        // 2. Storing the file for later use
-        // 3. Triggering another event
-        const detectedPeopleCount = Math.floor(Math.random() * 10); // Replace with actual face detection logic
-        setNumPeople(detectedPeopleCount.toString());
-        // Create a white image in base64 format and set it
-        const canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 400;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const whiteImageData = canvas.toDataURL(); // Get base64 of the white image
-        setImageResult(whiteImageData)
-        console.log(imageResult)
     };
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+    
+        if (imageResult) {
+            const img = new Image();
+            img.src = imageResult;
+    
+            img.onload = () => {
+                // Bước 1: Vẽ hình ảnh và landmarks lên một canvas tạm
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+    
+                // Đặt kích thước canvas tạm theo kích thước gốc của ảnh
+                tempCanvas.width = img.width;
+                tempCanvas.height = img.height;
+    
+                // Vẽ ảnh gốc lên canvas tạm
+                tempCtx.drawImage(img, 0, 0);
+    
+                // Vẽ landmarks và bounding box lên ảnh gốc trên canvas tạm
+                drawLandmarks(tempCtx, landmarks);
+    
+                // Bước 2: Scale canvas tạm xuống kích thước mong muốn và vẽ lên canvas chính
+                const maxWidth = 300;
+                const scale = img.width > maxWidth ? maxWidth / img.width : 1; // Giữ tỉ lệ
+                const newWidth = img.width * scale;
+                const newHeight = img.height * scale;
+    
+                // Đặt kích thước canvas chính là kích thước đã scale
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+    
+                // Vẽ nội dung từ canvas tạm đã có các landmark và bbox lên canvas chính đã scale
+                ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+            };
+        }
+    }, [imageResult, landmarks]);
+    const drawLandmarks = (ctx, landmarks) => {
+        if (Array.isArray(landmarks)) { // Check if landmarks is an array
+            landmarks.forEach((landmark) => {
+                ctx.fillStyle = landmark.color; // Màu của điểm
+                ctx.beginPath();
+                // ctx.arc(landmark.x, landmark.y, 5, 0, Math.PI * 2); // Vẽ hình tròn với bán kính 5
+                // Vẽ bounding box
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(landmark.x, landmark.y, landmark.w, landmark.h);
+
+                // Vẽ landmark cho mắt trái
+                ctx.fillStyle = 'blue';
+                ctx.beginPath();
+                ctx.arc(landmark.left_eye[0], landmark.left_eye[1], 5, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Vẽ landmark cho mắt phải
+                ctx.beginPath();
+                ctx.arc(landmark.right_eye[0], landmark.right_eye[1], 5, 0, 2 * Math.PI);
+      
+                ctx.fill();
+            });
+        } else {
+            console.error("Landmarks is not an array", landmarks);
+        }
+    };
+
+    const handleDetection = async (imageData) => {
+        try {
+            const response = await callAPI("/demo/detection", "POST", { image: imageData });
+            if (response) {
+                console.log(response.data);
+                setLandmarks(response.data["result"]); // Update landmarks
+                const detectedPeopleCount = response.data["result"].length; // Assuming landmarks correspond to detected people
+                setNumPeople(detectedPeopleCount.toString());
+                setImageResult(imageData); // Set the uploaded image to display
+            } else {
+                console.error("Error");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
     const handleReset = () => {
-        // Reset the uploaded image to allow re-upload
         setUploadedImage(null);
         setImageResult(null);
+        setLandmarks([]); // Reset landmarks as well
     };
+
     return (
         <>
             <MainCard title="Face Detection Demo">
@@ -96,6 +133,7 @@ const FaceDetectionPage = () => {
                     <MuiTypography variant="body1" gutterBottom>
                         Face Detection allows you to find faces in an image. Along with the position of the faces, Face Detection also provides key points (eyes, nose, mouth) for each face.
                     </MuiTypography>
+                    <canvas ref={canvasRef} width={300} height={400} style={{ display: 'none' }} /> {/* Add your canvas here */}
                 </Grid>
             </MainCard>
 
@@ -118,12 +156,10 @@ const FaceDetectionPage = () => {
                                         transition: 'transform 0.2s', // Hiệu ứng khi hover
                                       }}>
                                         <img
-                                            srcSet={`{${item.path}}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
+                                            srcSet={`${item.path}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                                             src={item.path}
                                             alt={item.title}
                                             loading="lazy"
-                                            
-                                        // onClick={() => setUploadedImage(item.img)}
                                         />
                                     </ImageListItem>
                                 ))}
@@ -136,43 +172,20 @@ const FaceDetectionPage = () => {
                     <Grid item xs={12} sm={6} md={5}>
                         <MuiTypography variant="subtitle1" gutterBottom> Result</MuiTypography>
                         <MuiTypography variant="body1" gutterBottom>
-                            {numPeople === "0"
-                                ? "No people detected."
-                                : `There are ${numPeople} people detected.`}
+                            {numPeople === "0" ? "No people detected." : `There are ${numPeople} people detected.`}
                         </MuiTypography>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                height: '100%', // Ensure the Box takes full height
-                            }}
-                        >
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <>
-                                    {imageResult ? (
-                                        <ImageListItem src={imageResult} />
-                                    ) : (
-                                        <ImageUpload
-                                            handleUpload={handleDetection}
-                                            uploadedImage={uploadedImage}
-                                            sizeAccept={{ width: 800, height: 800 }}
-                                        />
-                                    )}
-                                </>
-
+                                {imageResult ? (
+                                    <>
+                                        <canvas ref={canvasRef} width={300} height={400} style={{ border: '1px solid black' }} />
+                                    </>
+                                ) : (
+                                    <ImageUpload handleUpload={handleDetection} uploadedImage={uploadedImage} sizeAccept={{ width: 800, height: 800 }} />
+                                )}
                                 <Box sx={{ mt: 2, width: '75%' }}>
                                     <AnimateButton>
-                                        <Button
-                                            disableElevation
-                                            fullWidth
-                                            size="large"
-                                            type="button"
-                                            variant="contained"
-                                            color="secondary"
-                                            onClick={handleReset}
-                                        >
+                                        <Button disableElevation fullWidth size="large" variant="contained" color="secondary" onClick={handleReset}>
                                             Reset
                                         </Button>
                                     </AnimateButton>
@@ -183,7 +196,7 @@ const FaceDetectionPage = () => {
                 </Grid>
             </MainCard>
         </>
-    )
+    );
 };
 
 export default FaceDetectionPage;

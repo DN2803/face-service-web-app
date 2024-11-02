@@ -11,8 +11,8 @@ app.permanent_session_lifetime = timedelta(minutes=1)
 from app.controllers.hello import hello_bp
 app.register_blueprint(hello_bp)
 
-from app.packages.user.controllers.auth import auth_bp
-app.register_blueprint(auth_bp)
+# from app.packages.user.controllers.auth import auth_bp
+# app.register_blueprint(auth_bp)
 
 # from app.packages.user.controllers.face_auth import face_auth_bp
 # app.register_blueprint(face_auth_bp)
