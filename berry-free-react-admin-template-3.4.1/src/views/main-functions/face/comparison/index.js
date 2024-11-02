@@ -9,6 +9,8 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 // Image Upload Component
 import ImageUpload from 'ui-component/ImageUpload';
 
+import { callAPI } from 'utils/api_caller';
+
 const FaceComparisonPage = () => {
     const [uploadedImage1, setUploadedImage1] = useState(null);
     const [uploadedImage2, setUploadedImage2] = useState(null);
@@ -31,31 +33,29 @@ const FaceComparisonPage = () => {
                 const base64Image1 = await toBase64(uploadedImage1);
                 const base64Image2 = await toBase64(uploadedImage2);
 
-                console.log("1:", base64Image1);
-                console.log("2:", base64Image2);
-
-                const response = await callAPI("/demo-comparison", "POST", {
+                const response = await callAPI("/demo/comparison", "POST", {
                     image1: base64Image1,
                     image2: base64Image2
                 });
                 // const data = await response.data;
                 if (response) {
-                    // setNumPeople(data.numPeople.toString());
-                    // setImageResult(data.resultImage);
+                    console.log (response.data)
+                    setComparisonResult(response.data["result"]["score"]);
+                    setResult(response.data["result"]["is_matched"]);
                 }
                 else {
-                    console.error("Erorr")
+                    console.error("Error:")
                 }
             }
-            catch {
-                console.error("Erorr")
+            catch (error){
+                console.error("Error:", error)
             }
            
 
             // Example: Perform the comparison (this is where you could call an API)
-            const randomScore = Math.floor(Math.random() * 100); // Random match score for now
-            setComparisonResult(randomScore); // Set the comparison result
-            setResult(true)
+            //const randomScore = Math.floor(Math.random() * 100); // Random match score for now
+            //setComparisonResult(randomScore); // Set the comparison result
+            
 
         } else {
             alert('Please upload both images.');
@@ -113,7 +113,7 @@ const FaceComparisonPage = () => {
                             <Box sx={{ mt: 2, width: '100%' }}>
                                 {comparisonResult !== null && (
                                     <MuiTypography variant="body1" gutterBottom>
-                                        Match Score: {comparisonResult}% {comparisonResult >= 66 ? '✅ Match' : '❌ No Match'}
+                                        Match Score: {comparisonResult * 100}% {comparisonResult ? '✅ Match' : '❌ No Match'}
                                     </MuiTypography>
                                 )}
                             </Box>
