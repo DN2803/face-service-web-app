@@ -18,42 +18,19 @@ import ImageUpload from 'ui-component/ImageUpload';
 import liveness_demo_img from 'assets/images/data_test_image/liveness';
 import { callAPI } from 'utils/api_caller';
 import {convertAndCacheImage} from 'utils/imageCache'
+import { BACKEND_ENDPOINTS } from 'services/constant';
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceLivenessPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [approved, setApproved] = useState(false);
-    const [result, setResult] = useState(false)
-    // const [score, setScore] = useState(null)
-    // list Image Sample 
-    // const convert2base64 = async (file) => {
-    //     // Kiểm tra xem có tệp không và xem nó có phải là Blob không
-    //     const fullPath = `${file}`;
-    //     try {
-    //         const response = await fetch(fullPath);
-    //         if (!response.ok) {
-    //             throw new Error('Network response was not ok');
-    //         }
-    //         const blob = await response.blob(); // Chuyển đổi phản hồi thành Blob
-    //         const reader = new FileReader();
+    const [result, setResult] = useState(false);
     
-    //         reader.onloadend = () => {
-    //             const base64data = reader.result; // Dữ liệu hình ảnh ở dạng base64
-    //             // Ở đây bạn có thể thêm logic xử lý dữ liệu base64
-    //             handleLiveness(base64data)
-    //         };
-    //         // Bắt đầu đọc Blob dưới dạng base64
-    //         reader.readAsDataURL(blob);
-    //     } catch (error) {
-    //         console.error('Error fetching image:', error);
-    //     }
-    // }
     
     const handleLiveness = async (imageData) => {
         // Perform actions with the uploaded file or imageData (base64)
-        console.log('Image Data (base64):', imageData);
         try {
-            const response = await callAPI("/demo/anti-spoofing", "POST", {image: imageData})
+            const response = await callAPI(BACKEND_ENDPOINTS.demo_function.liveness, "POST", {image: imageData})
             if (response) {
                 console.log(response.data)
                 setResult(true);

@@ -60,7 +60,7 @@ const ProfileSection = () => {
   const handleLogout = async () => {
     console.log('Logout');
     // Remove token from localStorage
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     // Remove cookies 
     Cookies.remove('user');
     navigate('/');

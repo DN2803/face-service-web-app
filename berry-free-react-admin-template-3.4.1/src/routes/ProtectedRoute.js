@@ -2,7 +2,7 @@ import React,  {useState, useEffect} from 'react';
 import { Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types'; // Import PropTypes for prop validation
 import { callAPI } from 'utils/api_caller';
-
+import { BACKEND_ENDPOINTS } from 'services/constant';
 const isAuthenticated = async () => {
   const token = localStorage.getItem('access_token');
   if (!token) {
@@ -11,7 +11,7 @@ const isAuthenticated = async () => {
   
   try {
     // Assuming callAPI is asynchronous
-    const response = await callAPI("/user/my-info", "POST", {}, null, token);
+    const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, null, token);
     console.log(response);
     // Check if the response is valid, and assume true if the API confirms authentication
     return response && response.status === 200; 

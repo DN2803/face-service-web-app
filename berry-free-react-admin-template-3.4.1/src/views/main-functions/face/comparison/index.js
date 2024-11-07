@@ -10,6 +10,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import ImageUpload from 'ui-component/ImageUpload';
 
 import { callAPI } from 'utils/api_caller';
+import { BACKEND_ENDPOINTS } from 'services/constant';
 
 const FaceComparisonPage = () => {
     const [uploadedImage1, setUploadedImage1] = useState(null);
@@ -21,7 +22,7 @@ const FaceComparisonPage = () => {
         if (uploadedImage1 && uploadedImage2) {
 
             try {
-                const response = await callAPI("/demo/comparison", "POST", {
+                const response = await callAPI(BACKEND_ENDPOINTS.demo_function.comparison, "POST", {
                     image1: uploadedImage1,
                     image2: uploadedImage2
                 });

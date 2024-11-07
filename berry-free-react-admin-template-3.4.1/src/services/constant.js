@@ -1,15 +1,29 @@
 
-
-const BACKEND_ENDPOINTS = {
-    LOGIN: "/login",
-    REGISTER: "/register",
-    VERIFYEMAIL: "/exist_email", 
-    TURNONFACEID: "/create_face_auth",
-    CHECKFACEID: "/face_exist",
-    TURNOFF: "/remove_face_auth",
-
-
-    SENDOTP: "/send_otp",
-    VERIRYOTP: "/verify_otp",
-    RESETPASSWORD: "/reset_password"
-}
+export const BACKEND_ENDPOINTS = {
+    auth: {
+      register: {
+        checkMail: "/auth/register/check-email",
+        submit: "/auth/register/submit"
+      }, 
+      login: {
+        identify: "/auth/login/identify",
+        password: "/auth/login/validate/password",
+        faceid: "/auth/login/validate/face-id"
+      }, 
+      refesh_token: "/auth/refresh-token"
+    }, 
+    user: {
+      register: {
+        faceid: "/user/register-face-id"
+      },
+      info: "/user/my-info",
+      project: "user/my-project"
+    },
+    demo_function: {
+      detection: "/demo/detection",
+      comparison: "demo/comparison",
+      liveness: "/demo/anti-spoofing",
+      search: "/demo"
+    }
+  };
+  
