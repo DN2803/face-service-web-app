@@ -1,11 +1,24 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from app.packages.user.services.UserService import UserService
 
-user_bp = Blueprint('user', __name__)
+user_bp = Blueprint('user', __name__, url_prefix='/api/user')
 
-@user_bp.route('/api/user/my-info', methods=['POST'])
+@user_bp.route('/register-face-id', methods=['POST'])
+def register_face_id():
+    try:
+        verify_jwt_in_request(fresh=True)
+        user_id = get_jwt_identity()
+        data = request.json
+        message = UserService().add_face_id(user_id, data['image'])
+
+        return jsonify(message=message), 200
+    except Exception as e:
+        print(e)
+        return jsonify(error=str(e)), 400
+
+@user_bp.route('/my-info', methods=['POST'])
 def get_info():
     try:
         verify_jwt_in_request(fresh=True)
@@ -18,7 +31,7 @@ def get_info():
         print(e)
         return jsonify(error=str(e)), 400
 
-@user_bp.route('/api/user/my-projects', methods=['POST'])
+@user_bp.route('/my-projects', methods=['POST'])
 def get_projects():
     try:
         verify_jwt_in_request(fresh=True)
@@ -30,14 +43,3 @@ def get_projects():
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400
-
-@user_bp.route('/api/user/refresh-token', methods=['POST'])
-def refresh():
-    try:
-        verify_jwt_in_request(refresh=True)
-        user_id = get_jwt_identity()
-        new_refresh_token = UserService.gen_token(user_id, refresh=True)
-        return jsonify(refresh_token=new_refresh_token), 200
-    except Exception as e:
-        print(e)
-        return jsonify(error = str(e)), 400
