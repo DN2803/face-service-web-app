@@ -5,10 +5,10 @@ export async function loadModels() {
     console.log("hihihi")
     console.log(faceapi.nets)
 
-    // const MODEL_URL = process.env.PUBLIC_URL + '/models'
+    const MODEL_URL = `${process.env.PUBLIC_URL || ''}/models`
     try {
         // Ensure that the models are located in the /public/models folder
-        await faceapi.nets.tinyFaceDetector.loadFromUri( '/models');
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         console.log("Models loaded successfully");
     } catch (error) {
         console.error("Error loading models:", error);
