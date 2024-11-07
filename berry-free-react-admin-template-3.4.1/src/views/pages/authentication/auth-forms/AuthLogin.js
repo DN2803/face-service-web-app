@@ -58,7 +58,7 @@ const FirebaseLogin = ({ ...others }) => {
   const [onlyLogByPassword, setOnlyLogByPassword] = useState(false);
   const [firstStep, setFirstStep] = useState(true)
   const [username, setUsername] = useState('');
-  const [countFalse, setCountFalse] = useState(0);
+  const countFalseRef = useRef(0);
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ const FirebaseLogin = ({ ...others }) => {
       // Start sending images to the server every second
       intervalIdRef.current = setInterval(() => {
         sendFrameToServer();
-      }, 1000);
+      }, 5000);
     } catch (err) {
       console.error('Error accessing the camera: ', err);
       alert('Unable to access the camera. Please check your permissions.');
@@ -149,7 +149,7 @@ const FirebaseLogin = ({ ...others }) => {
     if (videoRef.current) {
       const detections = await detectFace(videoRef.current);
       if (!detections) {
-        setCountFalse(countFalse + 1);
+        countFalseRef.current += 1;
         return;
       }
       const canvas = document.createElement('canvas');
@@ -161,8 +161,9 @@ const FirebaseLogin = ({ ...others }) => {
       const imageData = canvas.toDataURL('image/jpeg');
       // Send the image data to the server
       try {
-        if (countFalse == 5) {
-          startCamera();
+        console.log("false: ", countFalseRef.current);
+        if (countFalseRef.current >= 5) {
+          stopCamera();
           setOnlyLogByPassword(true);
           setIsExistFaceID(false);
         }
@@ -177,12 +178,13 @@ const FirebaseLogin = ({ ...others }) => {
           navigate('/pages/project');
           // Tắt camera sau khi đăng nhập thành công
           stopCamera();
+          countFalseRef.current = 0;  // Reset countFalse
         } else {
           console.error('Lỗi đăng nhập:', data.message);
         }
       } catch (error) {
         console.error('Error:', error);
-        setCountFalse(countFalse + 1);
+        countFalseRef.current += 1;
       }
     }
   };
@@ -398,7 +400,7 @@ const FirebaseLogin = ({ ...others }) => {
               onlyLogByPassword && (
                 <div style={{ display: 'flex', alignItems: 'center', color: '#ff6666', marginLeft: '10px' }}>
                   <WarningAmberIcon style={{ marginRight: '5px' }} />
-                  <p style={{ margin: 10 }}>Can`&apos;`t login with face, please use password</p>
+                  <p style={{ margin: 10 }}>Face recognition failed multiple times. Please try logging in with your password.</p>
                 </div>
               )
             }

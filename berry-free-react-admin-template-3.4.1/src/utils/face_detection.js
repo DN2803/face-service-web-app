@@ -19,7 +19,8 @@ export async function loadModels() {
 export async function detectFace(image) {
     // Make sure models are loaded before calling this function
     const detections = await faceapi.detectAllFaces(image, new faceapi.TinyFaceDetectorOptions())
-    if (detections) {
+    console.log(detections);
+    if (detections.length > 0) {
         return true;
     }
     return false;
