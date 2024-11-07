@@ -15,7 +15,7 @@ def download_image(filepath):
         path = os.path.join(IMAGE_DIR, filepath)
         path = os.path.normpath(path)
         dir, filename = os.path.split(path)
-        
+
         return send_from_directory(dir, filename)
     except Exception as e:
         return jsonify(error=str(e)), 404
@@ -37,8 +37,8 @@ def demo_dectection():
         return jsonify(result=result), 200
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
-    
+        return jsonify(error=str(e)), 400
+
 @image_bp.route('/api/demo/anti-spoofing', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
 def demo_anti_spoofing():
@@ -54,11 +54,11 @@ def demo_anti_spoofing():
         return jsonify(result=result), 200
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify(error=str(e)), 400
 
 @image_bp.route('/api/demo/comparison', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
-def demo_comparison():
+def comparison():
     try:
         data = request.json
         is_matched, score = ImageService.compare(data['image1'], data['image2'], threshold=0.66)
@@ -70,4 +70,4 @@ def demo_comparison():
         return jsonify(result=result), 200
     except Exception as e:
         print(e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify(error=str(e)), 400

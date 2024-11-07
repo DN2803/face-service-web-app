@@ -23,7 +23,7 @@ const ImageUpload = ({ handleUpload, uploadedImage = null, sizeAccept = { width:
           reader.onloadend = () => {
             const imageData = reader.result;
             setPreviewImage(imageData);
-            handleUpload(file, imageData); // Trigger parent component upload
+            handleUpload(imageData); // Trigger parent component upload
             setError(null);
           };
           reader.readAsDataURL(file);

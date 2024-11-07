@@ -6,7 +6,6 @@ import SubCard from 'ui-component/cards/SubCard';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import { parseCookieToObject } from 'utils/cookies';
 import { callAPI } from 'utils/api_caller';
 
 const FaceAuth = () => {
@@ -18,29 +17,25 @@ const FaceAuth = () => {
     // Dùng useRef để lưu trữ intervalId
     const intervalIdRef = useRef(null);
 
-    // Lấy và giải mã cookie
-    const authTokenObject = parseCookieToObject('user');
-
     useEffect(() => {
-        const checkFaceAuth = async (userEmail) => {
+        const checkFaceAuth = async () => {
             try {
-                const response = await callAPI("/face_exist", "POST", {email: userEmail})
+                const response = await callAPI("/user/my-info", "POST", {}, null, localStorage.getItem('access_token'));
                 if (response) {
-                    setIsFaceIDEnabled(true);
+                    const info = response.data.info;
+                    setEmail( info["email"])
+                    
+                    setIsFaceIDEnabled(info["verified"]);
+                    
+                        
                 }
             } catch (error) {
                 console.error('Error checking FaceID status:', error);
                 setIsFaceIDEnabled(false);
             }
         };
-        if (authTokenObject) {
-            const user = authTokenObject;
-            if (user) {
-                setEmail(user.email); // Set email
-                checkFaceAuth(user.email); // Kiểm tra trạng thái FaceID
-            }
-        }
-    }, [authTokenObject]);
+        checkFaceAuth()
+    }, []);
 
     const handleToggle = async (event) => {
         const newStatus = event.target.checked; // Trạng thái mới từ toggle
@@ -93,7 +88,7 @@ const FaceAuth = () => {
 
             // Send the image data to the server
             try {
-                const response = await callAPI("/create_face_auth", "POST", {image: imageData, email: email})
+                const response = await callAPI("/register-face-id", "POST", {image: imageData}, {withCredentials: true}, localStorage.getItem('access_token'))
                 const data = await response.data;
                 if (data){
             
@@ -116,6 +111,7 @@ const FaceAuth = () => {
                 }}
             catch (error) {
                     console.error('Error:', error);
+                    //alert('Failed to register Face ID. Please try again.');
             }
         }
     };

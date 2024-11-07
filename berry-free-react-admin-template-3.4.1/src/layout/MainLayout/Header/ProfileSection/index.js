@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import Cookies from 'js-cookie';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -60,6 +61,8 @@ const ProfileSection = () => {
     console.log('Logout');
     // Remove token from localStorage
     localStorage.removeItem('token');
+    // Remove cookies 
+    Cookies.remove('user');
     navigate('/');
   };
   const handleAccountSetting = () => {

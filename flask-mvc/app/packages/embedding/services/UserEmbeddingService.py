@@ -1,34 +1,12 @@
 from app.packages.embedding.services.EmbeddingService import EmbeddingService
 from app.packages.embedding.repositories.UserEmbeddingRepo import UserEmbeddingRepo
 
-from deepface import DeepFace
 import pickle
 import numpy as np
-# import torch
-# import torch.nn.functional as F
-
-# __device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class UserEmbeddingService(EmbeddingService):
     def __init__(self):
         self.repository = UserEmbeddingRepo()
-    
-    @staticmethod
-    def encode(img_np):
-        """ Extract features from a given face image
-        Returns:
-            result (NDArray): normalize img features
-        """
-        embedding_objs = DeepFace.represent(
-            img_path = img_np,
-            model_name = "Facenet512",
-            enforce_detection = False,
-            detector_backend = 'skip'
-        )
-        embed = embedding_objs[0]['embedding']
-        embed_np = np.array(embed)
-        embed_normalize = embed_np/ np.linalg.norm(embed_np)
-        return embed_normalize
 
     def retrieval(self, embedding: np.ndarray, sim_threshold = 0.7):
         df = self.repository.get_embed_df()

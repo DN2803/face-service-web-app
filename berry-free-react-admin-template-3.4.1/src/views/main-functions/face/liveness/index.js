@@ -17,7 +17,7 @@ import ImageUpload from 'ui-component/ImageUpload';
 
 import liveness_demo_img from 'assets/images/data_test_image/liveness';
 import { callAPI } from 'utils/api_caller';
-
+import {convertAndCacheImage} from 'utils/imageCache'
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceLivenessPage = () => {
@@ -26,30 +26,28 @@ const FaceLivenessPage = () => {
     const [result, setResult] = useState(false)
     // const [score, setScore] = useState(null)
     // list Image Sample 
-    const convert2base64 = async (file) => {
-        // Kiểm tra xem có tệp không và xem nó có phải là Blob không
-        const fullPath = `${window.location.origin}${file}`;
-        try {
-            const response = await fetch(fullPath);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
+    // const convert2base64 = async (file) => {
+    //     // Kiểm tra xem có tệp không và xem nó có phải là Blob không
+    //     const fullPath = `${file}`;
+    //     try {
+    //         const response = await fetch(fullPath);
+    //         if (!response.ok) {
+    //             throw new Error('Network response was not ok');
+    //         }
+    //         const blob = await response.blob(); // Chuyển đổi phản hồi thành Blob
+    //         const reader = new FileReader();
     
-            const blob = await response.blob(); // Chuyển đổi phản hồi thành Blob
-            const reader = new FileReader();
-    
-            reader.onloadend = () => {
-                const base64data = reader.result; // Dữ liệu hình ảnh ở dạng base64
-                // Ở đây bạn có thể thêm logic xử lý dữ liệu base64
-                handleLiveness(base64data)
-            };
-    
-            // Bắt đầu đọc Blob dưới dạng base64
-            reader.readAsDataURL(blob);
-        } catch (error) {
-            console.error('Error fetching image:', error);
-        }
-    }
+    //         reader.onloadend = () => {
+    //             const base64data = reader.result; // Dữ liệu hình ảnh ở dạng base64
+    //             // Ở đây bạn có thể thêm logic xử lý dữ liệu base64
+    //             handleLiveness(base64data)
+    //         };
+    //         // Bắt đầu đọc Blob dưới dạng base64
+    //         reader.readAsDataURL(blob);
+    //     } catch (error) {
+    //         console.error('Error fetching image:', error);
+    //     }
+    // }
     
     const handleLiveness = async (imageData) => {
         // Perform actions with the uploaded file or imageData (base64)
@@ -59,17 +57,7 @@ const FaceLivenessPage = () => {
             if (response) {
                 console.log(response.data)
                 setResult(true);
-                if (response.data["result"]["is_real"]){
-                    setApproved(true)
-                }
-                else {
-                    setApproved(false)
-                }
-
-                    
-            }
-            else {
-                console.error("Erorr")
+                setApproved(response.data["result"]["is_real"])
             }
         }
         catch {
@@ -103,8 +91,12 @@ const FaceLivenessPage = () => {
                         </MuiTypography>
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
-                            {liveness_demo_img.map((item) => (
-                                    <ImageListItem key={item.img} onClick={() => convert2base64(item.path)}
+                            {
+                            liveness_demo_img.map((item) => {
+                                convertAndCacheImage(item.path);
+                                const cachedImageSrc = sessionStorage.getItem(item.path) || item.path;
+                                return (
+                                <ImageListItem key={item.img} onClick={() => handleLiveness(cachedImageSrc)}
                                     style={{
                                         border: '1px solid #ccc', // Đường viền
                                         borderRadius: '8px', // Góc bo tròn
@@ -113,15 +105,13 @@ const FaceLivenessPage = () => {
                                         transition: 'transform 0.2s', // Hiệu ứng khi hover
                                       }}>
                                         <img
-                                            srcSet={`{${item.path}}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-                                            src={item.path}
+                                            
+                                            src={cachedImageSrc}
                                             alt={item.title}
                                             loading="lazy"
-                                            
-                                        // onClick={() => setUploadedImage(item.img)}
                                         />
-                                    </ImageListItem>
-                                ))}
+                                </ImageListItem>
+                                )})}
                             </ImageList>
                         </Box>
                     </Grid>

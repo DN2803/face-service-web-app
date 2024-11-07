@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
@@ -37,6 +37,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
 import { callAPI } from 'utils/api_caller';
+import { loadModels, detectFace } from 'utils/face_detection';
 
 // ============================|| FIREBASE - LOGIN ||============================ //
 
@@ -54,32 +55,33 @@ const FirebaseLogin = ({ ...others }) => {
   const [errorLogin, setErrorLogin] = useState(false);
   const [isExistEmail, setIsExistEmail] = useState(false);
   const [isExistFaceID, setIsExistFaceID] = useState(false);
+  const [onlyLogByPassword, setOnlyLogByPassword] = useState(false);
   const [firstStep, setFirstStep] = useState(true)
+  const [username, setUsername] = useState('');
+  const [countFalse, setCountFalse] = useState(0);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadAllModels = async () => {
+      loadModels();
+      setModelsLoaded(true);
+    };
+    loadAllModels();
+  }, []);
   const checkEmailExistence = async (email) => {
     try {
       // Kiểm tra sự tồn tại của email
       const response = await callAPI("/login/identify", "POST", { email });
       const data = response.data;
-  
+      console.log(response)
       if (data) {
-        console.log("Email exists:", email);
         setIsExistEmail(true);
         setFirstStep(false);
         setErrorLogin(false);
-        try {
-          // Kiểm tra sự tồn tại của FaceID
-          const faceIDResponse = await callAPI("/face_exist", "POST", { email });
-          const faceIDData = faceIDResponse.data;
-  
-          if (faceIDData) {
-            setIsExistFaceID(true);
-          } else {
-            setIsExistFaceID(false); // FaceID không tồn tại
-          }
-        } catch (faceIDError) {
-          console.error("Error checking FaceID:", faceIDError);
-          setIsExistFaceID(false); // Nếu có lỗi trong kiểm tra FaceID
-        }
+        setIsExistFaceID(data['is_faceid']);
+        setUsername(data['user_name'])
+        localStorage.setItem('refresh_token', data.refresh_token);
+
       } else {
         console.error("Email does not exist.");
         setIsExistEmail(false);
@@ -91,33 +93,30 @@ const FirebaseLogin = ({ ...others }) => {
       setErrorLogin(true);
     }
   };
-  
-  
+
+
 
 
   const handleLogin = async (email, password) => {
     console.error('Login:', email, password);
     try {
-      const response = await callAPI("/login/validate", "POST", {email: email, password: password})
+      const response = await callAPI("/login/validate", "POST", { password: password }, null, localStorage.getItem('refresh_token'));
       const data = await response.data;
       if (response) {
         console.log('Đăng nhập thành công:', data);
-        const token = data.token;
-        localStorage.setItem('token', token);
-        const user = data.token;
-        console.log(user);
-        Cookies.set('user', user, { expires: 1 });
-        navigate('/dashboard/default');
+        localStorage.setItem('access_token', data.access_token);
+        navigate('/pages/project');
       } else {
-        console.error('Lỗi đăng nhập:', data.message);
-        setErrorLogin(true);
+        throw new Error(data.error);
       }
     } catch (error) {
       console.error('Lỗi khi gửi request:', error);
       setErrorLogin(true);
     }
   };
-  const startCamera = async (email) => {
+  const startCamera = async () => {
+    console.log(modelsLoaded)
+    if (modelsLoaded == false) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraActive(true);
@@ -128,8 +127,8 @@ const FirebaseLogin = ({ ...others }) => {
 
       // Start sending images to the server every second
       intervalIdRef.current = setInterval(() => {
-        sendFrameToServer(email);
-      }, 5000);
+        sendFrameToServer();
+      }, 1000);
     } catch (err) {
       console.error('Error accessing the camera: ', err);
       alert('Unable to access the camera. Please check your permissions.');
@@ -146,8 +145,13 @@ const FirebaseLogin = ({ ...others }) => {
       setCameraActive(false); // Update state to hide video component
     }
   };
-  const sendFrameToServer = async (email) => {
+  const sendFrameToServer = async () => {
     if (videoRef.current) {
+      const detections = await detectFace(videoRef.current);
+      if (!detections) {
+        setCountFalse(countFalse + 1);
+        return;
+      }
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       canvas.width = videoRef.current.videoWidth; // Set canvas width to video width
@@ -157,7 +161,12 @@ const FirebaseLogin = ({ ...others }) => {
       const imageData = canvas.toDataURL('image/jpeg');
       // Send the image data to the server
       try {
-        const response = await callAPI ("/login", "POST", {email: email, image: imageData})
+        if (countFalse == 5) {
+          startCamera();
+          setOnlyLogByPassword(true);
+          setIsExistFaceID(false);
+        }
+        const response = await callAPI("/login-face-id", "POST", { image: imageData }, null, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
         if (data) {
@@ -165,7 +174,7 @@ const FirebaseLogin = ({ ...others }) => {
           const token = data.token;
           localStorage.setItem('token', token);
           Cookies.set('user', token, { expires: 1 });
-          navigate('/dashboard/default');
+          navigate('/pages/project');
           // Tắt camera sau khi đăng nhập thành công
           stopCamera();
         } else {
@@ -173,6 +182,7 @@ const FirebaseLogin = ({ ...others }) => {
         }
       } catch (error) {
         console.error('Error:', error);
+        setCountFalse(countFalse + 1);
       }
     }
   };
@@ -191,7 +201,7 @@ const FirebaseLogin = ({ ...others }) => {
       <Grid container direction="column" justifyContent="center" spacing={2}>
         <Grid item xs={12}>
           <AnimateButton>
-            
+
           </AnimateButton>
         </Grid>
         <Grid item xs={12}>
@@ -225,7 +235,8 @@ const FirebaseLogin = ({ ...others }) => {
         </Grid>
         <Grid item xs={12} container alignItems="center" justifyContent="center">
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">Sign in with Email address</Typography>
+            {!isExistEmail && (<Typography variant="subtitle1">Sign in with Email address</Typography>)}
+            {isExistEmail && (<Typography variant="subtitle1">Hello {username}</Typography>)}
           </Box>
         </Grid>
       </Grid>
@@ -260,24 +271,26 @@ const FirebaseLogin = ({ ...others }) => {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit} {...others}>
-            <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ ...theme.typography.customInput }}>
-              <InputLabel htmlFor="outlined-adornment-email-login">Email Address / Username</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-email-login"
-                type="email"
-                value={values.email}
-                name="email"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                label="Email Address / Username"
-                inputProps={{}}
-              />
-              {touched.email && errors.email && (
-                <FormHelperText error id="standard-weight-helper-text-email-login">
-                  {errors.email}
-                </FormHelperText>
-              )}
-            </FormControl>
+            {!isExistEmail && (
+              <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ ...theme.typography.customInput }}>
+                <InputLabel htmlFor="outlined-adornment-email-login">Email Address / Username</InputLabel>
+                <OutlinedInput
+                  id="outlined-adornment-email-login"
+                  type="email"
+                  value={values.email}
+                  name="email"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  label="Email Address / Username"
+                  inputProps={{}}
+                />
+                {touched.email && errors.email && (
+                  <FormHelperText error id="standard-weight-helper-text-email-login">
+                    {errors.email}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            )}
 
             {isExistEmail && (
               <>
@@ -297,7 +310,7 @@ const FirebaseLogin = ({ ...others }) => {
                         }}
                       >
                         <Box sx={{ mr: { xs: 1, sm: 2, width: 20 } }}>
-                          <AddAPhoto style={{ marginRight: matchDownSM ? 8 : 16 }}/>
+                          <AddAPhoto style={{ marginRight: matchDownSM ? 8 : 16 }} />
                         </Box>
                       </Button>
                     </AnimateButton>
@@ -310,12 +323,12 @@ const FirebaseLogin = ({ ...others }) => {
                       </div>
                     )}
                     <Box
-                    sx={{
-                      alignItems: 'center',
-                      display: 'flex'
-                    }}
-                  >
-                    <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
+                      sx={{
+                        alignItems: 'center',
+                        display: 'flex'
+                      }}
+                    >
+                      <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
 
                       <Button
                         variant="outlined"
@@ -335,12 +348,12 @@ const FirebaseLogin = ({ ...others }) => {
                         OR
                       </Button>
 
-                    <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-                  </Box>
+                      <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
+                    </Box>
                   </>
                 )}
-                  
-                  <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ ...theme.typography.customInput }}>
+
+                <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ ...theme.typography.customInput }}>
                   <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
                   <OutlinedInput
                     id="outlined-adornment-password-login"
@@ -381,6 +394,14 @@ const FirebaseLogin = ({ ...others }) => {
                 </div>
               )
             }
+            {
+              onlyLogByPassword && (
+                <div style={{ display: 'flex', alignItems: 'center', color: '#ff6666', marginLeft: '10px' }}>
+                  <WarningAmberIcon style={{ marginRight: '5px' }} />
+                  <p style={{ margin: 10 }}>Can`&apos;`t login with face, please use password</p>
+                </div>
+              )
+            }
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
               <FormControlLabel
                 control={
@@ -388,7 +409,7 @@ const FirebaseLogin = ({ ...others }) => {
                 }
                 label="Remember me"
               />
-              <Typography onClick={() => navigate('/pages/forgot-password')}variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
+              <Typography onClick={() => navigate('/pages/forgot-password')} variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
                 Forgot Password?
               </Typography>
             </Stack>
@@ -399,40 +420,40 @@ const FirebaseLogin = ({ ...others }) => {
             )}
 
             {/* Button Next để kiểm tra email */
-            firstStep && (
-              <>
-              <Box sx={{ mt: 2 }}>
-                <AnimateButton>
-                  <Button
-                    disableElevation
-                    disabled={isSubmitting}
-                    fullWidth
-                    size="large"
-                    type="button"
-                    variant="contained"
-                    color="secondary"
-                    onClick={async () => await checkEmailExistence(values.email)} // Kiểm tra email khi bấm nút "Next"
-                    sx={{
-                      transition: 'transform 0.2s', // Thêm hiệu ứng chuyển động
-                      '&:active': { transform: 'scale(0.95)' } // Hiệu ứng khi bấm nút
-                    }}
-                  >
-                    Next
-                  </Button>
-                </AnimateButton>
-              </Box>
-              </>
-            )}
+              firstStep && (
+                <>
+                  <Box sx={{ mt: 2 }}>
+                    <AnimateButton>
+                      <Button
+                        disableElevation
+                        disabled={isSubmitting}
+                        fullWidth
+                        size="large"
+                        type="button"
+                        variant="contained"
+                        color="secondary"
+                        onClick={async () => await checkEmailExistence(values.email)} // Kiểm tra email khi bấm nút "Next"
+                        sx={{
+                          transition: 'transform 0.2s', // Thêm hiệu ứng chuyển động
+                          '&:active': { transform: 'scale(0.95)' } // Hiệu ứng khi bấm nút
+                        }}
+                      >
+                        Next
+                      </Button>
+                    </AnimateButton>
+                  </Box>
+                </>
+              )}
             {
               isExistEmail && (
                 <>
-                <Box sx={{ mt: 2 }}>
-                  <AnimateButton>
-                    <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
-                      Sign in
-                    </Button>
-                  </AnimateButton>
-                </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <AnimateButton>
+                      <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
+                        Sign in
+                      </Button>
+                    </AnimateButton>
+                  </Box>
                 </>
               )
             }

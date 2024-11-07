@@ -22,8 +22,8 @@ class UserSchema(SQLAlchemySchema):
         model = User
         include_fk = True
     
+    verified = auto_field()
     name = auto_field()
-    
     email = fields.Email(
         required = True,
         validate = validate.Length(max=100)

@@ -1,7 +1,7 @@
 from app.services.BaseService import BaseService
-from app.packages.embedding.services.EmbeddingService import EmbeddingService
 from app.packages.image.repositories.ImageRepo import ImageRepo
 from app.packages.image import IMAGE_DIR
+from app.packages.embedding.services.EmbeddingService import EmbeddingService
 
 import uuid
 import os
@@ -46,7 +46,7 @@ class ImageService(BaseService):
         """
         face_objs = DeepFace.extract_faces(
             img_path = img_path, 
-            detector_backend = 'yolov8',
+            detector_backend = 'yunet',
             align = True,
             color_face = 'bgr',
             normalize_face = False,
@@ -57,36 +57,15 @@ class ImageService(BaseService):
             raise Exception(f'There is not exactly one person in this image!')
 
         return face_objs
-    
-    @staticmethod
-    def encode(img_np):
-        """ Extract features from a given face image
-        Returns:
-            result (NDArray): normalize img features
-        """
-        embedding_objs = DeepFace.represent(
-            img_path = img_np,
-            model_name = "Facenet512",
-            enforce_detection = False,
-            detector_backend = 'skip'
-        )
-        embed = embedding_objs[0]['embedding']
-        embed_np = np.array(embed)
-        embed_normalize = embed_np/ np.linalg.norm(embed_np)
-        return embed_normalize
 
     @staticmethod
     def compare(img1_path, img2_path, threshold = 0.6):
         face_obj_1 = ImageService.extract_face(img1_path, only_one=True)
         face_obj_2 = ImageService.extract_face(img2_path, only_one=True)
-        embed_1 = ImageService.encode(face_obj_1[0]['face'])
-        embed_2 = ImageService.encode(face_obj_2[0]['face'])
-        cos_sim = np.dot(embed_1, embed_2)
+        embed_1 = EmbeddingService.encode(face_obj_1[0]['face'])
+        embed_2 = EmbeddingService.encode(face_obj_2[0]['face'])
 
-        if cos_sim < threshold:
-            return False, 0
-        
-        return True, cos_sim
+        return EmbeddingService.compare(embed_1, embed_2, threshold)
 
     @staticmethod
     def store_source(uri):

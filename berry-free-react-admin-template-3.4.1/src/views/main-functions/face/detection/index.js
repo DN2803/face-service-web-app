@@ -10,69 +10,50 @@ import ImageListItem from '@mui/material/ImageListItem';
 import ImageUpload from 'ui-component/ImageUpload';
 import detection_demo_img from 'assets/images/data_test_image/detection';
 import { callAPI } from 'utils/api_caller';
-
+import { convertAndCacheImage } from 'utils/imageCache';
 const FaceDetectionPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageResult, setImageResult] = useState(null);
     const [numPeople, setNumPeople] = useState("0");
     const [landmarks, setLandmarks] = useState([]); // State to store landmarks
     const canvasRef = useRef(null); // Reference to the canvas
-
-    const convert2base64 = async (file) => {
-        try {
-            const response = await fetch(file);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const blob = await response.blob();
-            const reader = new FileReader();
-
-            reader.onloadend = () => {
-                const base64data = reader.result;
-                handleDetection(base64data);
-            };
-            reader.readAsDataURL(blob);
-        } catch (error) {
-            console.error('Error fetching image:', error);
-        }
-    };
-
     useEffect(() => {
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-    
-        if (imageResult) {
-            const img = new Image();
-            img.src = imageResult;
-    
-            img.onload = () => {
-                // Bước 1: Vẽ hình ảnh và landmarks lên một canvas tạm
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-    
-                // Đặt kích thước canvas tạm theo kích thước gốc của ảnh
-                tempCanvas.width = img.width;
-                tempCanvas.height = img.height;
-    
-                // Vẽ ảnh gốc lên canvas tạm
-                tempCtx.drawImage(img, 0, 0);
-    
-                // Vẽ landmarks và bounding box lên ảnh gốc trên canvas tạm
-                drawLandmarks(tempCtx, landmarks);
-    
-                // Bước 2: Scale canvas tạm xuống kích thước mong muốn và vẽ lên canvas chính
-                const maxWidth = 300;
-                const scale = img.width > maxWidth ? maxWidth / img.width : 1; // Giữ tỉ lệ
-                const newWidth = img.width * scale;
-                const newHeight = img.height * scale;
-    
-                // Đặt kích thước canvas chính là kích thước đã scale
-                canvas.width = newWidth;
-                canvas.height = newHeight;
-    
-                // Vẽ nội dung từ canvas tạm đã có các landmark và bbox lên canvas chính đã scale
-                ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
-            };
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (imageResult) {
+                const img = new Image();
+                img.src = imageResult;
+        
+                img.onload = () => {
+                    // Bước 1: Vẽ hình ảnh và landmarks lên một canvas tạm
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+        
+                    // Đặt kích thước canvas tạm theo kích thước gốc của ảnh
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+        
+                    // Vẽ ảnh gốc lên canvas tạm
+                    tempCtx.drawImage(img, 0, 0);
+        
+                    // Vẽ landmarks và bounding box lên ảnh gốc trên canvas tạm
+                    drawLandmarks(tempCtx, landmarks);
+        
+                    // Bước 2: Scale canvas tạm xuống kích thước mong muốn và vẽ lên canvas chính
+                    const maxWidth = 300;
+                    const scale = img.width > maxWidth ? maxWidth / img.width : 1; // Giữ tỉ lệ
+                    const newWidth = img.width * scale;
+                    const newHeight = img.height * scale;
+        
+                    // Đặt kích thước canvas chính là kích thước đã scale
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+        
+                    // Vẽ nội dung từ canvas tạm đã có các landmark và bbox lên canvas chính đã scale
+                    ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+                };
+            }   
         }
     }, [imageResult, landmarks]);
     const drawLandmarks = (ctx, landmarks) => {
@@ -104,6 +85,8 @@ const FaceDetectionPage = () => {
     };
 
     const handleDetection = async (imageData) => {
+        console.log(uploadedImage)
+        console.log(imageData)
         try {
             const response = await callAPI("/demo/detection", "POST", { image: imageData });
             if (response) {
@@ -146,8 +129,11 @@ const FaceDetectionPage = () => {
                         </MuiTypography>
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
-                                {detection_demo_img.map((item) => (
-                                    <ImageListItem key={item.img} onClick={() => convert2base64(item.path)}
+                                {detection_demo_img.map((item) => {
+                                convertAndCacheImage(item.path);
+                                const cachedImageSrc = sessionStorage.getItem(item.path) || item.path;
+                                return (
+                                <ImageListItem key={item.img} onClick={() => handleDetection(cachedImageSrc)}
                                     style={{
                                         border: '1px solid #ccc', // Đường viền
                                         borderRadius: '8px', // Góc bo tròn
@@ -156,13 +142,12 @@ const FaceDetectionPage = () => {
                                         transition: 'transform 0.2s', // Hiệu ứng khi hover
                                       }}>
                                         <img
-                                            srcSet={`${item.path}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-                                            src={item.path}
+                                            src={cachedImageSrc}
                                             alt={item.title}
                                             loading="lazy"
                                         />
-                                    </ImageListItem>
-                                ))}
+                                </ImageListItem>
+                                )})}
                             </ImageList>
                         </Box>
                     </Grid>

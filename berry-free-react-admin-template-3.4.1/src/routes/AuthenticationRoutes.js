@@ -4,6 +4,8 @@ import { lazy } from 'react';
 import Loadable from 'ui-component/Loadable';
 import MinimalLayout from 'layout/MinimalLayout';
 import { EmailProvider } from 'hooks/context/EmailContext';  // Import EmailProvider
+import ProtectedRoute from './ProtectedRoute';
+import SelectProject from 'views/pages/authentication/authentication3/Project';
 
 // Lazy load các component
 const AuthLogin3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Login3')));
@@ -41,7 +43,15 @@ const AuthenticationRoutes = {
           <ResetPassword3 />
         </EmailProvider>
       )
-    }
+    },
+    {
+      path: '/pages/project',
+      element: (
+        <ProtectedRoute>
+          <SelectProject/>  
+        </ProtectedRoute>
+      )
+    },
   ]
 };
 
