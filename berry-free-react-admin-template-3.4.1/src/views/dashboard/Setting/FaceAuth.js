@@ -8,6 +8,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import { callAPI } from 'utils/api_caller';
 import { loadModels, detectFace } from 'utils/face_detection';
+import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceAuth = () => {
     const [cameraActive, setCameraActive] = useState(false);
     const videoRef = useRef(null);
@@ -28,7 +29,7 @@ const FaceAuth = () => {
     useEffect(() => {
         const checkFaceAuth = async () => {
             try {
-                const response = await callAPI("/user/my-info", "POST", {}, null, localStorage.getItem('access_token'));
+                const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, null, localStorage.getItem('access_token'));
                 if (response) {
                     const info = response.data.info;
                     setEmail( info["email"])
@@ -102,7 +103,7 @@ const FaceAuth = () => {
 
             // Send the image data to the server
             try {
-                const response = await callAPI("/register-face-id", "POST", {image: imageData}, {withCredentials: true}, localStorage.getItem('access_token'))
+                const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, {withCredentials: true}, localStorage.getItem('access_token'))
                 const data = await response.data;
                 if (data){
             

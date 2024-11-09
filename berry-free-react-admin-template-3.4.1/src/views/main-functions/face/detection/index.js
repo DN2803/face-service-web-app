@@ -11,6 +11,7 @@ import ImageUpload from 'ui-component/ImageUpload';
 import detection_demo_img from 'assets/images/data_test_image/detection';
 import { callAPI } from 'utils/api_caller';
 import { convertAndCacheImage } from 'utils/imageCache';
+import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceDetectionPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageResult, setImageResult] = useState(null);
@@ -88,7 +89,7 @@ const FaceDetectionPage = () => {
         console.log(uploadedImage)
         console.log(imageData)
         try {
-            const response = await callAPI("/demo/detection", "POST", { image: imageData });
+            const response = await callAPI(BACKEND_ENDPOINTS.demo_function.detection, "POST", { image: imageData });
             if (response) {
                 console.log(response.data);
                 setLandmarks(response.data["result"]); // Update landmarks

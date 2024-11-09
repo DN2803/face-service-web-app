@@ -38,6 +38,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 import { callAPI } from 'utils/api_caller';
 import { loadModels, detectFace } from 'utils/face_detection';
+import { BACKEND_ENDPOINTS } from 'services/constant';
 
 // ============================|| FIREBASE - LOGIN ||============================ //
 
@@ -71,7 +72,7 @@ const FirebaseLogin = ({ ...others }) => {
   const checkEmailExistence = async (email) => {
     try {
       // Kiểm tra sự tồn tại của email
-      const response = await callAPI("/login/identify", "POST", { email });
+      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.identify, "POST", { email });
       const data = response.data;
       console.log(response)
       if (data) {
@@ -100,7 +101,7 @@ const FirebaseLogin = ({ ...others }) => {
   const handleLogin = async (email, password) => {
     console.error('Login:', email, password);
     try {
-      const response = await callAPI("/login/validate", "POST", { password: password }, null, localStorage.getItem('refresh_token'));
+      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, null, localStorage.getItem('refresh_token'));
       const data = await response.data;
       if (response) {
         console.log('Đăng nhập thành công:', data);
@@ -167,13 +168,13 @@ const FirebaseLogin = ({ ...others }) => {
           setOnlyLogByPassword(true);
           setIsExistFaceID(false);
         }
-        const response = await callAPI("/login-face-id", "POST", { image: imageData }, null, localStorage.getItem('refresh_token'));
+        const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, null, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
         if (data) {
           console.log('Đăng nhập thành công:', data);
           const token = data.token;
-          localStorage.setItem('token', token);
+          localStorage.setItem('access_token', token);
           Cookies.set('user', token, { expires: 1 });
           navigate('/pages/project');
           // Tắt camera sau khi đăng nhập thành công
