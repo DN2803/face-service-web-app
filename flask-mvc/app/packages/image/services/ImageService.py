@@ -1,10 +1,10 @@
 from app.services.BaseService import BaseService
 from app.packages.image.repositories.ImageRepo import ImageRepo
-from app.packages.image import IMAGE_DIR
 from app.packages.embedding.services.EmbeddingService import EmbeddingService
+from app.cloud_storage.StorageApp import storage_app
 
 import uuid
-import os
+import base64
 from deepface import DeepFace
 from deepface.commons.image_utils import load_image_from_base64
 import cv2
@@ -67,15 +67,26 @@ class ImageService(BaseService):
 
         return EmbeddingService.compare(embed_1, embed_2, threshold)
 
-    @staticmethod
-    def store_source(uri):
-        img_np = load_image_from_base64(uri)
-        img_name = str(uuid.uuid4()) + '.jpg'
-        img_name = os.path.join('Source', img_name)
-        img_path = os.path.join(IMAGE_DIR, img_name)
+    def __compress(img_np, quality=85):
+        img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        _, buffer = cv2.imencode('.jpg', img, encode_param)
+        compressed_base64 = base64.b64encode(buffer).decode('utf-8')
+        
+        return compressed_base64
 
-        cv2.imwrite(img_path, img_np, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-        return img_name
+    def _upload_to_cloud(self, img_np, folder_name, img_name):
+        """
+        Returns:
+            result (str): Image url
+        """
+        content = self.__compress(img_np)        
+        img_url = storage_app.upload(folder_name, img_name, content)
+
+        return img_url
+
+    def _delete_on_cloud(self, folder_name, img_name):
+        return storage_app.delete(folder_name, img_name)
 
     def remove(self, img_obj):
         self.repository._delete(img_obj)

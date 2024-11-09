@@ -11,7 +11,7 @@ class DeployConfig:
         DeployConfig.DEBUG = os.getenv('DEBUG', 'True')
 
 from dotenv import load_dotenv
-def get_config():
+def _get_config():
     env = os.getenv('ENV', 'local')
 
     if env == 'production':
@@ -21,4 +21,4 @@ def get_config():
     
     return DeployConfig()
 
-config = get_config()
+config = _get_config()
