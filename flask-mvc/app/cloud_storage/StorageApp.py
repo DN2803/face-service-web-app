@@ -32,7 +32,6 @@ class StorageApp: #TODO: singleton with n instances
     def __del__(self):        
         print(self.refresh_token)
         with open('refresh_token.txt', 'w') as f:
-        with open('refresh_token.txt', 'w') as f:
             f.write(self.refresh_token)
 
     def __gen_access_token(self):
