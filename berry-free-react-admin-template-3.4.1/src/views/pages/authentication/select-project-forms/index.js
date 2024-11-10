@@ -9,10 +9,15 @@ import {
     Select,
     MenuItem,
 } from '@mui/material';
+import { callAPI } from 'utils/api_caller';
+import { BACKEND_ENDPOINTS } from 'services/constant';
 //import { parseCookieToObject } from 'utils/cookies';
 
-const fetchProjects = async (email) => {
-    console.log(email);
+const fetchProjects = async () => {
+    
+    const response = await callAPI(BACKEND_ENDPOINTS.user.project, "POST", {}, null, localStorage.getItem("access_token"));
+    // return response.data.project;
+    console.log(response.data); 
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve([
@@ -30,9 +35,9 @@ const SelectForm = (... others) => {
     // const authTokenObject = parseCookieToObject('user');
 
     useEffect(() => {
-        const getProjects = async (email) => {
+        const getProjects = async () => {
             try {
-                const result = await fetchProjects(email); // Fetch collections from database
+                const result = await fetchProjects(); // Fetch collections from database
                 setProjects(result);
             } catch (error) {
                 console.error("Error fetching projects", error);
@@ -40,13 +45,7 @@ const SelectForm = (... others) => {
                 setLoading(false);
             }
         };
-        getProjects("user.email");
-        // if (authTokenObject) {
-        //     const user = authTokenObject;
-        //     if (user) {
-        //         getProjects(user.email);
-        //     }
-        // }
+        getProjects();
     }, []);
 
     const handleAccessAPI = async (api) => {
