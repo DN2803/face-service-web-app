@@ -11,7 +11,7 @@ class StorageApp: #TODO: singleton with n instances
     refresh_token = config.REFRESH_TOKEN
     scopes = config.SCOPES
 
-    endpoint = f'{config.ENDPOINT}/me/drive/items/root:'
+    endpoint = f'{config.ENDPOINT}/me/drive/items/root:/Image Storage'
     headers = {}
     payload = {
         'type': 'view',
@@ -48,28 +48,39 @@ class StorageApp: #TODO: singleton with n instances
         else:
             raise Exception('Failed to get access_token: '+ str(token_response))
 
-    def __gen_share_link(self, folder_name, file_name):
-        url = f'{self.endpoint}/{folder_name}/{file_name}:/createLink'
-        response = httpx.post(url, headers=self.headers, json=self.payload)
+    # def __gen_share_link(self, folder_name, file_name):
+    #     url = f'{self.endpoint}/{folder_name}/{file_name}:/createLink'
+    #     response = httpx.post(url, headers=self.headers, json=self.payload)
 
-        if response.is_success:
-            return response.json()['link']['webUrl']
-        else:
-            raise Exception('Failed to create OneDrive share link!')
+    #     if response.is_success:
+    #         return response.json()['link']['webUrl']
+    #     else:
+    #         raise Exception('Failed to create OneDrive share link!')
 
-    def upload(self, folder_name, file_name, content):
+    def upload(self, file_path, content):
         # no need to check if file_name exists cause using uuid 
-        url = f'{self.endpoint}/{folder_name}/{file_name}:/content'
+        url = f'{self.endpoint}/{file_path}:/content'
         
         if datetime.now() > datetime.fromtimestamp(self.token_exp):
-            self.gen_access_token()
+            self.__gen_access_token()
 
         response = httpx.put(url, headers=self.headers, data=content)
 
-        if response.is_success:
-            return self.__gen_share_link(folder_name, file_name)
-        else:
+        if not response.is_success:
             raise Exception('Failed to upload to OneDrive!')
+
+    def gen_download_link(self, file_path):
+        url = f'{self.endpoint}/{file_path}:/content'
+
+        if datetime.now() > datetime.fromtimestamp(self.token_exp):
+            self.__gen_access_token()
+
+        response = httpx.get(url, headers=self.headers, follow_redirects=True)
+
+        if response.is_success:
+            return response.url
+        else:
+            raise Exception('Failed to generate download link!')
 
     def delete(self, folder_name, file_name):
         url = f'{self.endpoint}/{folder_name}/{file_name}'

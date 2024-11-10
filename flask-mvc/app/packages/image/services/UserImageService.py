@@ -15,7 +15,8 @@ class UserImageService(ImageService):
             result: an object of UserFaceImage
         """
         img_name = str(uuid.uuid4()) + '.jpg'
-        img_url = self._upload_to_cloud(face_np, self.IMG_DIR, img_name)
+        img_path = f'{self.IMG_DIR}/{img_name}'
+        self._upload_to_cloud(face_np, img_path)
 
         old_img = self.repository.get_by_user_id(user_id)
 
@@ -23,6 +24,6 @@ class UserImageService(ImageService):
             self._delete_on_cloud(self.IMG_DIR, old_img.img_name)
             self.remove(old_img)
 
-        img_obj = self.repository.add_img(img_name=img_name, img_url=img_url, user_id=user_id)
+        img_obj = self.repository.add_img(img_name=img_name, img_url=img_path, user_id=user_id)
 
         return img_obj

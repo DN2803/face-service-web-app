@@ -64,6 +64,10 @@ class ImageService(BaseService):
 
         return EmbeddingService.compare(embed_1, embed_2, threshold)
 
+    @staticmethod
+    def _get_download_link(img_path):
+        storage_app.gen_download_link(img_path)
+
     def __compress(img_np, quality=85):
         img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
@@ -73,14 +77,8 @@ class ImageService(BaseService):
         return compressed_base64
 
     def _upload_to_cloud(self, img_np, folder_name, img_name):
-        """
-        Returns:
-            result (str): Image url
-        """
         content = self.__compress(img_np)        
-        img_url = storage_app.upload(folder_name, img_name, content)
-
-        return img_url
+        return storage_app.upload(folder_name, img_name, content)
 
     def _delete_on_cloud(self, folder_name, img_name):
         return storage_app.delete(folder_name, img_name)

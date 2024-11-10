@@ -1,7 +1,6 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import os
 
 from app import app
 from app.packages.image.services.ImageService import ImageService
