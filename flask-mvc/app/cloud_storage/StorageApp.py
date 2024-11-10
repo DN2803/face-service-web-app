@@ -31,7 +31,7 @@ class StorageApp: #TODO: singleton with n instances
 
     def __del__(self):        
         print(self.refresh_token)
-        with open('refresh_token.txt', 'r') as f:
+        with open('refresh_token.txt', 'w') as f:
             f.write(self.refresh_token)
 
     def __gen_access_token(self):
@@ -49,7 +49,7 @@ class StorageApp: #TODO: singleton with n instances
             raise Exception('Failed to get access_token: '+ str(token_response))
 
     def __gen_share_link(self, folder_name, file_name):
-        url = f'/{self.endpoint}/{folder_name}/{file_name}:/createLink'
+        url = f'{self.endpoint}/{folder_name}/{file_name}:/createLink'
         response = httpx.post(url, headers=self.headers, json=self.payload)
 
         if response.is_success:
@@ -59,7 +59,7 @@ class StorageApp: #TODO: singleton with n instances
 
     def upload(self, folder_name, file_name, content):
         # no need to check if file_name exists cause using uuid 
-        url = f'/{self.endpoint}/{folder_name}/{file_name}:/content'
+        url = f'{self.endpoint}/{folder_name}/{file_name}:/content'
         
         if datetime.now() > datetime.fromtimestamp(self.token_exp):
             self.__gen_access_token()
@@ -70,9 +70,9 @@ class StorageApp: #TODO: singleton with n instances
             return self.__gen_share_link(folder_name, file_name)
         else:
             raise Exception('Failed to upload to OneDrive!')
-        
+
     def delete(self, folder_name, file_name):
-        url = f'/{self.endpoint}/{folder_name}/{file_name}'
+        url = f'{self.endpoint}/{folder_name}/{file_name}'
 
         if datetime.now() > datetime.fromtimestamp(self.token_exp):
             self.__gen_access_token()

@@ -3,12 +3,9 @@ from app.packages.image.repositories.ImageRepo import ImageRepo
 from app.packages.embedding.services.EmbeddingService import EmbeddingService
 from app.cloud_storage.StorageApp import storage_app
 
-import uuid
 import base64
 from deepface import DeepFace
-from deepface.commons.image_utils import load_image_from_base64
 import cv2
-import numpy as np
 
 class ImageService(BaseService):
     def __init__(self, repository: ImageRepo):
