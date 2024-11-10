@@ -70,6 +70,12 @@ const FirebaseLogin = ({ ...others }) => {
     loadAllModels();
   }, []);
   const checkEmailExistence = async (email) => {
+    const email_token = localStorage.getItem('refresh_token');
+    if (email_token) {
+        setIsExistEmail(true);
+        setFirstStep(false);
+        setErrorLogin(false);
+    }
     try {
       // Kiểm tra sự tồn tại của email
       const response = await callAPI(BACKEND_ENDPOINTS.auth.login.identify, "POST", { email });

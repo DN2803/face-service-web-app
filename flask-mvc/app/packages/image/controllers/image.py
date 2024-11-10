@@ -5,26 +5,26 @@ import os
 
 from app import app
 from app.packages.image.services.ImageService import ImageService
-from app.packages.image import IMAGE_DIR
+# from app.packages.image import IMAGE_DIR
 
 image_bp = Blueprint('image', __name__)
 
-@image_bp.route('/download/<path:filepath>')
-def download_image(filepath):
-    try:
-        path = os.path.join(IMAGE_DIR, filepath)
-        path = os.path.normpath(path)
-        dir, filename = os.path.split(path)
+# @image_bp.route('/download/<path:filepath>')
+# def download_image(filepath):
+#     try:
+#         path = os.path.join(IMAGE_DIR, filepath)
+#         path = os.path.normpath(path)
+#         dir, filename = os.path.split(path)
 
-        return send_from_directory(dir, filename)
-    except Exception as e:
-        return jsonify(error=str(e)), 404
+#         return send_from_directory(dir, filename)
+#     except Exception as e:
+#         return jsonify(error=str(e)), 404
 
-__demo_limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]  # Đặt giới hạn mặc định
-)
+# __demo_limiter = Limiter(
+#     get_remote_address,
+#     app=app,
+#     default_limits=["200 per day", "50 per hour"]  # Đặt giới hạn mặc định
+# )
 
 @image_bp.route('/api/demo/detection', methods=['POST'])
 @__demo_limiter.limit("10 per minute")

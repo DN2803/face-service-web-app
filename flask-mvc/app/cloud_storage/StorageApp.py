@@ -31,7 +31,7 @@ class StorageApp: #TODO: singleton with n instances
 
     def __del__(self):        
         print(self.refresh_token)
-        with open('refresh_token.txt', 'r') as f:
+        with open('refresh_token.txt', 'w') as f:
             f.write(self.refresh_token)
 
     def __gen_access_token(self):
@@ -48,7 +48,7 @@ class StorageApp: #TODO: singleton with n instances
         else:
             raise Exception('Failed to get access_token: '+ str(token_response))
 
-    def __gen_share_link(self, folder_name, file_name):
+    def gen_share_link(self, folder_name, file_name):
         url = f'/{self.endpoint}/{folder_name}/{file_name}:/createLink'
         response = httpx.post(url, headers=self.headers, json=self.payload)
 
@@ -62,7 +62,7 @@ class StorageApp: #TODO: singleton with n instances
         url = f'/{self.endpoint}/{folder_name}/{file_name}:/content'
         
         if datetime.now() > datetime.fromtimestamp(self.token_exp):
-            self.__gen_access_token()
+            self.gen_access_token()
 
         response = httpx.put(url, headers=self.headers, data=content)
 
