@@ -36,7 +36,7 @@ class AuthService(BaseService):
         if user:
             return user.id, user.name, user.verified
         else:
-            return None, None
+            return None, None, None
 
     def register(self, **kwargs):
         validated_data = self.schema.load(data=kwargs)

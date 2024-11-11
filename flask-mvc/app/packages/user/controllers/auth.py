@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, set_access_cookies
 from app.packages.user.services.AuthService import AuthService
 
 auth_bp = Blueprint('auth', __name__,url_prefix='/api/auth')
@@ -8,7 +8,7 @@ auth_bp = Blueprint('auth', __name__,url_prefix='/api/auth')
 def check_email():
     try:
         data = request.json
-        user_id = AuthService().check_email(data['email'])
+        user_id,_,_ = AuthService().check_email(data['email'])
 
         if user_id:            
             raise Exception('This email already exists!')
@@ -59,10 +59,9 @@ def validate():
 
         if is_valid:
             access_token = AuthService.gen_token(user_id)
-            response = jsonify(message="Login successfully.",
-                               user_id=user_id,
-                               access_token=access_token
-                               )
+            response = jsonify(message="Login successfully.")
+            set_access_cookies(response, access_token)
+
             return response, 200
         else:
             return jsonify(error="Invalid credentials."), 401
@@ -85,10 +84,9 @@ def validate_face_id():
 
         if is_valid:
             access_token = AuthService.gen_token(user_id)
-            response = jsonify(message="Login successfully.",
-                    user_id=user_id,
-                    access_token=access_token
-                    )
+            response = jsonify(message="Login successfully.")
+            set_access_cookies(response, access_token)
+
             return response, 200
         else:
             return jsonify(error="Invalid credentials."), 401
