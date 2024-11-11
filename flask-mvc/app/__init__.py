@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 app = Flask("app")
-CORS(app)
+CORS(app, supports_credentials=True)
 
 # import blueprints and register them
 from app.controllers.hello import hello_bp

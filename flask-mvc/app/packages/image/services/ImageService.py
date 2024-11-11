@@ -68,20 +68,19 @@ class ImageService(BaseService):
     def _get_download_link(img_path):
         storage_app.gen_download_link(img_path)
 
-    def __compress(img_np, quality=85):
-        img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
+    def __compress(self, img_np, quality=85):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
-        _, buffer = cv2.imencode('.jpg', img, encode_param)
+        _, buffer = cv2.imencode('.jpg', img_np, encode_param)
         compressed_base64 = base64.b64encode(buffer).decode('utf-8')
         
         return compressed_base64
 
-    def _upload_to_cloud(self, img_np, folder_name, img_name):
+    def _upload_to_cloud(self, img_np, file_path):
         content = self.__compress(img_np)        
-        return storage_app.upload(folder_name, img_name, content)
+        return storage_app.upload(file_path, content)
 
-    def _delete_on_cloud(self, folder_name, img_name):
-        return storage_app.delete(folder_name, img_name)
+    def _delete_on_cloud(self, file_path):
+        return storage_app.delete(file_path)
 
     def remove(self, img_obj):
         self.repository._delete(img_obj)

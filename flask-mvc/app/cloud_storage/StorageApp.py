@@ -29,13 +29,7 @@ class StorageApp: #TODO: singleton with n instances
         except Exception as e:
             print(e)
 
-    def __del__(self):        
-        print(self.refresh_token)
-        with open('refresh_token.txt', 'w') as f:
-            f.write(self.refresh_token)
-
     def __gen_access_token(self):
-        print('Acquiring new token...')
         token_response = self.app.acquire_token_by_refresh_token(self.refresh_token, self.scopes)
 
         if 'access_token' in token_response:
@@ -45,6 +39,10 @@ class StorageApp: #TODO: singleton with n instances
             self.headers = {
                 'Authorization': f'Bearer {self.access_token}'
             }
+            
+            with open('refresh_token.txt', 'w') as f:
+                f.write(self.refresh_token)
+                print('New refresh token has been saved!')
         else:
             raise Exception('Failed to get access_token: '+ str(token_response))
 
@@ -82,8 +80,8 @@ class StorageApp: #TODO: singleton with n instances
         else:
             raise Exception('Failed to generate download link!')
 
-    def delete(self, folder_name, file_name):
-        url = f'{self.endpoint}/{folder_name}/{file_name}'
+    def delete(self, file_path):
+        url = f'{self.endpoint}/{file_path}'
 
         if datetime.now() > datetime.fromtimestamp(self.token_exp):
             self.__gen_access_token()

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, set_access_cookies
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import set_access_cookies, set_refresh_cookies
 from app.packages.user.services.AuthService import AuthService
 
 auth_bp = Blueprint('auth', __name__,url_prefix='/api/auth')
@@ -42,6 +43,8 @@ def indentify():
                                is_faceid = user_is_faceid,
                                refresh_token=refresh_token
                                )
+            set_refresh_cookies(response, refresh_token)
+            
             return response, 200
         else:
             raise Exception('This email does not exist')
