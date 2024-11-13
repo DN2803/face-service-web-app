@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import { Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -18,6 +18,17 @@ import AuthFooter from 'ui-component/cards/AuthFooter';
 const SelectProject = () => {
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const handleClick = () => {
+    const projectName = window.prompt('Please enter the project name:');
+    if (projectName) {
+      alert(`Project name entered: ${projectName}`);
+      // Bạn có thể xử lý thêm ở đây, ví dụ: lưu tên dự án hoặc điều hướng sang trang khác
+
+      navigate('/pages/poi-management');
+
+    }
+  };
 
   return (
     <AuthWrapper1>
@@ -54,7 +65,12 @@ const SelectProject = () => {
                   </Grid>
                   <Grid item xs={12}>
                     <Grid item container direction="column" alignItems="center" xs={12}>
-                      <Typography component={Link} to="/pages/poi-management" variant="subtitle1" sx={{ textDecoration: 'none' }}>
+                      <Typography 
+                        component="span"
+                        variant="subtitle1"
+                        sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                        onClick={handleClick}
+                        >
                         Create New Project ?
                       </Typography>
                     </Grid>

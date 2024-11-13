@@ -7,7 +7,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import { callAPI } from 'utils/api_caller';
-import { loadModels, detectFace } from 'utils/face_detection';
+// import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceAuth = () => {
     const [cameraActive, setCameraActive] = useState(false);
@@ -17,15 +17,15 @@ const FaceAuth = () => {
     const [isCreateNew, setIsCreateNew] = useState(false);
     // Dùng useRef để lưu trữ intervalId
     const intervalIdRef = useRef(null);
-    const [modelsLoaded, setModelsLoaded] = useState(false);
+    // const [modelsLoaded, setModelsLoaded] = useState(false);
 
-    useEffect(() => {
-        const loadAllModels = async () => {
-        loadModels();
-        setModelsLoaded(true);
-        };
-        loadAllModels();
-    }, []);
+    // useEffect(() => {
+    //     const loadAllModels = async () => {
+    //     loadModels();
+    //     setModelsLoaded(true);
+    //     };
+    //     loadAllModels();
+    // }, []);
     useEffect(() => {
         const checkFaceAuth = async () => {
             try {
@@ -34,9 +34,7 @@ const FaceAuth = () => {
                     const info = response.data.info;
                     setEmail( info["email"])
                     
-                    setIsFaceIDEnabled(info["verified"]);
-                    
-                        
+                    setIsFaceIDEnabled(info["verified"]);     
                 }
             } catch (error) {
                 console.error('Error checking FaceID status:', error);
@@ -67,7 +65,7 @@ const FaceAuth = () => {
     };
     const startCamera = async () => {
         try {
-            if (modelsLoaded == false) return;
+            // if (modelsLoaded == false) return;
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
             if (videoRef.current) {
@@ -78,7 +76,9 @@ const FaceAuth = () => {
 
             // Start sending images to the server every second
             intervalIdRef.current = setInterval(() => {
+                console.log("hihihi")
                 sendFrameToServer();
+                
             }, 5000);
         } catch (err) {
             console.error("Error accessing the camera: ", err);
@@ -88,10 +88,12 @@ const FaceAuth = () => {
 
     const sendFrameToServer = async () => {
         if (videoRef.current) {
-            const detections = await detectFace(videoRef.current);
-            if (!detections) {
-                return;
-            }
+            // const detections = await detectFace(videoRef.current);
+            // if (!detections) {
+            //     return;
+            // }
+            // 
+            //console.log(detections)
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = videoRef.current.videoWidth; // Set canvas width to video width
@@ -126,7 +128,17 @@ const FaceAuth = () => {
                 }}
             catch (error) {
                     console.error('Error:', error);
-                    //alert('Failed to register Face ID. Please try again.');
+                    alert('Failed to register Face ID. Please try again.');
+                    if (videoRef.current && videoRef.current.srcObject) {
+                        const stream = videoRef.current.srcObject;
+                        const tracks = stream.getTracks();
+                        // Stop all tracks (camera stream)
+                        tracks.forEach((track) => track.stop());
+                        // Clear the interval to stop sending frames
+                        clearInterval(intervalIdRef.current);
+                        setCameraActive(false); // Update state to hide video component
+
+                    }    
             }
         }
     };

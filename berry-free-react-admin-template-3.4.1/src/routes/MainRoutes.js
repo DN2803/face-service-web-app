@@ -3,10 +3,11 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
-import ProtectedRoute from './ProtectedRoute';
-import PersonManagement from 'views/management/pages/person';
-import CollectionManagement from 'views/management/pages/collections';
-import DeveloperManagement from 'views/management/pages/developers';
+import ProtectedRoute from './core-routers/ProtectedRoute';
+import PersonManagement from 'views/pages/management/pages/person';
+import CollectionManagement from 'views/pages/management/pages/collections';
+import DeveloperManagement from 'views/pages/management/pages/developers';
+import CollectionPersonManagement from 'views/pages/management/pages/collection-person';
 // import { element } from 'prop-types';
 
 // dashboard routing
@@ -85,6 +86,19 @@ const MainRoutes = {
           element: (
             <ProtectedRoute>
               <CollectionManagement/>
+            </ProtectedRoute>
+          )
+        }
+      ]
+    },
+    {
+      path: 'pages', 
+      children: [
+        {
+          path: 'collection/poi-management',
+          element: (
+            <ProtectedRoute>
+              <CollectionPersonManagement/>
             </ProtectedRoute>
           )
         }

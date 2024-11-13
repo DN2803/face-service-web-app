@@ -1,32 +1,42 @@
+import img1 from "../Demo/liveness/Angelina Jolie_webcam.png"
+import img2 from "../Demo/liveness/Angelina-Jolie_fake.png"
+import img3 from "../Demo/liveness/Angelina-Jolie_real.png"
+import img4 from "../Demo/liveness/Cristiano Ronaldo_webcam.png"
+import img5 from "../Demo/liveness/ronaldo_fake.png"
+import img6 from "../Demo/liveness/ronaldo_real.png"
+import img7 from "../Demo/liveness/Johnny Depp_webcam.png"
+import img8 from "../Demo/liveness/Johnny Depp_fake.png"
+import img9 from "../Demo/liveness/Johnny Depp_real.png"
+
 const liveness_demo_img = [
     {
-        "path" : "http://localhost:8080/download/Demo/liveness/Angelina%20Jolie_webcam.png"
+        path: img1
     }, 
     {
-        "path" : "http://localhost:8080/download/Demo/liveness/Angelina-Jolie_fake.png"
-    }, 
-    {
-        "path" : "http://localhost:8080/download/Demo/liveness/Angelina-Jolie_real.png"
-    }, 
-    {
-        "path" :  "http://localhost:8080/download/Demo/liveness/Cristiano%20Ronaldo_webcam.png"
-    }, 
-    {
-        "path" : "http://localhost:8080/download/Demo/liveness/ronaldo_fake.png"
-    }, 
-    {
-        "path" : "http://localhost:8080/download/Demo/liveness/ronaldo_real.png"
-    }, 
-    {
-        "path" : "http://localhost:8080/download/Demo/liveness/Johnny%20Depp_fake.png"
-    }, 
-    {
-        "path": "http://localhost:8080/download/Demo/liveness/Johnny%20Depp_webcam.png"
+        path: img2
     },
     {
-        "path":  "http://localhost:8080/download/Demo/liveness/Johnny%20Depp_real.png"
-    }
-    
+        path: img3
+    },
+    {
+        path: img4
+    },
+    {
+        path: img5
+    },
+    {
+        path: img6
+    },
+    {
+        path: img7
+    },
+    {
+        path: img8
+    },
+    {
+        path: img9
+    },
+
 ]
 
 export default liveness_demo_img;
