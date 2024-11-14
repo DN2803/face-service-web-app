@@ -4,7 +4,7 @@ import time
 import secrets
 
 class KeyService(BaseService):
-    DEFAULT_EXP = int(2,592,000) # 30 days
+    DEFAULT_EXP = int(2592000) # 30 days
 
     def __init__(self):
         self.repository = KeyRepo()
@@ -17,7 +17,7 @@ class KeyService(BaseService):
 
     def create_project(self, project_name):
         key, created_at = self.__gen_key()
-        expires_at =created_at+self.DEFAULT_EXP
+        expires_at = created_at + self.DEFAULT_EXP
         key_obj = self.repository.add_key(
             key = key,
             project_name = project_name,
