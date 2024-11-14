@@ -3,11 +3,14 @@ from app.packages.user.repositories.UserRepo import UserRepo
 from app.packages.user.models.User import UserSchema
 from app.packages.image.services.UserImageService import UserImageService
 from app.packages.embedding.services.UserEmbeddingService import UserEmbeddingService
+from app.packages.api.repositories.UserKeyRepo import UserKeyRepo
+from app.packages.api.services.KeyService import KeyService
 
 class UserService(BaseService):
     def __init__(self):
-        self.repository = UserRepo()
         self.schema = UserSchema()
+        self.repository = UserRepo()
+        self.user_key_repo = UserKeyRepo()
 
     def add_face_id(self, user_id, img):
         """
@@ -46,8 +49,20 @@ class UserService(BaseService):
 
         return info
     
-    def get_projects(self, user_id):
-        user = self.repository.get_user_by_id(user_id)
+    #PROJECTS
+    def create_project(self, user_id, project_name):
+        key_id, key, expires_at = KeyService().create_project(project_name)
+        self.user_key_repo.add(user_id, key_id)
 
-        if not user:
-            raise Exception("User was not found!")
+        return key, expires_at
+
+    def get_projects(self, user_id):
+        key_ids = self.user_key_repo.get_key_ids(user_id)
+        key_service = KeyService()
+        result = []
+
+        for key_id in key_ids:
+            key_obj = key_service.get_key_by_id(key_id)
+            result.append((key_obj.project_name, key_obj.key))
+
+        return result

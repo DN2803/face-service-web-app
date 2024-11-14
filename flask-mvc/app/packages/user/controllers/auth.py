@@ -38,12 +38,12 @@ def indentify():
         
         if user_id:
             refresh_token = AuthService.gen_token(user_id, refresh=True)
+            print(f'email token: {refresh_token}')
             response = jsonify(message="Email exists",
                                user_name=user_name,
                                is_faceid = user_is_faceid,
                                refresh_token=refresh_token
                                )
-            set_refresh_cookies(response, refresh_token)
             
             return response, 200
         else:
@@ -62,6 +62,7 @@ def validate():
 
         if is_valid:
             access_token = AuthService.gen_token(user_id)
+            print(f'pw token: {access_token}')
             response = jsonify(message="Login successfully.")
             set_access_cookies(response, access_token)
 

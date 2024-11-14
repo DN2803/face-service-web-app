@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, decode_token
 
 from app.packages.user.services.UserService import UserService
 
@@ -39,6 +39,20 @@ def get_projects():
         
         projects = UserService().get_projects(user_id)
         return jsonify(projects=projects), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify(error=str(e)), 400
+
+@user_bp.route('/create-project', methods=['POST'])
+def create_project():
+    try:
+        verify_jwt_in_request(fresh=True)
+        user_id = get_jwt_identity()
+        data = request.json
+        key, exp = UserService().create_project(user_id, data['project_name'])
+
+        return jsonify(key=key, exp=exp), 201
 
     except Exception as e:
         print(e)

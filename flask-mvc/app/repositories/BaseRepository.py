@@ -31,8 +31,19 @@ class BaseRepository:
         else:
             return self.model.query.filter_by(**filter).first()
 
-    def _get_dataframe(self, drop_cols):
-        query = self.session.query(self.model).statement
+    def _get_dataframe(self, drop_cols, filter_col=None, filter_value=None):
+        filter = dict()
+
+        if filter_col and filter_value:
+            filter[filter_col]=filter_value
+        
+        query = None
+
+        if filter:
+            query = self.session.query(self.model).filter_by(**filter).statement
+        else:
+            query = self.session.query(self.model).statement
+            
         df = pd.read_sql(query, con=db.engine)
         
         if drop_cols:

@@ -16,3 +16,6 @@ app.register_blueprint(user_bp)
 
 from app.packages.image.controllers.image import image_bp
 app.register_blueprint(image_bp)
+
+# from app.packages.api.controllers.api import api_bp
+# app.register_blueprint(api_bp)
