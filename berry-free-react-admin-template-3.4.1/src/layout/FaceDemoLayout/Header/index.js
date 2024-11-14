@@ -84,7 +84,7 @@ const Header = () => {
                                 size="large"
                                 variant="contained"
                                 color="secondary"
-                                onClick={() => navigate('/pages/login/login3')}
+                                onClick={() => navigate('/pages/login/verify-email')}
                                 sx={{
                                     transition: 'transform 0.2s',
                                     '&:active': { transform: 'scale(0.95)' }

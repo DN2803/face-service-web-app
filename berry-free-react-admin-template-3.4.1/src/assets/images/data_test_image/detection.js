@@ -1,31 +1,38 @@
-
+import img1 from "../Demo/detection/__results___9_0.png"
+import img2 from "../Demo/detection/img_1038.jpg"
+import img3 from "../Demo/detection/img_1056.jpg"
+import img4 from "../Demo/detection/img_1119.jpg"
+import img5 from "../Demo/detection/img_795.jpg"
+import img6 from "../Demo/detection/img_833.jpg"
+import img7 from "../Demo/detection/img_869.jpg"
+import img8 from "../Demo/detection/img_961.jpg"
 const detection_demo_img = [
     {
-        "path" : "http://localhost:8080/download/Demo/detection/__results___9_0.png"
+        path: img1
     }, 
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_1038.jpg"
-    }, 
+        path: img2
+    },
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_1056.jpg"
-    }, 
+        path: img3
+    },
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_1119.jpg"
-    }, 
+        path: img4
+    },
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_795.jpg"
-    }, 
+        path: img5
+    },
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_833.jpg"
-    }, 
+        path: img6
+    },
     {
-        "path" : "http://localhost:8080/download/Demo/detection/img_869.jpg"
-    }, 
+        path: img7
+    },
     {
-        "path": "http://localhost:8080/download/Demo/detection/img_961.jpg"
-    }
+        path: img8
+    },
+    
     
 ]
-
 
 export default detection_demo_img;

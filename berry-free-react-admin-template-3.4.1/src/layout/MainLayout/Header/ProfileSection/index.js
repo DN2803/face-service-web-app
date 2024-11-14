@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import Cookies from 'js-cookie';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from 'store/actions/authActions';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -56,13 +56,11 @@ const ProfileSection = () => {
    * anchorRef is used on different componets and specifying one type leads to other components throwing an error
    * */
   const anchorRef = useRef(null);
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     console.log('Logout');
-    // Remove token from localStorage
-    localStorage.removeItem('access_token');
-    // Remove cookies 
-    Cookies.remove('user');
+    dispatch(logout());
     navigate('/');
   };
   const handleAccountSetting = () => {

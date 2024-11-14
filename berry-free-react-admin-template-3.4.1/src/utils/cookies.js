@@ -16,7 +16,7 @@ export function getCookieValue(name) {
  * @returns {object|null} - Object được giải mã hoặc null nếu không tìm thấy.
  */
 // Hàm để giải mã JWT từ cookie
-const decodeJWT = (token) => {
+export const decodeJWT = (token) => {
     // JWT được tách ra thành ba phần: header, payload và signature
     const parts = token.split('.');
     if (parts.length !== 3) {

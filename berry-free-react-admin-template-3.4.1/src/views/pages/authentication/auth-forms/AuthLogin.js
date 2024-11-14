@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate} from 'react-router-dom';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Button,
-  Checkbox,
   Divider,
   FormControl,
-  FormControlLabel,
   FormHelperText,
   Grid,
   IconButton,
@@ -40,6 +37,11 @@ import { callAPI } from 'utils/api_caller';
 import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
+import { useEmailVerified,  useUserInfo } from 'hooks';
+
+
+import { loginSuccess } from 'store/actions/authActions';
+
 // ============================|| FIREBASE - LOGIN ||============================ //
 
 const FirebaseLogin = ({ ...others }) => {
@@ -47,72 +49,57 @@ const FirebaseLogin = ({ ...others }) => {
   const scriptedRef = useScriptRef();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const customization = useSelector((state) => state.customization);
-  const [checked, setChecked] = useState(true);
   const navigate = useNavigate();
   const videoRef = useRef(null);
   // Dùng useRef để lưu trữ intervalId
   const intervalIdRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [errorLogin, setErrorLogin] = useState(false);
-  const [isExistEmail, setIsExistEmail] = useState(false);
-  const [isExistFaceID, setIsExistFaceID] = useState(false);
+
   const [onlyLogByPassword, setOnlyLogByPassword] = useState(false);
-  const [firstStep, setFirstStep] = useState(true)
-  const [username, setUsername] = useState('');
+
   const countFalseRef = useRef(0);
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  const { userInfo } = useUserInfo();
+  const { isVerified, loading, error } = useEmailVerified();
+
+  const dispatch = useDispatch();
+  const redirectRoute = useSelector(state => state.auth.redirectRoute);
 
   useEffect(() => {
-    const loadAllModels = async () => {
-      loadModels();
-      setModelsLoaded(true);
-    };
-    loadAllModels();
-  }, []);
-  const checkEmailExistence = async (email) => {
-    const email_token = localStorage.getItem('refresh_token');
-    if (email_token) {
-        setIsExistEmail(true);
-        setFirstStep(false);
-        setErrorLogin(false);
-    }
-    try {
-      // Kiểm tra sự tồn tại của email
-      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.identify, "POST", { email });
-      const data = response.data;
-      console.log(response)
-      if (data) {
-        setIsExistEmail(true);
-        setFirstStep(false);
-        setErrorLogin(false);
-        setIsExistFaceID(data['is_faceid']);
-        setUsername(data['user_name'])
-        localStorage.setItem('refresh_token', data.refresh_token);
-
-      } else {
-        console.error("Email does not exist.");
-        setIsExistEmail(false);
-        setErrorLogin(true);
+    const checkVerificationAndLoadModels = async () => {
+      if (!loading) {
+        if (error) {
+          console.error("Token decoding error:", error);
+          return;
+        }
+        
+        if (isVerified) {
+          await loadModels(); // Load models only if verified
+          setModelsLoaded(true);
+        } else {
+          navigate('/pages/login/verify-email'); // Navigate if not verified
+        }
       }
-    } catch (emailError) {
-      console.error("Error checking email:", emailError);
-      setIsExistEmail(false); // Nếu có lỗi trong kiểm tra email
-      setErrorLogin(true);
-    }
-  };
+    };
 
+    checkVerificationAndLoadModels();
+  }, [loading, error, isVerified, navigate]);
 
-
-
-  const handleLogin = async (email, password) => {
-    console.error('Login:', email, password);
+ 
+  const handleLogin = async ( password) => {
+    //console.error('Login:', password);
     try {
-      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, null, localStorage.getItem('refresh_token'));
+      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, { withCredentials: true }, localStorage.getItem('refresh_token'));
       const data = await response.data;
       if (response) {
-        console.log('Đăng nhập thành công:', data);
-        localStorage.setItem('access_token', data.access_token);
-        navigate('/pages/project');
+        dispatch(loginSuccess(userInfo));
+        // Chuyển hướng về route đã lưu trữ trong Redux (nếu có)
+        if (redirectRoute) {
+          navigate(redirectRoute); // use navigate instead of history.push
+        } else {
+          navigate('/pages/project');  // navigate to default page
+        }
       } else {
         throw new Error(data.error);
       }
@@ -174,14 +161,11 @@ const FirebaseLogin = ({ ...others }) => {
           setOnlyLogByPassword(true);
           setIsExistFaceID(false);
         }
-        const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, null, localStorage.getItem('refresh_token'));
+        const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, { withCredentials: true }, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
         if (data) {
           console.log('Đăng nhập thành công:', data);
-          const token = data.token;
-          localStorage.setItem('access_token', token);
-          Cookies.set('user', token, { expires: 1 });
           navigate('/pages/project');
           // Tắt camera sau khi đăng nhập thành công
           stopCamera();
@@ -204,67 +188,32 @@ const FirebaseLogin = ({ ...others }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-
+   // Loading/Error display logic
+   if (loading) return <p>Loading...</p>;
+   if (error) return <p>Error: {error}</p>
   return (
     <>
       <Grid container direction="column" justifyContent="center" spacing={2}>
-        <Grid item xs={12}>
-          <AnimateButton>
-
-          </AnimateButton>
-        </Grid>
-        <Grid item xs={12}>
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex'
-            }}
-          >
-            <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-
-            <Button
-              variant="outlined"
-              sx={{
-                cursor: 'unset',
-                m: 2,
-                py: 0.5,
-                px: 7,
-                borderColor: `${theme.palette.grey[100]} !important`,
-                color: `${theme.palette.grey[900]}!important`,
-                fontWeight: 500,
-                borderRadius: `${customization.borderRadius}px`
-              }}
-              disableRipple
-              disabled
-            >
-            </Button>
-
-            <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-          </Box>
-        </Grid>
         <Grid item xs={12} container alignItems="center" justifyContent="center">
           <Box sx={{ mb: 2 }}>
-            {!isExistEmail && (<Typography variant="subtitle1">Sign in with Email address</Typography>)}
-            {isExistEmail && (<Typography variant="subtitle1">Hello {username}</Typography>)}
+            <Typography variant="subtitle1">Hello {userInfo.username} </Typography>
           </Box>
         </Grid>
       </Grid>
 
       <Formik
         initialValues={{
-          email: '',
           password: '',
           submit: null
         }}
         validationSchema={Yup.object().shape({
-          email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           password: Yup.string().max(255).required('Password is required')
         })}
         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
           try {
             if (scriptedRef.current) {
               // Gọi hàm handleLogin để gửi dữ liệu về server
-              await handleLogin(values.email, values.password);
+              await handleLogin(values.password);
               setStatus({ success: true });
               setSubmitting(false);
             }
@@ -280,121 +229,96 @@ const FirebaseLogin = ({ ...others }) => {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit} {...others}>
-            {!isExistEmail && (
-              <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ ...theme.typography.customInput }}>
-                <InputLabel htmlFor="outlined-adornment-email-login">Email Address / Username</InputLabel>
-                <OutlinedInput
-                  id="outlined-adornment-email-login"
-                  type="email"
-                  value={values.email}
-                  name="email"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  label="Email Address / Username"
-                  inputProps={{}}
-                />
-                {touched.email && errors.email && (
-                  <FormHelperText error id="standard-weight-helper-text-email-login">
-                    {errors.email}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            )}
-
-            {isExistEmail && (
+            {userInfo.faceid && (
               <>
-                {isExistFaceID && (
-                  <>
-                    <AnimateButton>
-                      <Button
-                        disableElevation
-                        fullWidth
-                        size="large"
-                        variant="outlined"
-                        onClick={() => startCamera(values.email)}
-                        sx={{
-                          color: 'grey.700',
-                          backgroundColor: theme.palette.grey[50],
-                          borderColor: theme.palette.grey[100]
-                        }}
-                      >
-                        <Box sx={{ mr: { xs: 1, sm: 2, width: 20 } }}>
-                          <AddAPhoto style={{ marginRight: matchDownSM ? 8 : 16 }} />
-                        </Box>
-                      </Button>
-                    </AnimateButton>
-                    {cameraActive && (
-                      <div style={{ marginTop: '20px' }}>
-                        <video ref={videoRef} width="320" height="240" style={{ border: '1px solid black' }} autoPlay playsInline>
-                          {/* Add empty track for accessibility */}
-                          <track kind="captions" />
-                        </video>
-                      </div>
-                    )}
-                    <Box
-                      sx={{
-                        alignItems: 'center',
-                        display: 'flex'
-                      }}
-                    >
-                      <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-
-                      <Button
-                        variant="outlined"
-                        sx={{
-                          cursor: 'unset',
-                          m: 2,
-                          py: 0.5,
-                          px: 7,
-                          borderColor: `${theme.palette.grey[100]} !important`,
-                          color: `${theme.palette.grey[900]}!important`,
-                          fontWeight: 500,
-                          borderRadius: `${customization.borderRadius}px`
-                        }}
-                        disableRipple
-                        disabled
-                      >
-                        OR
-                      </Button>
-
-                      <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
+                <AnimateButton>
+                  <Button
+                    disableElevation
+                    fullWidth
+                    size="large"
+                    variant="outlined"
+                    onClick={() => startCamera(values.email)}
+                    sx={{
+                      color: 'grey.700',
+                      backgroundColor: theme.palette.grey[50],
+                      borderColor: theme.palette.grey[100]
+                    }}
+                  >
+                    <Box sx={{ mr: { xs: 1, sm: 2, width: 20 } }}>
+                      <AddAPhoto style={{ marginRight: matchDownSM ? 8 : 16 }} />
                     </Box>
-                  </>
+                  </Button>
+                </AnimateButton>
+                {cameraActive && (
+                  <div style={{ marginTop: '20px' }}>
+                    <video ref={videoRef} width="320" height="240" style={{ border: '1px solid black' }} autoPlay playsInline>
+                      {/* Add empty track for accessibility */}
+                      <track kind="captions" />
+                    </video>
+                  </div>
                 )}
+                <Box
+                  sx={{
+                    alignItems: 'center',
+                    display: 'flex'
+                  }}
+                >
+                  <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
 
-                <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ ...theme.typography.customInput }}>
-                  <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
-                  <OutlinedInput
-                    id="outlined-adornment-password-login"
-                    type={showPassword ? 'text' : 'password'}
-                    value={values.password}
-                    name="password"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={handleClickShowPassword}
-                          onMouseDown={handleMouseDownPassword}
-                          edge="end"
-                          size="large"
-                        >
-                          {showPassword ? <Visibility /> : <VisibilityOff />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    label="Password"
-                    inputProps={{}}
-                  />
-                  {touched.password && errors.password && (
-                    <FormHelperText error id="standard-weight-helper-text-password-login">
-                      {errors.password}
-                    </FormHelperText>
-                  )}
-                </FormControl>
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      cursor: 'unset',
+                      m: 2,
+                      py: 0.5,
+                      px: 7,
+                      borderColor: `${theme.palette.grey[100]} !important`,
+                      color: `${theme.palette.grey[900]}!important`,
+                      fontWeight: 500,
+                      borderRadius: `${customization.borderRadius}px`
+                    }}
+                    disableRipple
+                    disabled
+                  >
+                    OR
+                  </Button>
+
+                  <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
+                </Box>
               </>
             )}
+
+            <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ ...theme.typography.customInput }}>
+              <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
+              <OutlinedInput
+                id="outlined-adornment-password-login"
+                type={showPassword ? 'text' : 'password'}
+                value={values.password}
+                name="password"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                      size="large"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                }
+                label="Password"
+                inputProps={{}}
+              />
+              {touched.password && errors.password && (
+                <FormHelperText error id="standard-weight-helper-text-password-login">
+                  {errors.password}
+                </FormHelperText>
+              )}
+            </FormControl>
             {
               errorLogin && (
                 <div style={{ display: 'flex', alignItems: 'center', color: '#ff6666', marginLeft: '10px' }}>
@@ -412,12 +336,12 @@ const FirebaseLogin = ({ ...others }) => {
               )
             }
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-              <FormControlLabel
-                control={
-                  <Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />
-                }
-                label="Remember me"
-              />
+              <Typography onClick={() =>{
+                   localStorage.removeItem('refresh_token');
+                   navigate('/pages/login/verify-email');
+              } } variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
+                Go back
+              </Typography>
               <Typography onClick={() => navigate('/pages/forgot-password')} variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
                 Forgot Password?
               </Typography>
@@ -427,45 +351,13 @@ const FirebaseLogin = ({ ...others }) => {
                 <FormHelperText error>{errors.submit}</FormHelperText>
               </Box>
             )}
-
-            {/* Button Next để kiểm tra email */
-              firstStep && (
-                <>
-                  <Box sx={{ mt: 2 }}>
-                    <AnimateButton>
-                      <Button
-                        disableElevation
-                        disabled={isSubmitting}
-                        fullWidth
-                        size="large"
-                        type="button"
-                        variant="contained"
-                        color="secondary"
-                        onClick={async () => await checkEmailExistence(values.email)} // Kiểm tra email khi bấm nút "Next"
-                        sx={{
-                          transition: 'transform 0.2s', // Thêm hiệu ứng chuyển động
-                          '&:active': { transform: 'scale(0.95)' } // Hiệu ứng khi bấm nút
-                        }}
-                      >
-                        Next
-                      </Button>
-                    </AnimateButton>
-                  </Box>
-                </>
-              )}
-            {
-              isExistEmail && (
-                <>
-                  <Box sx={{ mt: 2 }}>
-                    <AnimateButton>
-                      <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
-                        Sign in
-                      </Button>
-                    </AnimateButton>
-                  </Box>
-                </>
-              )
-            }
+            <Box sx={{ mt: 2 }}>
+              <AnimateButton>
+                <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
+                  Sign in
+                </Button>
+              </AnimateButton>
+            </Box>
           </form>
         )}
       </Formik>

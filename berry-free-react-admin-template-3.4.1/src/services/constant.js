@@ -17,7 +17,7 @@ export const BACKEND_ENDPOINTS = {
         faceid: "/user/register-face-id"
       },
       info: "/user/my-info",
-      project: "user/my-project"
+      project: "/user/my-project"
     },
     demo_function: {
       detection: "/demo/detection",

@@ -1,14 +1,19 @@
+
+const isBase64Image = (image) => {
+    return typeof image === 'string' && image.startsWith('data:image/');
+};
 export async function convertAndCacheImage(imagePath) {
     // Kiểm tra xem hình ảnh có sẵn trong cache không
     let cachedImage = sessionStorage.getItem(imagePath);
-
-    if (cachedImage) {
-        // Nếu có cache, dùng hình ảnh đã cache
-        // console.log("Using cached image");
+    console.log(cachedImage);
+    if (isBase64Image(cachedImage)) {
         return cachedImage;
     } else {
         // Nếu chưa có cache, tải ảnh và chuyển sang base64
+        //const response = await fetch(imagePath, {mode: 'no-cors', redirect: 'follow'});
         const response = await fetch(imagePath);
+        
+        console.log(response)
         const blob = await response.blob();
         const reader = new FileReader();
 
