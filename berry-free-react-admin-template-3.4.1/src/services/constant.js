@@ -26,7 +26,7 @@ export const BACKEND_ENDPOINTS = {
       detection: "/demo/detection",
       comparison: "/demo/comparison",
       liveness: "/demo/anti-spoofing",
-      search: "/demo"
+      search: "/demo/search"
     }
   };
   

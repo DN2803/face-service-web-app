@@ -9,7 +9,6 @@ import { gridSpacing } from 'store/constant';
 import { callAPI } from 'utils/api_caller';
 import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
-import Cookies from "js-cookie";
 const FaceAuth = () => {
     const [cameraActive, setCameraActive] = useState(false);
     const videoRef = useRef(null);
@@ -30,14 +29,11 @@ const FaceAuth = () => {
     useEffect(() => {
         const checkFaceAuth = async () => {
             try {
-                // Lấy giá trị của `access_token`
-                const accessToken = Cookies.get("access_token_cookie");
-                console.log("Access Token:", accessToken);
                 const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, true);                
                 if (response) {
                     const info = response.data.info;
-                    setEmail( info["email"])
-                    
+                    console.log(info);
+                    setEmail(info["email"])
                     setIsFaceIDEnabled(info["verified"]);     
                 }
             } catch (error) {
@@ -80,9 +76,7 @@ const FaceAuth = () => {
 
             // Start sending images to the server every second
             intervalIdRef.current = setInterval(() => {
-                console.log("hihihi")
-                sendFrameToServer();
-                
+                sendFrameToServer(); 
             }, 5000);
         } catch (err) {
             console.error("Error accessing the camera: ", err);
@@ -112,8 +106,6 @@ const FaceAuth = () => {
                 const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, true)
                 const data = await response.data;
                 if (data){
-            
-                    console.log('Image sent successfully:', data);
                     clearInterval(intervalIdRef.current); // Dừng interval
                     alert('Face ID successfully created!');
                     // Dừng stream camera
@@ -141,7 +133,6 @@ const FaceAuth = () => {
                         // Clear the interval to stop sending frames
                         clearInterval(intervalIdRef.current);
                         setCameraActive(false); // Update state to hide video component
-
                     }    
             }
         }

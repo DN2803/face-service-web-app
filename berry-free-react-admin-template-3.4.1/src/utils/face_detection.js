@@ -15,11 +15,31 @@ export async function loadModels() {
     }
 }
 
+function isFrontalFace(landmarks) {
+    if (!landmarks) return false; // Đảm bảo Landmark tồn tại
+
+    const nose = landmarks.getNose();
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
+    const mouth = landmarks.getMouth();
+
+    // Đảm bảo Landmark chính tồn tại
+    if (!nose || !leftEye || !rightEye || !mouth) return false;
+
+    // Nếu tất cả kiểm tra đều đạt, đây là khuôn mặt trực diện
+    return true;
+}
+
 // Detect faces in the provided image
 export async function detectFace(image) {
-    // Ensure models are loaded before calling this function
-    const detections = await faceapi.detectAllFaces(image, new faceapi.TinyFaceDetectorOptions());
-    console.log("Detections:", detections);
-    
-    return detections.length > 0;
+    const detectionsWithLandmarks = await faceapi.detectAllFaces(image, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks(); // Detect landmarks
+
+    console.log("Detections with Landmarks:", detectionsWithLandmarks);
+
+    // Filter only frontal faces
+    const frontalFaces = detectionsWithLandmarks.filter(detection => isFrontalFace(detection.landmarks));
+    console.log("Frontal Faces:", frontalFaces);
+
+    return frontalFaces.length > 0; // Return true if at least one frontal face
 }

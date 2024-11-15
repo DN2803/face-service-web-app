@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import {
@@ -37,7 +37,7 @@ import { callAPI } from 'utils/api_caller';
 import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
-import { useEmailVerified,  useUserInfo } from 'hooks';
+import { useEmailVerified, useUserInfo } from 'hooks';
 
 
 import { loginSuccess } from 'store/actions/authActions';
@@ -73,7 +73,7 @@ const FirebaseLogin = ({ ...others }) => {
           console.error("Token decoding error:", error);
           return;
         }
-        
+
         if (isVerified) {
           await loadModels(); // Load models only if verified
           setModelsLoaded(true);
@@ -86,8 +86,8 @@ const FirebaseLogin = ({ ...others }) => {
     checkVerificationAndLoadModels();
   }, [loading, error, isVerified, navigate]);
 
- 
-  const handleLogin = async ( password) => {
+
+  const handleLogin = async (password) => {
     //console.error('Login:', password);
     try {
       const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, true, localStorage.getItem('refresh_token'));
@@ -165,9 +165,14 @@ const FirebaseLogin = ({ ...others }) => {
         const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, { withCredentials: true }, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
-        if (data) {
-          console.log('Đăng nhập thành công:', data);
-          navigate('/pages/project');
+        if (response) {
+          dispatch(loginSuccess(userInfo));
+          // Chuyển hướng về route đã lưu trữ trong Redux (nếu có)
+          if (redirectRoute) {
+            navigate(redirectRoute); // use navigate instead of history.push
+          } else {
+            navigate('/pages/project');  // navigate to default page
+          }
           // Tắt camera sau khi đăng nhập thành công
           stopCamera();
           countFalseRef.current = 0;  // Reset countFalse
@@ -189,9 +194,9 @@ const FirebaseLogin = ({ ...others }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-   // Loading/Error display logic
-   if (loading) return <p>Loading...</p>;
-   if (error) return <p>Error: {error}</p>
+  // Loading/Error display logic
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>
   return (
     <>
       <Grid container direction="column" justifyContent="center" spacing={2}>
@@ -337,10 +342,10 @@ const FirebaseLogin = ({ ...others }) => {
               )
             }
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-              <Typography onClick={() =>{
-                   localStorage.removeItem('refresh_token');
-                   navigate('/pages/login/verify-email');
-              } } variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
+              <Typography onClick={() => {
+                localStorage.removeItem('refresh_token');
+                navigate('/pages/login/verify-email');
+              }} variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
                 Go back
               </Typography>
               <Typography onClick={() => navigate('/pages/forgot-password')} variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
