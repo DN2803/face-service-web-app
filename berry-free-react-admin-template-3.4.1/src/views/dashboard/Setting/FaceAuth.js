@@ -7,8 +7,9 @@ import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import { callAPI } from 'utils/api_caller';
-// import { loadModels, detectFace } from 'utils/face_detection';
+import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
+import Cookies from "js-cookie";
 const FaceAuth = () => {
     const [cameraActive, setCameraActive] = useState(false);
     const videoRef = useRef(null);
@@ -17,19 +18,22 @@ const FaceAuth = () => {
     const [isCreateNew, setIsCreateNew] = useState(false);
     // Dùng useRef để lưu trữ intervalId
     const intervalIdRef = useRef(null);
-    // const [modelsLoaded, setModelsLoaded] = useState(false);
+    const [modelsLoaded, setModelsLoaded] = useState(false);
 
-    // useEffect(() => {
-    //     const loadAllModels = async () => {
-    //     loadModels();
-    //     setModelsLoaded(true);
-    //     };
-    //     loadAllModels();
-    // }, []);
+    useEffect(() => {
+        const loadAllModels = async () => {
+        loadModels();
+        setModelsLoaded(true);
+        };
+        loadAllModels();
+    }, []);
     useEffect(() => {
         const checkFaceAuth = async () => {
             try {
-                const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, null, localStorage.getItem('access_token'));
+                // Lấy giá trị của `access_token`
+                const accessToken = Cookies.get("access_token_cookie");
+                console.log("Access Token:", accessToken);
+                const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, true);                
                 if (response) {
                     const info = response.data.info;
                     setEmail( info["email"])
@@ -65,7 +69,7 @@ const FaceAuth = () => {
     };
     const startCamera = async () => {
         try {
-            // if (modelsLoaded == false) return;
+            if (modelsLoaded == false) return;
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
             if (videoRef.current) {
@@ -88,12 +92,12 @@ const FaceAuth = () => {
 
     const sendFrameToServer = async () => {
         if (videoRef.current) {
-            // const detections = await detectFace(videoRef.current);
-            // if (!detections) {
-            //     return;
-            // }
-            // 
-            //console.log(detections)
+            const detections = await detectFace(videoRef.current);
+            if (!detections) {
+                return;
+            }
+            
+            console.log(detections)
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = videoRef.current.videoWidth; // Set canvas width to video width
@@ -105,7 +109,7 @@ const FaceAuth = () => {
 
             // Send the image data to the server
             try {
-                const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, {withCredentials: true}, localStorage.getItem('access_token'))
+                const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, true)
                 const data = await response.data;
                 if (data){
             

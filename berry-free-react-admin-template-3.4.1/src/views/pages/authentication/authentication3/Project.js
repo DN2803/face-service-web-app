@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import { Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -10,7 +9,9 @@ import AuthCardWrapper from '../AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 import SelectForm from '../select-project-forms';
 import AuthFooter from 'ui-component/cards/AuthFooter';
-
+import { callAPI } from 'utils/api_caller';
+import { BACKEND_ENDPOINTS } from 'services/constant';
+import { setApiKey } from 'store/actions/authActions';
 // assets
 
 // ===============================|| AUTH3 - SELECTPROJECT ||=============================== //
@@ -19,15 +20,21 @@ const SelectProject = () => {
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
-  const handleClick = () => {
+  const handleClick = async () => {
     const projectName = window.prompt('Please enter the project name:');
-    if (projectName) {
-      alert(`Project name entered: ${projectName}`);
-      // Bạn có thể xử lý thêm ở đây, ví dụ: lưu tên dự án hoặc điều hướng sang trang khác
-
-      navigate('/pages/poi-management');
-
+    try {
+      if (projectName) {
+        alert(`Project name entered: ${projectName}`);
+        // Bạn có thể xử lý thêm ở đây, ví dụ: lưu tên dự án hoặc điều hướng sang trang khác
+        const response = await callAPI(BACKEND_ENDPOINTS.user.project.create, "POST", {project_name: projectName}, true);
+        const data = response.data;
+        setApiKey(data.key);
+        navigate('/pages/poi-management');
+      } 
+    } catch (error) {
+      console.error("Error:", error); // Xử lý lỗi nếu có
     }
+   
   };
 
   return (

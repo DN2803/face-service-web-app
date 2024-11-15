@@ -17,11 +17,14 @@ export const BACKEND_ENDPOINTS = {
         faceid: "/user/register-face-id"
       },
       info: "/user/my-info",
-      project: "/user/my-project"
+      project: {
+        get: "/user/my-projects",
+        create: "/user/create-project" 
+      }
     },
     demo_function: {
       detection: "/demo/detection",
-      comparison: "demo/comparison",
+      comparison: "/demo/comparison",
       liveness: "/demo/anti-spoofing",
       search: "/demo"
     }

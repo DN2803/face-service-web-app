@@ -1,22 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination } from '@mui/material';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination, IconButton } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import DialogForm from '../DialogForm';
 import PersonForm from '../forms/person-form';
 import { callAPI } from 'utils/api_caller';
 import FaceSearchForm from '../forms/face-search-form';
 
+
+function createData(photo, name, id, dob, nationality, modifiedDate, collection) {
+    return {
+      photo, 
+      id,
+      name,
+      dob, 
+      nationality, 
+      modifiedDate,
+      collection
+    };
+  }
+
+
+  
+
+
 const PersonManagement = () => {
     const [search, setSearch] = useState('');
     const [openSeach, setOpenSearch] = useState(false);
     const [openAdd, setOpenAdd] = useState(false);
+
+    const [editPerson, setEditPerson] = useState(null);
     // For demonstration, no persons are added, which will display the "No Person Found" message.
 
-    const [persons, setPersons] = useState([]);
+    // const [persons, setPersons] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalRows, setTotalRows] = useState(0);
+
+    const persons = [
+        createData("photo1.jpg", "John Doe", "123", "1990-01-01", "American", "2023-11-13", "Art Collection"),
+        createData("photo2.jpg", "Jane Smith", "124", "1985-05-12", "Canadian", "2023-11-12", "Book Collection"),
+        createData("photo3.jpg", "Alice Johnson", "125", "1992-07-21", "British", "2023-11-11", "Music Collection"),
+        createData("photo4.jpg", "Michael Brown", "126", "1988-03-15", "Australian", "2023-11-10", "Coin Collection"),
+        createData("photo5.jpg", "Emma Wilson", "127", "1995-12-30", "New Zealander", "2023-11-09", "Stamp Collection")
+    ];
 
     // Function to load persons from the server
     const loadPersons = async (page, rowsPerPage) => {
@@ -41,6 +70,7 @@ const PersonManagement = () => {
         setOpenSearch(true);
     };
     const handleOpenAdd = () => {
+        setEditPerson(null);
         setOpenAdd(true);
     };
 
@@ -52,16 +82,36 @@ const PersonManagement = () => {
         setOpenAdd(false);
     };
 
-    // const handleSubmit = async (values) => {
-    //     // Handle the form submission logic here
-    //     console.log(values);
-    //     handleCloseAdd(); // Close dialog after submission
-    // };
-    // const handleSearchFace = () => {
-    //     console.log ("call backend")
-    //     handleCloseSearch();
-    // }
+    const handleSubmit = async (values) => {
+        // Handle the form submission logic here
+        console.log(values);
+        handleCloseAdd(); // Close dialog after submission
+    };
+    const handleSearchFace = () => {
+        console.log ("call backend")
+        handleCloseSearch();
+    }
 
+    const onEdit = (id) => {
+        const personToEdit = persons.find((person) => person.id === id);
+        if (personToEdit) {
+            setOpenAdd(true);  // Mở dialog "Add Person" nhưng sẽ dùng để chỉnh sửa
+            // Truyền dữ liệu người dùng cần chỉnh sửa vào form
+            setEditPerson(personToEdit); // Giả sử bạn đã tạo một state để lưu người dùng đang được chỉnh sửa
+        }
+    }
+
+    const onDelete = async (id) => {
+        try {
+            // Gửi yêu cầu xóa người dùng từ API
+            await callAPI(`/delete_person/${id}`, 'DELETE');
+            
+            // Sau khi xóa thành công, cập nhật lại danh sách người dùng
+            loadPersons(page, rowsPerPage);
+        } catch (error) {
+            console.error('Error deleting person:', error);
+        }
+    }
     return (
         <Box sx={{ padding: '20px' }}>
             <Box sx={{
@@ -122,12 +172,12 @@ const PersonManagement = () => {
                     </Box>
                 </Box>
             </Box>
-            <DialogForm open={openAdd} onClose={handleCloseAdd} title="Add person details">
-                <PersonForm/>
+            <DialogForm open={openAdd} onClose={handleCloseAdd} title={editPerson ? "Edit person details" : "Add person details"}>
+                <PersonForm onSubmit={handleSubmit} person={editPerson}/>
             </DialogForm>
             
             <DialogForm open={openSeach} onClose={handleCloseSearch} title="Search Face">
-                <FaceSearchForm/>
+                <FaceSearchForm onSubmit={handleSearchFace}/>
             </DialogForm>
 
             {/* Table Section */}
@@ -155,14 +205,24 @@ const PersonManagement = () => {
                         ) : (
                             persons.map((person) => (
                                 <TableRow key={person.id}>
-                                    <TableCell> {/* Add image here */} </TableCell>
+                                    <TableCell> <img src={person.photo} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
                                     <TableCell>{person.dob}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
                                     <TableCell>{person.modifiedDate}</TableCell>
                                     <TableCell>{person.collection}</TableCell>
-                                    <TableCell> {/* Add action buttons here */} </TableCell>
+                                    <TableCell> 
+                                        {/* Nút Sửa */}
+                                        <IconButton onClick={()=>onEdit(person.id)} color="primary">
+                                            <EditIcon />
+                                        </IconButton>
+                                        
+                                        {/* Nút Xóa */}
+                                        <IconButton onClick={() => onDelete(person.id)} color="secondary">
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}

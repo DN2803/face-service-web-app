@@ -9,7 +9,9 @@ import Cookies from 'js-cookie';
 export function getCookieValue(name) {
     return Cookies.get(name) || null;  // Trả về giá trị cookie hoặc null
 }
-
+export function deleteCookie(name) {
+    Cookies.remove(name);
+}
 /**
  * Giải mã giá trị cookie thành object.
  * @param {string} cookieName - Tên của cookie.

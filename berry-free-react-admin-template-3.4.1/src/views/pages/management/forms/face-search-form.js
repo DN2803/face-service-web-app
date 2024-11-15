@@ -18,6 +18,7 @@ const FaceSearchForm = () => {
     const handleSearch = async (values, image) => {
         console.log(values);
         console.log(image);
+        
     };
 
     const limits = [10, 20, 50];

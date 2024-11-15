@@ -22,16 +22,19 @@ const fetchCollections = async () => {
     });
 };
 
-const PersonForm = () => {
+const PersonForm = ({ onSubmit, person = null }) => {
     const scriptedRef = useRef(true); // Reference to handle async logic
-    const [images, setImages] = useState([]); // State to hold image files
+    const [images, setImages] = useState(person?.images || []); // Initialize with person images if editing
     const [collections, setCollections] = useState([]); // State to hold collection options
     const [loading, setLoading] = useState(true); // State to manage loading state
-    
-    const handleSubmit = async (value, images) => {
-        console.log("value: ", value);
-        console.log(images)
-    }
+
+    const handleSubmit = async (values) => {
+        // Gọi hàm onSubmit với dữ liệu của form và danh sách hình ảnh
+        onSubmit({
+            ...values,
+            images,
+        });
+    };
 
     // Fetch collections from database on component mount
     useEffect(() => {
@@ -62,10 +65,10 @@ const PersonForm = () => {
     return (
         <Formik
             initialValues={{
-                name: '',
-                dob: '',
-                nationality: '',
-                collection: '',
+                name: person?.name || '',
+                dob: person?.dob || '',
+                nationality: person?.nationality || '',
+                collection: person?.collection || '',
                 submit: null
             }}
             validationSchema={Yup.object().shape({
@@ -125,11 +128,11 @@ const PersonForm = () => {
                             label="Date of Birth"
                             sx={{
                                 '& input': {
-                                    color: 'transparent',
+                                    color: values.dob ? 'inherit' :'transparent' , // Apply transparent color if dob has value
                                     '&:focus': {
                                         color: 'inherit',
-                                    }
-                                }
+                                    },
+                                },
                             }}
                         />
                         {touched.dob && errors.dob && (
@@ -138,6 +141,7 @@ const PersonForm = () => {
                             </FormHelperText>
                         )}
                     </FormControl>
+
 
                     {/* Nationality Field */}
                     <FormControl fullWidth error={Boolean(touched.nationality && errors.nationality)} sx={{ mb: 2 }}>
@@ -196,7 +200,7 @@ const PersonForm = () => {
                             <Box>
                                 {images.map((image, index) => (
                                     <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                                        <Typography>{image.name}</Typography>
+                                        <Typography>{image.name || image}</Typography>
                                         <Button variant="outlined" color="error" onClick={() => handleRemoveImage(index)}>Remove</Button>
                                     </Box>
                                 ))}
@@ -212,10 +216,10 @@ const PersonForm = () => {
                             type="submit"
                             color="primary"
                             variant="contained"
-                            disabled={isSubmitting  || !images}
+                            disabled={isSubmitting || !images.length}
                             fullWidth
                         >
-                            Submit
+                            {person ? 'Update' : 'Submit'}
                         </Button>
                     </Box>
                 </form>

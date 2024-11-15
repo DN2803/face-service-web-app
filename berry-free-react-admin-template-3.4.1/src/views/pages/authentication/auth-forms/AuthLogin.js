@@ -90,8 +90,9 @@ const FirebaseLogin = ({ ...others }) => {
   const handleLogin = async ( password) => {
     //console.error('Login:', password);
     try {
-      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, { withCredentials: true }, localStorage.getItem('refresh_token'));
+      const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, true, localStorage.getItem('refresh_token'));
       const data = await response.data;
+      console.log(response);
       if (response) {
         dispatch(loginSuccess(userInfo));
         // Chuyển hướng về route đã lưu trữ trong Redux (nếu có)
