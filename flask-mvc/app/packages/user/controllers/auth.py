@@ -23,8 +23,7 @@ def check_email():
 def register():
     try:
         data = request.json
-        user_id = AuthService().register(**data)
-        print(f'User {user_id} registered sucessfully')
+        AuthService().register(**data)
         return jsonify(message="User registered successfully."), 201
     except Exception as e:
         print(e)
@@ -34,16 +33,11 @@ def register():
 def indentify():
     try:
         data = request.json
-        user_id, user_name, user_is_faceid = AuthService().check_email(data['email'])
+        info = AuthService().check_email(data['email'])
         
-        if user_id:
-            refresh_token = AuthService.gen_token(user_id, refresh=True)
-            print(f'email token: {refresh_token}')
-            response = jsonify(message="Email exists",
-                               user_name=user_name,
-                               is_faceid = user_is_faceid,
-                               refresh_token=refresh_token
-                               )
+        if info:
+            refresh_token = AuthService.gen_token(info['id'], refresh=True)
+            response = jsonify(message="Email exists", info=info, refresh_token=refresh_token)
             
             return response, 200
         else:
@@ -62,7 +56,6 @@ def validate():
 
         if is_valid:
             access_token = AuthService.gen_token(user_id)
-            print(f'pw token: {access_token}')
             response = jsonify(message="Login successfully.")
             set_access_cookies(response, access_token)
 
@@ -97,7 +90,7 @@ def validate_face_id():
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400
-    
+
 @auth_bp.route('/refresh-token', methods=['POST'])
 def refresh():
     try:

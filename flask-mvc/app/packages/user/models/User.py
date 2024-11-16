@@ -10,7 +10,10 @@ class User(TimestampMixin, BaseModel):
     #auth_info
     email = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    face_embed_id = db.Column(db.Integer, db.ForeignKey('user_face_embedding.id',name='user-faceEmbed-fk', ondelete='SET NULL'))
+    face_embed_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user_face_embedding.id',name='user-faceEmbed-fk', ondelete='SET NULL')
+    )
 
     user_face_image = db.relationship('UserFaceImage', backref='user', cascade='all, delete-orphan')
 
@@ -22,6 +25,7 @@ class UserSchema(SQLAlchemySchema):
         model = User
         include_fk = True
     
+    id = auto_field()
     verified = auto_field()
     name = auto_field()
     email = fields.Email(

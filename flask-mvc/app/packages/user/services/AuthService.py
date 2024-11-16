@@ -34,9 +34,12 @@ class AuthService(BaseService):
         user = self.repository.get_user_by_email(email)
         
         if user:
-            return user.id, user.name, user.verified
+            info = self.schema.dump(user)
+            info.pop('password')
+            info.pop('email')
+            return info
         else:
-            return None, None, None
+            return None
 
     def register(self, **kwargs):
         validated_data = self.schema.load(data=kwargs)

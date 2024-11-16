@@ -42,19 +42,19 @@ class UserService(BaseService):
 
         return str("User Face ID registered successfully.")
 
-    def get_base_info(self, user_id):
-        user = self.repository.get_user_by_id(user_id)
-        info = self.schema.dump(user)
-        info.pop('password')
+    # def get_base_info(self, user_id):
+    #     user = self.repository.get_user_by_id(user_id)
+    #     info = self.schema.dump(user)
+    #     info.pop('password')
 
-        return info
+    #     return info
     
     #PROJECTS
     def create_project(self, user_id, project_name):
-        key_id, key, expires_at = KeyService().create_project(project_name)
-        self.user_key_repo.add(user_id, key_id)
+        project_info = KeyService().create_project(project_name)
+        self.user_key_repo.add(user_id, project_info['id'])
 
-        return key, expires_at
+        return project_info['key'], project_info['expires_at']
 
     def get_projects(self, user_id):
         key_objs = self.user_key_repo.get_key_ids(user_id)

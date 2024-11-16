@@ -7,10 +7,7 @@ class UserRepo(BaseRepository):
         super().__init__(User, db.session)
 
     def add_user(self, **kwargs):
-        try:
-            return self._create(**kwargs)
-        except Exception as e:
-            raise e
+        return self._create(**kwargs)
 
     def get_user_by_id(self, id):
         return self._get_by('id', id)
