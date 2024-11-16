@@ -36,14 +36,14 @@ class BaseRepository:
 
         if filter_col and filter_value:
             filter[filter_col]=filter_value
-        
+
         query = None
 
         if filter:
-            query = self.session.query(self.model).filter_by(**filter).statement
+            query = self.session.query.filter_by(**filter).statement
         else:
             query = self.session.query(self.model).statement
-            
+
         df = pd.read_sql(query, con=db.engine)
         
         if drop_cols:
