@@ -13,7 +13,6 @@ export async function convertAndCacheImage(imagePath) {
         //const response = await fetch(imagePath, {mode: 'no-cors', redirect: 'follow'});
         const response = await fetch(imagePath);
         
-        console.log(response)
         const blob = await response.blob();
         const reader = new FileReader();
 

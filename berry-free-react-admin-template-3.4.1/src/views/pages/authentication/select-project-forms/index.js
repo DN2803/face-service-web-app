@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux'
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -11,19 +13,25 @@ import {
 } from '@mui/material';
 import { callAPI } from 'utils/api_caller';
 import { BACKEND_ENDPOINTS } from 'services/constant';
-//import { parseCookieToObject } from 'utils/cookies';
+import { setApiKey } from 'store/actions/authActions';
 
 const fetchProjects = async () => {
     
-    const response = await callAPI(BACKEND_ENDPOINTS.user.project, "POST", {}, null, localStorage.getItem("access_token"));
-    // return response.data.project;
-    console.log(response.data); 
+    const response = await callAPI(BACKEND_ENDPOINTS.user.project.get, "POST", {}, { withCredentials: true });
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve([
-                { api: 1, name: "hello" },
-                { api: 2, name: "test" }
-            ]);
+            if (Array.isArray(response.data.projects)) {
+                resolve(response.data.projects.map((project) => {
+                    // Replace with desired mapping logic
+                    return {
+                        name: project[0],
+                        api: project[1],
+                    };
+                }));
+            } else {
+                console.error("projects is not an array:", response.data.projects);
+                resolve([]);
+            }
         }, 1000);
     });
 };
@@ -31,9 +39,8 @@ const fetchProjects = async () => {
 const SelectForm = (... others) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // const authTokenObject = parseCookieToObject('user');
-
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     useEffect(() => {
         const getProjects = async () => {
             try {
@@ -50,12 +57,13 @@ const SelectForm = (... others) => {
 
     const handleAccessAPI = async (api) => {
         console.log("Accessed API:", api);
+        dispatch(setApiKey(api));
+        navigate('/pages/poi-management');
     };
 
     return (
         <Formik
             initialValues={{
-
                 project: '',
             }}
             validationSchema={Yup.object().shape({
@@ -91,7 +99,6 @@ const SelectForm = (... others) => {
                             label="Project"
                             disabled={loading} // Disable the select while loading
                         >
-                            <MenuItem value="">None</MenuItem>
                             {projects.map((project) => (
                                 <MenuItem key={project.api} value={project.api}>
                                     {project.name}

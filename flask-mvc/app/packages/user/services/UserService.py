@@ -57,7 +57,9 @@ class UserService(BaseService):
         return key, expires_at
 
     def get_projects(self, user_id):
-        key_ids = self.user_key_repo.get_key_ids(user_id)
+        key_objs = self.user_key_repo.get_key_ids(user_id)
+        key_ids = [key_obj.key_id for key_obj in key_objs]
+        print(key_ids)
         key_service = KeyService()
         result = []
 

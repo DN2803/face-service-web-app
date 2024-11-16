@@ -53,7 +53,7 @@ const FirebaseEmailLogin = ({ ...others }) => {
     
         try {
           // Kiểm tra sự tồn tại của email
-          const response = await callAPI(BACKEND_ENDPOINTS.auth.login.identify, "POST", { email },  { withCredentials: true });
+          const response = await callAPI(BACKEND_ENDPOINTS.auth.login.identify, "POST", { email }, true);
           const data = response.data;
           console.log(response)
           if (data) {
