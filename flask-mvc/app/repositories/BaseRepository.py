@@ -51,12 +51,10 @@ class BaseRepository:
 
         return df
 
-    def _update_by_id(self, id, **kwargs):
-        obj = self._get_by('id', id)
-
+    def _update_by_obj(self, obj, **kwargs):
         for key, value in kwargs.items():
             if not hasattr(obj, key):
-                print(f'WARNING: ignore update unfound table column: {key}')
+                print(f'WARNING: ignore update unfound attribute {key} of {obj}')
             setattr(obj, key, value)
 
         self.session.commit()

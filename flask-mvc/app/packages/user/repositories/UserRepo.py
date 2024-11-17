@@ -15,5 +15,5 @@ class UserRepo(BaseRepository):
     def get_user_by_email(self, email):
         return self._get_by('email', email)
 
-    def add_face_embed(self, user_id, embed_id):
-        self._update_by_id(id=user_id, verified=True, face_embed_id=embed_id)
+    def add_face_embed(self, user, embed_id):
+        self._update_by_obj(obj=user, verified=True, face_embed_id=embed_id)

@@ -1,6 +1,7 @@
 from app.config.Database import db
 from app.models.BaseModel import BaseModel
-from Collection import Collection
+from app.packages.api.models.Collection import Collection
+from app.packages.api.models.AccessCollection import AccessCollection
 
 class Key(BaseModel):
     key = db.Column(db.String(32), nullable=False)
@@ -18,6 +19,7 @@ class Key(BaseModel):
         single_parent=True
     )
     collections = db.relationship('Collection', backref='key', cascade='all, delete-orphan')
+    access = db.relationship('AccessCollection', backref='key-access', cascade='all, delete-orphan')
 
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 class KeySchema(SQLAlchemySchema):

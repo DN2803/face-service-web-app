@@ -3,4 +3,3 @@
 env
 test.py
 refresh_token.txt
-migrations

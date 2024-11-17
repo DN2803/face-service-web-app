@@ -38,7 +38,7 @@ class UserService(BaseService):
         img_obj = face_service.store(face_img, user.id)
         embed = embed_service.add_embedding(embedding, img_obj.id)
 
-        self.repository.add_face_embed(user.id, embed.id)
+        self.repository.add_face_embed(user, embed.id)
 
         return str("User Face ID registered successfully.")
 

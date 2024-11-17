@@ -8,3 +8,6 @@ class PersonRepo(BaseRepository):
 
     def add_person(self, **kwargs):
         return self._create(**kwargs)
+    
+    def update_info(self, person, **kwargs):
+        self._update_by_obj(person,**kwargs)

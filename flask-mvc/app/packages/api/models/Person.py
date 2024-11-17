@@ -1,5 +1,6 @@
 from app.config.Database import db
 from app.models.BaseModel import BaseModel, TimestampMixin
+from app.packages.image.models.PersonFaceImage import PersonFaceImage
 
 class Person(TimestampMixin, BaseModel):
     name = db.Column(db.Unicode(40), nullable=False)
@@ -7,12 +8,22 @@ class Person(TimestampMixin, BaseModel):
     nationality = db.Column(db.String(50))
     avt_id = db.Column(
         db.Integer,
-        db.ForeignKey('person-face-image.id', name='person-image-fk'),
-        nullable=False
+        db.ForeignKey('person_face_image.id', name='person-image-fk')
     )
-    collection_id = db.Column(db.Integer, db.ForeignKey('collection.id', name='person-collection-fk', ondelete='SET NULL'))
-
-    person_face_image = db.relationship('PersonFaceImage', backref='person', cascade='all, delete-orphan')
+    collection_id = db.Column(
+        db.Integer,
+        db.ForeignKey('collection.id',name='person-collection-fk', ondelete='SET NULL')
+    )
+    face_embed_id = db.Column(
+        db.Integer,
+        db.ForeignKey('person_face_embedding.id',name='person-faceEmbed-fk', ondelete='SET NULL')
+    )
+    person_face_image = db.relationship(
+        'PersonFaceImage',
+        backref='person',
+        cascade='all, delete-orphan',
+        foreign_keys='PersonFaceImage.person_id'
+    )
 
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 
@@ -25,4 +36,5 @@ class PersonSchema(SQLAlchemySchema):
     name = auto_field()
     birth = auto_field()
     nationality = auto_field()
+    avt_id = auto_field()
     collection_id = auto_field()

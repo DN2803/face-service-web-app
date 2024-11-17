@@ -12,7 +12,7 @@ class PersonImageService(ImageService):
     def store(self, face_np, person_id):
         """ Store the given face image and update database
         Returns:
-            result: an object of UserFaceImage
+            result: an object of PersonFaceImage
         """
         img_name = str(uuid.uuid4()) + '.jpg'
         img_path = f'{self.IMG_DIR}/{img_name}'
