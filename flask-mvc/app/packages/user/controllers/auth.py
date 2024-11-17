@@ -9,7 +9,8 @@ auth_bp = Blueprint('auth', __name__,url_prefix='/api/auth')
 def check_email():
     try:
         data = request.json
-        user_id,_,_ = AuthService().check_email(data['email'])
+        info = AuthService().check_email(data['email'])
+        user_id = info['id']
 
         if user_id:            
             raise Exception('This email already exists!')
