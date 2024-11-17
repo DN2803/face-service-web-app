@@ -17,7 +17,7 @@ class KeyRepo(BaseRepository):
     def check_key(self, key):
         obj = self._get_by('key', key)
 
-        if obj and int(time.time()) > obj.expires_at:
+        if obj and int(time.time()) < obj.expires_at:
             return obj.id
         else:
             return None
