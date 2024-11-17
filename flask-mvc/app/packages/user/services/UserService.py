@@ -5,7 +5,7 @@ from app.packages.image.services.UserImageService import UserImageService
 from app.packages.embedding.services.UserEmbeddingService import UserEmbeddingService
 from app.packages.api.repositories.UserKeyRepo import UserKeyRepo
 from app.packages.api.services.KeyService import KeyService
-
+from app.packages.api.models.Key import KeySchema
 class UserService(BaseService):
     def __init__(self):
         self.schema = UserSchema()
@@ -42,12 +42,12 @@ class UserService(BaseService):
 
         return str("User Face ID registered successfully.")
 
-    # def get_base_info(self, user_id):
-    #     user = self.repository.get_user_by_id(user_id)
-    #     info = self.schema.dump(user)
-    #     info.pop('password')
+    def get_base_info(self, user_id):
+        user = self.repository.get_user_by_id(user_id)
+        info = self.schema.dump(user)
+        info.pop('password')
 
-    #     return info
+        return info
     
     #PROJECTS
     def create_project(self, user_id, project_name):
@@ -57,14 +57,14 @@ class UserService(BaseService):
         return project_info['key'], project_info['expires_at']
 
     def get_projects(self, user_id):
-        key_objs = self.user_key_repo.get_key_ids(user_id)
-        key_ids = [key_obj.key_id for key_obj in key_objs]
-        print(key_ids)
+        objs = self.user_key_repo.get_key_ids(user_id)
         key_service = KeyService()
+        key_schema = KeySchema()
         result = []
 
-        for key_id in key_ids:
-            key_obj = key_service.get_key_by_id(key_id)
-            result.append((key_obj.project_name, key_obj.key))
+        for obj in objs:
+            key_obj = key_service.get_key_by_id(obj.key_id)
+            temp_result = key_schema.dump(key_obj)
+            result.append(temp_result)
 
         return result

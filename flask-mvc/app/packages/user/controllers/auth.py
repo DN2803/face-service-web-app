@@ -10,9 +10,8 @@ def check_email():
     try:
         data = request.json
         info = AuthService().check_email(data['email'])
-        user_id = info['id']
 
-        if user_id:            
+        if info:            
             raise Exception('This email already exists!')
         else:
             return jsonify(message="This email is available for registration!"), 200

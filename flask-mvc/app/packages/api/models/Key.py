@@ -27,7 +27,6 @@ class KeySchema(SQLAlchemySchema):
         model = Key
         include_fk = True
 
-    id = auto_field()
     key = auto_field()
     project_name = auto_field()
     expires_at = auto_field()

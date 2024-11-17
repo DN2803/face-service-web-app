@@ -43,6 +43,7 @@ class KeyService(BaseService):
     def check_key(self, key):
         return self.repository.check_key(key)
 
+    #----------------------PERSON----------------------#
     def _person_img_process(self, images, person_id):
         face_img_ids = []
         face_imgs = []
