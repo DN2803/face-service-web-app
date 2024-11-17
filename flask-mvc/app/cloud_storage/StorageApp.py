@@ -1,5 +1,5 @@
 import msal
-from datetime import datetime
+import time
 import httpx
 
 from app.config.CloudStorageConfig import config
@@ -59,7 +59,7 @@ class StorageApp: #TODO: singleton with n instances
         # no need to check if file_name exists cause using uuid 
         url = f'{self.endpoint}/{file_path}:/content'
         
-        if datetime.now() > datetime.fromtimestamp(self.token_exp):
+        if time.time() > self.token_exp:
             self.__gen_access_token()
 
         response = httpx.put(url, headers=self.headers, data=content)
@@ -70,7 +70,7 @@ class StorageApp: #TODO: singleton with n instances
     def gen_download_link(self, file_path):
         url = f'{self.endpoint}/{file_path}:/content'
 
-        if datetime.now() > datetime.fromtimestamp(self.token_exp):
+        if time.time() > self.token_exp:
             self.__gen_access_token()
 
         response = httpx.get(url, headers=self.headers, follow_redirects=True)
@@ -83,12 +83,12 @@ class StorageApp: #TODO: singleton with n instances
     def delete(self, file_path):
         url = f'{self.endpoint}/{file_path}'
 
-        if datetime.now() > datetime.fromtimestamp(self.token_exp):
+        if time.time() > self.token_exp:
             self.__gen_access_token()
 
         response = httpx.delete(url, headers=self.headers)
 
         if not response.is_success:
-            raise Exception('Failed to delete {folder_name}/{file_name} from OneDrive!')
+            raise Exception(f'Failed to delete {file_path} from OneDrive!')
         
 storage_app = StorageApp()

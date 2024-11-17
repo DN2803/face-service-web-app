@@ -17,6 +17,7 @@ class PersonImageService(ImageService):
         img_name = str(uuid.uuid4()) + '.jpg'
         img_path = f'{self.IMG_DIR}/{img_name}'
         self._upload_to_cloud(face_np, img_path)
-        img_obj = self.repository.add_img(img_name=img_name, img_url=img_path, person_id=person_id)
+        img_obj = self.repository.add_img(img_url=img_path, person_id=person_id)
+        download_link = self.get_download_link(img_path)
 
-        return img_obj
+        return img_obj.id, download_link

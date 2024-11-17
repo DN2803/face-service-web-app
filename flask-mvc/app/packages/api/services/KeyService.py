@@ -43,10 +43,16 @@ class KeyService(BaseService):
     def check_key(self, key):
         return self.repository.check_key(key)
 
+    def check_access(self, key_id, collection_id):
+        access_obj = AccessCollectionRepo().get_key(collection_id)
+
+        return True if access_obj.key_id == key_id else False
+
     #----------------------PERSON----------------------#
     def _person_img_process(self, images, person_id):
-        face_img_ids = []
+        img_urls = []
         face_imgs = []
+        embed_ids = []
         img_service = PersonImageService()
         embed_service = PersonEmbeddingService()
 
@@ -57,50 +63,81 @@ class KeyService(BaseService):
 
                 if len(face_imgs) != 1:
                     face_imgs.append(face_img)
-                
-                img_obj = img_service.store(face_img, person_id)
-                face_img_ids.append(img_obj.id)
-                
+
+                img_id, img_url = img_service.store(face_img, person_id)
+                img_urls.append(img_url)
+
+                if len(embed_ids) != 1:
+                    embedding = embed_service.encode(face_img)
+                    embed = embed_service.add_embedding(embedding, img_id)
+                    embed_ids.append(embed.id)
+
             except Exception as e:
                 print('Ignore invalid image storing: ' + str(e))
                 continue
 
-        embedding = embed_service.encode(face_img[0])
-        embed = embed_service.add_embedding(embedding, img_obj.id)
-
-        return face_img_ids, embed.id
+        return img_urls, embed_ids[0]
 
     def add_person(self, key_id, **kwargs):
         schema = PersonSchema()
         images = kwargs.pop('images')
-        print(images)
+
+        if not images: raise Exception('No image found!')
+
         validated_data = schema.load(data=kwargs)
         person = None
 
         # link to collection
         if 'collection_id' in validated_data:
-            key_obj = AccessCollectionRepo().get_key(validated_data['collection_id'])
-
-            if not key_obj or key_obj.id != key_id:
+            if self.check_access(key_id,validated_data['collection_id']):
                 raise Exception('Cannot add Person to this Collection!')
         else:
-            collection_obj = CollectionRepo().add_collection(name='.', description='.')
+            collection_obj = CollectionRepo().add_collection(name='.', description='.',admin_key_id=key_id)
             AccessCollectionRepo().link(collection_obj.id, key_id)
             validated_data['collection_id'] = collection_obj.id
 
         person_repo = PersonRepo()
         person = person_repo.add_person(**validated_data)
-        img_id_list, embed_id = self._person_img_process(images, person.id)
-        person_repo.update_info(person, avt_id = img_id_list[0], face_embed_id=embed_id)
+        img_url_list, embed_id = self._person_img_process(images, person.id)
+        person_repo.update_info(person, face_embed_id=embed_id)
         person_info = schema.dump(person)
-        return person_info, img_id_list
+        return person_info, img_url_list
+
+    def get_person(self, key_id, person_id):
+        person_repo = PersonRepo()
+        person_obj = person_repo.get_person(person_id)
+        img_urls = []
+
+        if not person_obj or not self.check_access(key_id, person_obj.collection_id):
+            return None, None
+        
+        info = PersonSchema().dump(person_obj)
+        img_service = PersonImageService()
+        img_objs = img_service.repository.get_by_person_id(person_id)
+        
+        for img_obj in img_objs:
+            url = img_service.get_download_link(img_obj.img_url) #img_url is a path at the moment
+            img_urls.append(url)
+
+        return info, img_urls
 
     def add_collection(self, key_id, **kwargs):
         schema = CollectionSchema()
         validated_data = schema.load(data=kwargs)
+        validated_data['admin_key_id'] = key_id
 
         collection_obj = CollectionRepo().add_collection(**validated_data)
         AccessCollectionRepo().link(collection_obj.id, key_id)
 
         res = schema.dump(collection_obj)
         return res
+
+    def get_collection(self, key_id, collection_id):
+        collection_repo = CollectionRepo()
+        collection_obj = collection_repo.get_collection_by_id(collection_id)
+
+        if not collection_obj or not self.check_access(key_id, collection_id):
+            return None
+        
+        info = CollectionSchema().dump(collection_obj)
+        return info

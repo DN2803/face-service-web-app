@@ -4,12 +4,8 @@ from app.packages.image.models.PersonFaceImage import PersonFaceImage
 
 class Person(TimestampMixin, BaseModel):
     name = db.Column(db.Unicode(40), nullable=False)
-    birth =  db.Column(db.DateTime)
+    birth =  db.Column(db.Date)
     nationality = db.Column(db.String(50))
-    avt_id = db.Column(
-        db.Integer,
-        db.ForeignKey('person_face_image.id', name='person-image-fk')
-    )
     collection_id = db.Column(
         db.Integer,
         db.ForeignKey('collection.id',name='person-collection-fk', ondelete='SET NULL')
@@ -36,5 +32,4 @@ class PersonSchema(SQLAlchemySchema):
     name = auto_field()
     birth = auto_field()
     nationality = auto_field()
-    avt_id = auto_field()
     collection_id = auto_field()

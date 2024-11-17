@@ -38,7 +38,12 @@ def person():
             return response, 201
 
         if request.method == 'GET':
-            pass
+            person_info, img_urls = key_service.get_person(data['person_id'])
+            response = jsonify(
+                person_info=person_info,
+                images=img_urls
+            )
+            return response, 200
         if request.method == 'PATCH':
             pass
         if request.method == 'DELETE':
@@ -61,15 +66,19 @@ def collection():
         data = request.json
 
         if request.method == 'POST':
-            collection_info = key_service.add_collection(key_id, **data)
+            info = key_service.add_collection(key_id, **data)
             response = jsonify(
-                collection_info=collection_info,
+                collection_info=info,
                 message="Added new Collection successfully."
             )
             return response, 201
 
         if request.method == 'GET':
-            pass
+            info = key_service.get_person(data['person_id'])
+            response = jsonify(
+                collection_info=info
+            )
+            return response, 200
         if request.method == 'PATCH':
             pass
         if request.method == 'DELETE':

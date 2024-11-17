@@ -6,6 +6,7 @@ from app.packages.embedding.services.UserEmbeddingService import UserEmbeddingSe
 from app.packages.api.repositories.UserKeyRepo import UserKeyRepo
 from app.packages.api.services.KeyService import KeyService
 from app.packages.api.models.Key import KeySchema
+
 class UserService(BaseService):
     def __init__(self):
         self.schema = UserSchema()

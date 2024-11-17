@@ -64,8 +64,7 @@ class ImageService(BaseService):
 
         return EmbeddingService.compare(embed_1, embed_2, threshold)
 
-    @staticmethod
-    def _get_download_link(img_path):
+    def get_download_link(self, img_path):
         storage_app.gen_download_link(img_path)
 
     def __compress(self, img_np, quality=85):
