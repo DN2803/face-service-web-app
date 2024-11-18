@@ -11,6 +11,7 @@ class Collection(TimestampMixin, BaseModel):
     persons = db.relationship('Person', backref='collection', cascade='all, delete-orphan')
     access = db.relationship('AccessCollection', backref='collection-access', cascade='all, delete-orphan')
 
+
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 
 class CollectionSchema(SQLAlchemySchema):
@@ -21,3 +22,9 @@ class CollectionSchema(SQLAlchemySchema):
     id = auto_field()
     name = auto_field()
     description = auto_field()
+
+from sqlalchemy import event
+@event.listens_for(Collection, "before_delete")
+def prevent_delete(mapper, connection, target):
+    if target.name == 'Base':
+        raise ValueError(f'Cannot delete Base Collection. collection_id:{target.id}')

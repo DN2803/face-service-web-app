@@ -8,7 +8,6 @@ class Key(BaseModel):
     project_name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.Integer, nullable=False)
     expires_at = db.Column(db.Integer, nullable=False)
-    def_coll_id = db.Column(db.Integer, db.ForeignKey('collection.id',name='key-def_coll-fk'))
     admin_key_id = db.Column(db.Integer, db.ForeignKey('key.id',name='key-admin-fk', ondelete='CASCADE'))
 
     dev_key_id = db.relationship(
@@ -30,5 +29,4 @@ class KeySchema(SQLAlchemySchema):
     key = auto_field()
     project_name = auto_field()
     expires_at = auto_field()
-    def_coll_id = auto_field()
     admin_key_id = auto_field()

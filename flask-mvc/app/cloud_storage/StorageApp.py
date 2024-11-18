@@ -38,7 +38,7 @@ class StorageApp: #TODO: singleton with n instances
             self.access_token = token_response['access_token']
             self.token_exp = token_response['id_token_claims']['exp']
             self.refresh_token = token_response['refresh_token']
-            self.headers = ['Authorization'] = f'Bearer {self.access_token}'
+            self.headers['Authorization'] = f'Bearer {self.access_token}'
             
             with open('refresh_token.txt', 'w') as f:
                 f.write(self.refresh_token)
