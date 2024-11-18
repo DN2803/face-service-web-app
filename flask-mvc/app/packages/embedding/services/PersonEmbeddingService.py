@@ -3,23 +3,26 @@ from app.packages.embedding.repositories.PersonEmbeddingRepo import PersonEmbedd
 
 import pickle
 import numpy as np
+import pandas as pd
 
 class PersonEmbeddingService(EmbeddingService):
     def __init__(self):
         self.repository = PersonEmbeddingRepo()
 
-    def retrieval(self, embedding: np.ndarray, sim_threshold = 0.7):
-        df = self.repository.get_embed_df()
-
-        if df.empty: return []
+    def retrieval(self, df: pd.DataFrame, embedding: np.ndarray, limit, sim_threshold = 0.7):
+        if df.empty: return None
         db_embed_np = np.array(df['embedding'].tolist())
         
         cos_sim = embedding @ db_embed_np.T
         print(f'MIN sim: {cos_sim.min()}, MAX sim: {cos_sim.max()}')
         
         indices = np.where(cos_sim > sim_threshold)[0]
+
+        if len(indices) > limit:
+            indices = indices[:limit]
+        
         filtered_df  = df.iloc[indices]
-        result = filtered_df['id'].to_list() #TODO: need to sort it?
+        result = filtered_df['id']
 
         return result
 

@@ -8,9 +8,13 @@ class PersonRepo(BaseRepository):
 
     def add_person(self, **kwargs):
         return self._create(**kwargs)
-    
+
     def get_person(self, person_id):
         return self._get_by('id', person_id)
+
+    def get_df(self, collection_id):
+        df = self._get_dataframe(None,'collection_id', collection_id)
+        return df
 
     def update_info(self, person, **kwargs):
         self._update_by_obj(person,**kwargs)

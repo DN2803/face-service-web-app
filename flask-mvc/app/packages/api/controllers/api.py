@@ -78,9 +78,9 @@ def persons():
         data = request.json
 
         if request.method == 'GET':
-            if 'limit' or 'collection_ids' not in data:
+            if 'limit' not in data or 'collection_ids' not in data:
                 raise Exception('Not enough parameters!')
-            
+
             persons = key_service.get_persons(key_id, is_admin, **data)
 
             response = jsonify(
@@ -163,7 +163,27 @@ def collections():
                 collections=collections
             )
             return response, 200
+    except Exception as e:
+        print(e)
+        return jsonify(error = str(e)), 400
 
+@api_bp.route('/search', methods=['POST'])
+@__key_limiter.limit('20 per minute')
+def search():
+    try:
+        key_service = KeyService()
+        key = _get_api_key()
+        key_id, is_admin = key_service.check_key(key)
+
+        if not key_id:
+            return jsonify(error='Invalid API Key!'), 401
+
+        data = request.json
+
+        result = key_service.search(key_id, is_admin, **data)
+        print(result)
+        
+        return jsonify(result=result), 200
     except Exception as e:
         print(e)
         return jsonify(error = str(e)), 400

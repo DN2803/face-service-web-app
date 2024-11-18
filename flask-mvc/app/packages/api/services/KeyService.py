@@ -199,3 +199,34 @@ class KeyService(BaseService):
 
         result =  CollectionSchema(many=True).dump(collections)
         return result
+    
+    def search(self, key_id, is_admin, **kwargs):
+        collection_id = kwargs['collection_id'],
+        image, score, limit = kwargs['image'], kwargs['score'], kwargs['limit']
+
+        if not self.check_access(key_id, is_admin, collection_id):
+            return None
+
+        # Get persons by collection_id
+        person_df = PersonRepo().get_df(collection_id)
+
+        if person_df.empty:
+            return None
+        
+        # Image Encoding:
+        embed_service = PersonEmbeddingService()
+        face_obj = PersonImageService.extract_face(image, only_one=True)
+        embedding = embed_service.encode(face_obj[0]['face'])
+
+        # Get embeddings df 
+        embed_ids = person_df['face_embed_id'].tolist()
+        embed_df = embed_service.repository.get_embeds_df(embed_ids)
+
+        # Retrieval
+        embed_ids_result = embed_service.retrieval(embed_df, embedding, limit, score)
+
+        if embed_ids_result == None:
+            return None
+        
+        result = person_df.loc[person_df['face_embed_id'].isin(embed_ids_result)]
+        return result.to_json()
