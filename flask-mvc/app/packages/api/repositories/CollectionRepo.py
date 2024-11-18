@@ -11,3 +11,11 @@ class CollectionRepo(BaseRepository):
     
     def get_collection_by_id(self, id):
         return self._get_by('id', id)
+    
+    def get_collections(self, collection_ids):
+        return self.model.query.filter(
+            self.model.collection_id.in_(collection_ids)
+        ).first()
+
+    def get_collections_by_key_id(self, admin_key_id):
+        return self._get_by('admin_key_id',admin_key_id, all=True)

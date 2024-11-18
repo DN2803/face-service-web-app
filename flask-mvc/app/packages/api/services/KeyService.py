@@ -33,20 +33,42 @@ class KeyService(BaseService):
             created_at = created_at,
             expires_at = expires_at
         )
-        
+
+        #create default collection
+        collection_obj = CollectionRepo().add_collection(
+            name='Base', 
+            description='The default collection of your project. Undeletable.',
+            admin_key_id=key_obj.id
+        )
+        self.repository.update_key(key, def_coll_id = collection_obj.id)
         res = KeySchema().dump(key_obj)
+
         return res
 
     def get_key_by_id(self, key_id):
         return self.repository.get_key_by_id(key_id)
 
     def check_key(self, key):
-        return self.repository.check_key(key)
+        key_obj = self.repository.check_key(key)
 
-    def check_access(self, key_id, collection_id):
-        access_obj = AccessCollectionRepo().get_key(collection_id)
+        if key_obj:
+            is_admin = False if key_obj.admin_key_id else True
+            return key_obj.id, is_admin
 
-        return True if access_obj.key_id == key_id else False
+        return None, None
+
+    def check_access(self, key_id, is_admin, collection_id):
+        result = False
+
+        if is_admin:
+            collection = CollectionRepo().get_collection_by_id(collection_id)
+
+            if collection.admin_key_id == key_id: 
+                result = True 
+        else:
+            result = AccessCollectionRepo().check_access(key_id, collection_id)
+
+        return result
 
     #----------------------PERSON----------------------#
     def _person_img_process(self, images, person_id):
@@ -78,7 +100,7 @@ class KeyService(BaseService):
 
         return img_urls, embed_ids[0]
 
-    def add_person(self, key_id, **kwargs):
+    def add_person(self, key_id, is_admin, **kwargs):
         schema = PersonSchema()
         images = kwargs.pop('images')
 
@@ -87,14 +109,8 @@ class KeyService(BaseService):
         validated_data = schema.load(data=kwargs)
         person = None
 
-        # link to collection
-        if 'collection_id' in validated_data:
-            if self.check_access(key_id,validated_data['collection_id']):
-                raise Exception('Cannot add Person to this Collection!')
-        else:
-            collection_obj = CollectionRepo().add_collection(name='.', description='.',admin_key_id=key_id)
-            AccessCollectionRepo().link(collection_obj.id, key_id)
-            validated_data['collection_id'] = collection_obj.id
+        if self.check_access(key_id, is_admin, validated_data['collection_id']):
+            raise Exception('Cannot add Person to this Collection!')
 
         person_repo = PersonRepo()
         person = person_repo.add_person(**validated_data)
@@ -103,41 +119,83 @@ class KeyService(BaseService):
         person_info = schema.dump(person)
         return person_info, img_url_list
 
-    def get_person(self, key_id, person_id):
+    def get_person(self, key_id, is_admin, person_id):
         person_repo = PersonRepo()
         person_obj = person_repo.get_person(person_id)
-        img_urls = []
 
-        if not person_obj or not self.check_access(key_id, person_obj.collection_id):
-            return None, None
-        
+        if not person_obj or not self.check_access(key_id, is_admin, person_obj.collection_id):
+            return None
+
         info = PersonSchema().dump(person_obj)
+        img_urls =  PersonImageService().get_link_by_person_id(person_id)
+        info['images'] = img_urls
+
+        return info
+
+    def update_person(self, key_id, is_admin, person_id):
+        #TODO: update person info, images
+        pass
+
+    def delete_person(self, key_id, is_admin, person_id):
+        person_repo = PersonRepo()
+        person_obj = person_repo.get_person(person_id)
+
+        if not person_obj or not self.check_access(key_id, is_admin, person_obj.collection_id):
+            return False
+        else:
+            person_repo.delete_person(person=person_obj)
+            return True
+
+    def get_persons(self, key_id, is_admin, **kwargs):        
+        collection_ids, limit = kwargs['collection_ids'], kwargs['limit']        
+        last_id = kwargs['last_id'] if 'last_id' in kwargs else 0
+
+        for collection_id in collection_id:
+            if not self.check_access(key_id, is_admin, collection_id):
+                raise Exception('Collection is inaccessible!')
+
+        persons = PersonRepo().get_persons(limit, last_id, collection_ids)
+        schema = PersonSchema()
         img_service = PersonImageService()
-        img_objs = img_service.repository.get_by_person_id(person_id)
-        
-        for img_obj in img_objs:
-            url = img_service.get_download_link(img_obj.img_url) #img_url is a path at the moment
-            img_urls.append(url)
+        result = []
 
-        return info, img_urls
+        for person in persons:
+            info = schema.dumps(person)
+            img_urls =  img_service.get_link_by_person_id(person.id)
+            info['images'] = img_urls
+            result.append(info)
 
+        return result
+
+    #----------------------COLLECTION----------------------#
     def add_collection(self, key_id, **kwargs):
         schema = CollectionSchema()
         validated_data = schema.load(data=kwargs)
         validated_data['admin_key_id'] = key_id
-
         collection_obj = CollectionRepo().add_collection(**validated_data)
-        AccessCollectionRepo().link(collection_obj.id, key_id)
 
         res = schema.dump(collection_obj)
         return res
 
-    def get_collection(self, key_id, collection_id):
+    def get_collection(self, key_id, is_admin, collection_id):
         collection_repo = CollectionRepo()
         collection_obj = collection_repo.get_collection_by_id(collection_id)
 
-        if not collection_obj or not self.check_access(key_id, collection_id):
+        if not collection_obj or not self.check_access(key_id, is_admin, collection_id):
             return None
-        
+
         info = CollectionSchema().dump(collection_obj)
         return info
+
+    def get_collections(self, key_id, is_admin):
+        collections = None
+
+        if is_admin:
+            collections = CollectionRepo().get_collections_by_key_id(key_id)
+            
+        else:
+            collection_ids = AccessCollectionRepo().get_collection_ids(key_id)
+            collections = CollectionRepo().get_collections(collection_ids)
+
+        result =  CollectionSchema(many=True).dump(collections)
+        return result

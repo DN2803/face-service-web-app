@@ -12,7 +12,9 @@ class StorageApp: #TODO: singleton with n instances
     scopes = config.SCOPES
 
     endpoint = f'{config.ENDPOINT}/me/drive/items/root:/Image Storage'
-    headers = {}
+    headers = {
+        'Content-Type': 'application/octet-stream'
+    }
     payload = {
         'type': 'view',
         'scope': 'anonymous'
@@ -36,9 +38,7 @@ class StorageApp: #TODO: singleton with n instances
             self.access_token = token_response['access_token']
             self.token_exp = token_response['id_token_claims']['exp']
             self.refresh_token = token_response['refresh_token']
-            self.headers = {
-                'Authorization': f'Bearer {self.access_token}'
-            }
+            self.headers = ['Authorization'] = f'Bearer {self.access_token}'
             
             with open('refresh_token.txt', 'w') as f:
                 f.write(self.refresh_token)
@@ -56,7 +56,7 @@ class StorageApp: #TODO: singleton with n instances
     #         raise Exception('Failed to create OneDrive share link!')
 
     def upload(self, file_path, content):
-        # no need to check if file_name exists cause using uuid 
+        # no need to check if file_name is available cause using uuid 
         url = f'{self.endpoint}/{file_path}:/content'
         
         if time.time() > self.token_exp:
@@ -67,6 +67,20 @@ class StorageApp: #TODO: singleton with n instances
         if not response.is_success:
             raise Exception('Failed to upload to OneDrive!')
 
+    def get_file(self, file_path):
+        url = f'{self.endpoint}/{file_path}:/content'
+
+        if time.time() > self.token_exp:
+            self.__gen_access_token()
+
+        response = httpx.get(url, headers=self.headers)
+
+        if response.is_success:
+            download_response = httpx.get(response.headers['location'])
+            return download_response.content
+        else:
+            raise Exception('Failed to generate download link!')
+
     def gen_download_link(self, file_path):
         url = f'{self.endpoint}/{file_path}:/content'
 
@@ -76,7 +90,7 @@ class StorageApp: #TODO: singleton with n instances
         response = httpx.get(url, headers=self.headers, follow_redirects=True)
 
         if response.is_success:
-            return response.url
+            return str(response.url)
         else:
             raise Exception('Failed to generate download link!')
 

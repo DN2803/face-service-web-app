@@ -14,3 +14,13 @@ class PersonRepo(BaseRepository):
 
     def update_info(self, person, **kwargs):
         self._update_by_obj(person,**kwargs)
+
+    def delete_person(self, person):
+        self._delete(person)
+
+    def get_persons(self, limit, last_id, collection_ids):
+        records = self.model.query.filter(
+            (self.model.id > last_id) & (self.model.collection_id.in_(collection_ids))
+        ).limit(limit).all()
+
+        return records

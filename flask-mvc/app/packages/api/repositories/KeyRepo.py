@@ -18,6 +18,9 @@ class KeyRepo(BaseRepository):
         obj = self._get_by('key', key)
 
         if obj and int(time.time()) < obj.expires_at:
-            return obj.id
+            return obj
         else:
             return None
+        
+    def update_key(self, key, **kwargs):
+        self._update_by_obj(key, **kwargs)

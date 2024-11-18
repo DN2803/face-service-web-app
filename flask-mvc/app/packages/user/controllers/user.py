@@ -18,7 +18,7 @@ def register_face_id():
         print(e)
         return jsonify(error=str(e)), 400
 
-@user_bp.route('/my-info', methods=['POST'])
+@user_bp.route('/my-info', methods=['GET'])
 def get_info():
     try:
         verify_jwt_in_request(fresh=True)
@@ -31,7 +31,7 @@ def get_info():
         print(e)
         return jsonify(error=str(e)), 400
 
-@user_bp.route('/my-projects', methods=['POST'])
+@user_bp.route('/my-projects', methods=['GET'])
 def get_projects():
     try:
         verify_jwt_in_request(fresh=True)
@@ -50,9 +50,13 @@ def create_project():
         verify_jwt_in_request(fresh=True)
         user_id = get_jwt_identity()
         data = request.json
-        key, exp = UserService().create_project(user_id, data['project_name'])
+        info = UserService().create_project(user_id, data['project_name'])
+        response = jsonify(
+            info=info,
+            message='Created new Project successfully!'
+        )
 
-        return jsonify(key=key, exp=exp), 201
+        return response, 201
 
     except Exception as e:
         print(e)

@@ -8,7 +8,7 @@ class Person(TimestampMixin, BaseModel):
     nationality = db.Column(db.String(50))
     collection_id = db.Column(
         db.Integer,
-        db.ForeignKey('collection.id',name='person-collection-fk', ondelete='SET NULL')
+        db.ForeignKey('collection.id',name='person-collection-fk', ondelete='CASCADE')
     )
     face_embed_id = db.Column(
         db.Integer,

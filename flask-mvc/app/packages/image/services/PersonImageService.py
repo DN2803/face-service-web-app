@@ -21,3 +21,13 @@ class PersonImageService(ImageService):
         download_link = self.get_download_link(img_path)
 
         return img_obj.id, download_link
+    
+    def get_link_by_person_id(self, person_id):
+        result = []
+        img_objs = self.repository.get_by_person_id(person_id)
+
+        for img_obj in img_objs:
+            url = self.get_download_link(img_obj.img_url) #img_url is a path at the moment
+            result.append(url)
+        
+        return result

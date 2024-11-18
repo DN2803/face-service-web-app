@@ -11,7 +11,6 @@ class UserService(BaseService):
     def __init__(self):
         self.schema = UserSchema()
         self.repository = UserRepo()
-        self.user_key_repo = UserKeyRepo()
 
     def add_face_id(self, user_id, img):
         """
@@ -53,12 +52,13 @@ class UserService(BaseService):
     #PROJECTS
     def create_project(self, user_id, project_name):
         project_info = KeyService().create_project(project_name)
-        self.user_key_repo.add(user_id, project_info['id'])
+        UserKeyRepo().add(user_id, project_info['id'])
+        project_info.pop['admin_key_id']
 
-        return project_info['key'], project_info['expires_at']
+        return project_info
 
     def get_projects(self, user_id):
-        objs = self.user_key_repo.get_key_ids(user_id)
+        objs = UserKeyRepo().get_key_ids(user_id)
         key_service = KeyService()
         key_schema = KeySchema()
         result = []
