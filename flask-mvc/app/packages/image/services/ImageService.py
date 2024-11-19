@@ -71,7 +71,7 @@ class ImageService(BaseService):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
         _, buffer = cv2.imencode('.jpg', img_np, encode_param)
         
-        return buffer.tobytes
+        return buffer.tobytes()
 
     def _upload_to_cloud(self, img_np, file_path):
         content = self.__compress(img_np)        

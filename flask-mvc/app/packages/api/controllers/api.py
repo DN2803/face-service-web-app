@@ -64,7 +64,7 @@ def person():
         print(e)
         return jsonify(error = str(e)), 400
 
-@api_bp.route('/persons', methods=['GET','DELETE'])
+@api_bp.route('/persons', methods=['GET', 'DELETE'])
 @__key_limiter.limit('20 per minute')
 def persons():
     try:
@@ -75,12 +75,22 @@ def persons():
         if not key_id:
             return jsonify(error='Invalid API Key!'), 401
 
-        data = request.json
-
         if request.method == 'GET':
-            if 'limit' not in data or 'collection_ids' not in data:
+            # Lấy dữ liệu từ query parameters
+            collection_ids = request.args.get('collection_ids')  # Lấy chuỗi collection_ids
+            limit = request.args.get('limit', type=int)  # Lấy limit (mặc định None)
+
+            if not collection_ids:
                 raise Exception('Not enough parameters!')
 
+            # Chuyển chuỗi collection_ids thành danh sách
+            collection_ids = [int(id) for id in collection_ids.split(',')]
+
+            # Gọi service xử lý
+            data = {
+                'collection_ids': collection_ids,
+                'limit': limit
+            }
             persons = key_service.get_persons(key_id, is_admin, **data)
 
             response = jsonify(
@@ -90,6 +100,10 @@ def persons():
             return response, 200
 
         if request.method == 'DELETE':
+            data = request.json  # Body chỉ dùng cho DELETE
+            if not data or 'person_id' not in data:
+                raise Exception('Not enough parameters!')
+
             if key_service.delete_person(key_id, is_admin, data['person_id']):
                 return jsonify(message='Delete Successfully!'), 200
             else:
@@ -97,7 +111,7 @@ def persons():
 
     except Exception as e:
         print(e)
-        return jsonify(error = str(e)), 400
+        return jsonify(error=str(e)), 400
 
 @api_bp.route('/collection', methods=['POST','GET','PATCH','DELETE'])
 @__key_limiter.limit('20 per minute')

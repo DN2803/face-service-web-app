@@ -35,16 +35,15 @@ class KeyService(BaseService):
         )
 
         #create default collection
-        collection_obj = CollectionRepo().add_collection(
+        CollectionRepo().add_collection(
             name='Base', 
             description='The default collection of your project. Undeletable.',
             admin_key_id=key_obj.id
         )
-        self.repository.update_key(key, def_coll_id = collection_obj.id)
+
         res = KeySchema().dump(key_obj)
-
+        res['id'] = key_obj.id
         return res
-
     def get_key_by_id(self, key_id):
         return self.repository.get_key_by_id(key_id)
 
@@ -109,7 +108,7 @@ class KeyService(BaseService):
         validated_data = schema.load(data=kwargs)
         person = None
 
-        if self.check_access(key_id, is_admin, validated_data['collection_id']):
+        if not self.check_access(key_id, is_admin, validated_data['collection_id']):
             raise Exception('Cannot add Person to this Collection!')
 
         person_repo = PersonRepo()
@@ -117,7 +116,8 @@ class KeyService(BaseService):
         img_url_list, embed_id = self._person_img_process(images, person.id)
         person_repo.update_info(person, face_embed_id=embed_id)
         person_info = schema.dump(person)
-        return person_info, img_url_list
+        person_info['images'] = img_url_list
+        return person_info
 
     def get_person(self, key_id, is_admin, person_id):
         person_repo = PersonRepo()
@@ -150,7 +150,7 @@ class KeyService(BaseService):
         collection_ids, limit = kwargs['collection_ids'], kwargs['limit']        
         last_id = kwargs['last_id'] if 'last_id' in kwargs else 0
 
-        for collection_id in collection_id:
+        for collection_id in collection_ids:
             if not self.check_access(key_id, is_admin, collection_id):
                 raise Exception('Collection is inaccessible!')
 

@@ -53,7 +53,6 @@ class UserService(BaseService):
     def create_project(self, user_id, project_name):
         project_info = KeyService().create_project(project_name)
         UserKeyRepo().add(user_id, project_info['id'])
-        project_info.pop['admin_key_id']
 
         return project_info
 
