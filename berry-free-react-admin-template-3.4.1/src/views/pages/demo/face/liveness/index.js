@@ -1,46 +1,54 @@
 import React, { useState } from 'react';
 // material-ui
-import { Grid, Divider, Box, Button } from '@mui/material';
+import { Grid, Divider, Box, Button, Typography } from '@mui/material';
 import MuiTypography from '@mui/material/Typography';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 
 import AnimateButton from 'ui-component/extended/AnimateButton';
-
+import { ClipLoader } from 'react-spinners';
 
 // Image 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageUpload from 'ui-component/ImageUpload';
 
+import trueImage from 'assets/images/checked1.png'
+import falseImage from 'assets/images/wrong.png'
 
 
 import liveness_demo_img from 'assets/images/data_test_image/liveness';
-import { callAPI } from 'utils/api_caller';
-import {convertAndCacheImage} from 'utils/imageCache'
+import { useCallAPI } from 'hooks/useCallAPI';
+import { convertAndCacheImage } from 'utils/imageCache'
 import { BACKEND_ENDPOINTS } from 'services/constant';
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceLivenessPage = () => {
+    const { callAPI } = useCallAPI();
+
     const [uploadedImage, setUploadedImage] = useState(null);
     const [approved, setApproved] = useState(false);
     const [result, setResult] = useState(false);
-    
-    
+
+
+    const [isLoading, setIsLoading] = useState(false); 
     const handleLiveness = async (imageData) => {
-        // Perform actions with the uploaded file or imageData (base64)
+        // Bắt đầu trạng thái loading
+        setIsLoading(true);
         try {
-            const response = await callAPI(BACKEND_ENDPOINTS.demo_function.liveness, "POST", {image: imageData})
+            const response = await callAPI(BACKEND_ENDPOINTS.demo_function.liveness, "POST", { image: imageData });
             if (response) {
-                console.log(response.data)
+                console.log(response.data);
                 setResult(true);
-                setApproved(response.data["result"]["is_real"])
+                setApproved(response.data["result"]["is_real"]);
             }
-        }
-        catch {
-            console.error("Erorr")
+        } catch (error) {
+            console.error("Error:", error);
             setResult(true);
             setApproved(false);
+        } finally {
+            // Kết thúc trạng thái loading
+            setIsLoading(false);
         }
     };
     const handleReset = () => {
@@ -54,7 +62,7 @@ const FaceLivenessPage = () => {
             <MainCard title="Liveness Demo">
                 <Grid item>
                     <MuiTypography variant="body1" gutterBottom>
-                    Welcome to our liveness demo, where we feature our advanced technology that addresses the need for fraud prevention and security in diverse applications. Our liveness feature enables the verification of live human presence, providing assurance that the person in front of the camera is not a still image or pre-recorded video.
+                        Welcome to our liveness demo, where we feature our advanced technology that addresses the need for fraud prevention and security in diverse applications. Our liveness feature enables the verification of live human presence, providing assurance that the person in front of the camera is not a still image or pre-recorded video.
                     </MuiTypography>
                 </Grid>
             </MainCard>
@@ -68,27 +76,28 @@ const FaceLivenessPage = () => {
                         </MuiTypography>
                         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <ImageList sx={{ width: '80%', height: 450 }} cols={3} rowHeight={164}>
-                            {
-                            liveness_demo_img.map((item) => {
-                                convertAndCacheImage(item.path);
-                                const cachedImageSrc = sessionStorage.getItem(item.path) || item.path;
-                                return (
-                                <ImageListItem key={item.img} onClick={() => handleLiveness(cachedImageSrc)}
-                                    style={{
-                                        border: '1px solid #ccc', // Đường viền
-                                        borderRadius: '8px', // Góc bo tròn
-                                        overflow: 'hidden', // Ẩn phần ảnh bị tràn
-                                        cursor: 'pointer', // Đổi con trỏ khi di chuột
-                                        transition: 'transform 0.2s', // Hiệu ứng khi hover
-                                      }}>
-                                        <img
-                                            
-                                            src={cachedImageSrc}
-                                            alt={item.title}
-                                            loading="lazy"
-                                        />
-                                </ImageListItem>
-                                )})}
+                                {
+                                    liveness_demo_img.map((item) => {
+                                        convertAndCacheImage(item.path);
+                                        const cachedImageSrc = sessionStorage.getItem(item.path) || item.path;
+                                        return (
+                                            <ImageListItem key={item.img} onClick={() => handleLiveness(cachedImageSrc)}
+                                                style={{
+                                                    border: '1px solid #ccc', // Đường viền
+                                                    borderRadius: '8px', // Góc bo tròn
+                                                    overflow: 'hidden', // Ẩn phần ảnh bị tràn
+                                                    cursor: 'pointer', // Đổi con trỏ khi di chuột
+                                                    transition: 'transform 0.2s', // Hiệu ứng khi hover
+                                                }}>
+                                                <img
+
+                                                    src={cachedImageSrc}
+                                                    alt={item.title}
+                                                    loading="lazy"
+                                                />
+                                            </ImageListItem>
+                                        )
+                                    })}
                             </ImageList>
                         </Box>
                     </Grid>
@@ -99,7 +108,7 @@ const FaceLivenessPage = () => {
                         <MuiTypography variant="subtitle1" gutterBottom> Liveness Result</MuiTypography>
                         <MuiTypography variant="body1" gutterBottom>
                             {"result here"}
-                            {result && (approved? (<p>real</p>):(<p>fake</p>))}
+
                         </MuiTypography>
                         <Box
                             sx={{
@@ -111,8 +120,70 @@ const FaceLivenessPage = () => {
                             }}
                         >
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {/* Hiển thị trạng thái loading */}
+                                {isLoading && <ClipLoader size={50} color={"#123abc"} />}
+                                {result && (approved ?
+                                    (<div
+                                        className='match'
+                                        style={{
+                                            backgroundColor: '#e0ffe0', // Màu nền xanh nhạt
+                                            padding: '20px',           // Khoảng cách bên trong
+                                            borderRadius: '10px',      // Bo góc
+                                            textAlign: 'center'        // Canh giữa nội dung
+                                        }}
+                                    >
+                                        <Typography
+                                            variant='h2'
+                                            style={{
+                                                color: '#008000',      // Màu chữ xanh
+                                                fontWeight: 'bold',    // Chữ đậm
+                                                marginBottom: '20px'   // Khoảng cách dưới
+                                            }}
+                                        >
+                                            Liveness passed
+                                        </Typography>
+                                        <img
+                                            src={trueImage}
+                                            alt=''
+                                            style={{
+                                                width: '150px',        // Chiều rộng ảnh
+                                                height: '150px',       // Chiều cao ảnh
+                                                objectFit: 'cover',    // Cắt ảnh vừa khung
+                                                borderRadius: '50%'    // Bo tròn ảnh
+                                            }}
+                                        />
+                                    </div>) : (<div
+                                        className='no-match'
+                                        style={{
+                                            backgroundColor: '#ffe0e0', // Màu nền đỏ nhạt
+                                            padding: '20px',           // Khoảng cách bên trong
+                                            borderRadius: '10px',      // Bo góc
+                                            textAlign: 'center'        // Canh giữa nội dung
+                                        }}
+                                    >
+                                        <Typography
+                                            variant='h2'
+                                            style={{
+                                                color: '#ff0000',      // Màu chữ đỏ
+                                                fontWeight: 'bold',    // Chữ đậm
+                                                marginBottom: '20px'   // Khoảng cách dưới
+                                            }}
+                                        >
+                                            Spoofing detected
+                                        </Typography>
+                                        <img
+                                            src={falseImage}
+                                            alt=''
+                                            style={{
+                                                width: '150px',        // Chiều rộng ảnh
+                                                height: '150px',       // Chiều cao ảnh
+                                                objectFit: 'cover',    // Cắt ảnh vừa khung
+                                                borderRadius: '50%'    // Bo tròn ảnh
+                                            }}
+                                        />
+                                    </div>))}
                                 {
-                                    !result && (<ImageUpload handleUpload={handleLiveness} uploadedImage={uploadedImage} sizeAccept={{ width: 800, height: 800 }}/>)
+                                    !result && (<ImageUpload handleUpload={handleLiveness} uploadedImage={uploadedImage} sizeAccept={{ width: 800, height: 800 }} />)
                                 }
                                 <Box sx={{ mt: 2, width: '75%' }}>
                                     <AnimateButton>
