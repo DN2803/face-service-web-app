@@ -286,13 +286,14 @@ const PersonManagement = () => {
                         ) : (
                             persons.map((person) => (
                                 <TableRow key={person.id}>
-                                    <TableCell><img src={person.photo} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /></TableCell>
+                                    <TableCell>
+                                        <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
-                                    <TableCell>{person.dob}</TableCell>
+                                    <TableCell>{person.birth}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
-                                    <TableCell>{person.modifiedDate}</TableCell>
-                                    <TableCell>{person.collection}</TableCell>
+                                    <TableCell>{person.updated_at}</TableCell>
+                                    <TableCell>{person.collection_id}</TableCell>
                                     <TableCell>
                                         <IconButton color="primary" onClick={() => handleEdit(person.id)}><EditIcon /></IconButton>
                                         <IconButton color="secondary" onClick={() => handleDelete(person.id)}><DeleteIcon /></IconButton>

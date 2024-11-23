@@ -255,12 +255,12 @@ const PersonCollectionManagement = () => {
                             persons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        <img src={person.photo} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
+                                        <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
-                                    <TableCell>{person.dob}</TableCell>
+                                    <TableCell>{person.birth}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
-                                    <TableCell>{person.modifiedDate}</TableCell>
+                                    <TableCell>{person.updated_at}</TableCell>
                                     <TableCell>
                                         {/* Nút Sửa */}
                                         <IconButton onClick={() => onEdit(person.id)} color="primary">
