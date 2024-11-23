@@ -4,12 +4,15 @@ import FolderSharedIcon from '@mui/icons-material/FolderShared';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { ClipLoader } from 'react-spinners';
 import DialogForm from '../DialogForm';
 import CollectionForm from '../forms/collection-form';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 import { useCallAPI } from 'hooks/useCallAPI';
 import { useFetchCollections } from 'hooks/useFetchCollections';
+import { useNavigate } from 'react-router-dom';
 const CollectionManagement = () => {
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
     const [editCollection, setEditCollection] = useState(null);
@@ -18,7 +21,7 @@ const CollectionManagement = () => {
     const { fetchCollections } = useFetchCollections();
     const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
     const [itemsPerPage] = useState(5); // Số mục hiển thị trên mỗi trang
-
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getCollections = async () => {
@@ -156,6 +159,7 @@ const CollectionManagement = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
+                        {loading && <ClipLoader size={50} color={"#123abc"} />}
                         {currentCollections.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} align="center">
@@ -165,7 +169,7 @@ const CollectionManagement = () => {
                         ) : (
                             currentCollections.map((collection) => (
                                 <TableRow key={collection.id}>
-                                    <TableCell>{collection.name}</TableCell>
+                                    <TableCell onClick={() => navigate('/pages/collection/poi-management', {state: {collection: collection}})}>{collection.name}</TableCell>
                                     <TableCell>{collection.id}</TableCell>
                                     <TableCell>{collection.description}</TableCell>
                                     <TableCell>

@@ -166,6 +166,19 @@ const PersonManagement = () => {
 
     const handleSearchFace = async (values) => {
         console.log("Searching face with values:", values);
+        const body = {
+            collection_id: parseInt(values.collection_id,10),
+            image: values.image,
+            max_results: parseInt(values.limit, 10),
+            score: values.confidence_score,
+        }
+        const respone = await callAPI(BACKEND_ENDPOINTS.project.search, "POST", body, true);
+
+        if (respone) { 
+            setResult(respone.data.result);
+            console.log(respone.data);
+        }
+        
         handleCloseSearch();
     };
 

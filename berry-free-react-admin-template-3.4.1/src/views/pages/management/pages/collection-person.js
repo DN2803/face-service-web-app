@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination, IconButton } from '@mui/material';
+import { useLocation } from 'react-router-dom';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Pagination, IconButton } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -10,19 +11,10 @@ import { useCallAPI } from 'hooks/useCallAPI';
 import FaceSearchForm from '../forms/face-search-form';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
-// function createData(photo, name, id, dob, nationality, modifiedDate) {
-//     return {
-//       photo, 
-//       id,
-//       name,
-//       dob, 
-//       nationality, 
-//       modifiedDate
-//     };
-//   }
+
 const PersonCollectionManagement = () => {
     const { callAPI } = useCallAPI();
-
+    const location = useLocation();
     const [search, setSearch] = useState('');
     const [openSeach, setOpenSearch] = useState(false);
     const [openAdd, setOpenAdd] = useState(false);
@@ -30,30 +22,75 @@ const PersonCollectionManagement = () => {
     const [editPerson, setEditPerson] = useState(null);
     // For demonstration, no persons are added, which will display the "No Person Found" message.
 
-    // const [persons, setPersons] = useState([]);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [totalRows, setTotalRows] = useState(0);
-    const persons = [];
+    const [persons, setPersons] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+    const [itemsPerPage] = useState(5); // Số mục hiển thị trên mỗi trang
+    const [numPerson, setNumPerson] = useState(0);
+    const [lastIDs, setLastIDs] = useState([]);
 
-    // Function to load persons from the server
-    const loadPersons = async (page, rowsPerPage) => {
-        const data = await callAPI(BACKEND_ENDPOINTS.project.person, "GET", {pageIndex: page, maxCount: rowsPerPage });
-        setPersons(data.persons);
-        setTotalRows(data.totalCount);
-    };
+    const collection = location.state.collection || null;
+    console.log(collection)
     useEffect(() => {
-        loadPersons(page, rowsPerPage);
-    }, [page, rowsPerPage]);
+        const loadAllPersons = async () => {
+            try {
+                const queryParams = new URLSearchParams({
+                    collection_ids: [collection.id],
+                    limit: 5
+                });
+                const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}?${queryParams.toString()}`, "GET", null, true);
+                setNumPerson(response.data.count);
+                setPersons(response.data.persons)
+                // Cập nhật lastID của trang đầu tiên
+                setLastIDs((prevLastIDs) => {
+                    const newLastIDs = [...prevLastIDs];
+                    newLastIDs[0] = data.persons[data.persons.length - 1]?.id || null; // Lưu lastID của trang
+                    return newLastIDs;
+                });
+                console.log(response);
+            } catch (error) {
+                console.error("Error loading persons", error);
+            }
+        }
+        loadAllPersons();
+    }, [callAPI]);
 
-    const handlePageChange = (event, newPage) => {
-        setPage(newPage);
-    };
 
-    const handleRowsPerPageChange = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0); // Reset to the first page
-    };
+    useEffect(() => {
+        const loadPersonsForPage = async () => {
+            try {
+                // Lấy lastID của trang hiện tại (trang đầu tiên là 0)
+                const lastID = lastIDs[currentPage - 1] || null;
+
+                // Tạo query params cho API
+                const queryParams = new URLSearchParams({
+                    collection_ids: [collection.id],
+                    limit: itemsPerPage,
+                    last_id: lastID // Thêm lastID vào query để lấy người tiếp theo
+                });
+
+                // Gọi API để lấy dữ liệu cho trang hiện tại
+                const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}?${queryParams.toString()}`, "GET", null, true);
+                setNumPerson(response.data.count);
+                setPersons(response.data.persons);
+
+                // Cập nhật lastID của trang hiện tại
+                setLastIDs((prevLastIDs) => {
+                    const newLastIDs = [...prevLastIDs];
+                    newLastIDs[currentPage - 1] = response.data.persons[response.data.persons.length - 1]?.id || null;
+                    return newLastIDs;
+                });
+
+            } catch (error) {
+                console.error("Error loading persons for page", error);
+            }
+        };
+
+        
+        loadPersonsForPage();
+        
+    }, [currentPage, callAPI, lastIDs, itemsPerPage]); 
+
+
     // Function to handle dialog open
     const handleOpenSearch = () => {
         setOpenSearch(true);
@@ -92,16 +129,16 @@ const PersonCollectionManagement = () => {
         const body = {
             ...(values.collection && { collection_id: values.collection }),
             birth: values.dob,
-            images: values.images,          
+            images: values.images,
             name: values.name,
             nationality: values.nationality,
         }
         await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
-       
+
         handleCloseAdd(); // Close dialog after submission
     };
     const handleSearchFace = () => {
-        console.log ("call backend")
+        console.log("call backend")
         handleCloseSearch();
     }
 
@@ -118,7 +155,7 @@ const PersonCollectionManagement = () => {
         try {
             // Gửi yêu cầu xóa người dùng từ API
             await callAPI(`/delete_person/${id}`, 'DELETE');
-            
+
             // Sau khi xóa thành công, cập nhật lại danh sách người dùng
             loadPersons(page, rowsPerPage);
         } catch (error) {
@@ -144,7 +181,7 @@ const PersonCollectionManagement = () => {
                         marginBottom: '20px',
                     }}
                 >
-                    <Typography variant="h5">Persons</Typography>
+                    <Typography variant="h5">Persons of Collection {collection.name}</Typography>
                     <Typography variant="body2">Register persons for Face Search</Typography>
                 </Box>
 
@@ -175,7 +212,7 @@ const PersonCollectionManagement = () => {
                             color="warning"
                             startIcon={<PersonAddIcon />}
                             sx={{ marginRight: '10px' }}
-                            onClick={handleOpenAdd} 
+                            onClick={handleOpenAdd}
                         >
                             Add Person
                         </Button>
@@ -186,11 +223,11 @@ const PersonCollectionManagement = () => {
                 </Box>
             </Box>
             <DialogForm open={openAdd} onClose={handleCloseAdd} title={editPerson ? "Edit person details" : "Add person details"}>
-                <PersonForm onSubmit={handleSubmit} person={editPerson}/>
+                <PersonForm onSubmit={handleSubmit} person={editPerson} />
             </DialogForm>
-            
+
             <DialogForm open={openSeach} onClose={handleCloseSearch} title="Search Face">
-                <FaceSearchForm onSubmit={handleSearchFace}/>
+                <FaceSearchForm onSubmit={handleSearchFace} />
             </DialogForm>
 
             {/* Table Section */}
@@ -224,12 +261,12 @@ const PersonCollectionManagement = () => {
                                     <TableCell>{person.dob}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
                                     <TableCell>{person.modifiedDate}</TableCell>
-                                    <TableCell> 
+                                    <TableCell>
                                         {/* Nút Sửa */}
-                                        <IconButton onClick={()=>onEdit(person.id)} color="primary">
+                                        <IconButton onClick={() => onEdit(person.id)} color="primary">
                                             <EditIcon />
                                         </IconButton>
-                                        
+
                                         {/* Nút Xóa */}
                                         <IconButton onClick={() => onDelete(person.id)} color="secondary">
                                             <DeleteIcon />
@@ -240,14 +277,11 @@ const PersonCollectionManagement = () => {
                         )}
                     </TableBody>
                 </Table>
-                <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={totalRows}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
+                <Pagination
+                    count={Math.ceil(numPerson / itemsPerPage)} // Tổng số trang
+                    page={currentPage}
+                    onChange={(event, value) => setCurrentPage(value)} // Cập nhật trang
+                    color="primary"
                 />
             </TableContainer>
         </Box >
