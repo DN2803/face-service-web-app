@@ -12,15 +12,22 @@ import {
 
 
 
-const CollectionForm = ({ onSubmit }) => {
-    const scriptedRef = useRef(null); // Reference to handle async logic
+const CollectionForm = ({ onSubmit, collection = null }) => {
+    const scriptedRef = useRef(true); // Reference to handle async logic
+    const handleSubmit = async (values) => {
+        // Gọi hàm onSubmit với dữ liệu của form và danh sách hình ảnh
+        console.log(values);
+        onSubmit({
+            ...values,
+        });
+    };
 
 
     return (
         <Formik
             initialValues={{
-                name: '',
-                description: '',
+                name: collection?.name || '',
+                description: collection?.description || '',
                 submit: null
             }}
             validationSchema={Yup.object().shape({
@@ -30,7 +37,8 @@ const CollectionForm = ({ onSubmit }) => {
                 try {
                     if (scriptedRef.current) {
                         // Call onSubmit prop to handle form submission
-                        await onSubmit(values);
+                        console.log("hihih");
+                        await handleSubmit(values);
                         setStatus({ success: true });
                         setSubmitting(false);
                     }
@@ -69,20 +77,20 @@ const CollectionForm = ({ onSubmit }) => {
                     </FormControl>
 
                     {/* Description Field */}
-                    <FormControl fullWidth error={Boolean(touched.id && errors.id)} sx={{ mb: 2 }}>
-                        <InputLabel htmlFor="id">Description</InputLabel>
+                    <FormControl fullWidth error={Boolean(touched.description && errors.description)} sx={{ mb: 2 }}>
+                        <InputLabel htmlFor="description">Description</InputLabel>
                         <OutlinedInput
-                            id="id"
+                            id="description"
                             type="text"
                             value={values.description}
-                            name="id"
+                            name="description"
                             onBlur={handleBlur}
                             onChange={handleChange}
                             label="Description"
                         />
-                        {touched.id && errors.id && (
-                            <FormHelperText error id="id-error">
-                                {errors.id}
+                        {touched.description && errors.description && (
+                            <FormHelperText error description="description-error">
+                                {errors.description}
                             </FormHelperText>
                         )}
                     </FormControl>
@@ -97,7 +105,7 @@ const CollectionForm = ({ onSubmit }) => {
                             disabled={isSubmitting}
                             fullWidth
                         >
-                            Submit
+                            {collection ? 'Update' : 'Submit'}
                         </Button>
                     </Box>
                 </form>

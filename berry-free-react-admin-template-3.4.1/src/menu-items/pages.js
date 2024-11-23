@@ -1,6 +1,7 @@
 // assets
 import { IconKey, IconCode } from '@tabler/icons';
 import PersonIcon from '@mui/icons-material/Person';
+import { Search } from '@mui/icons-material';
 import FolderSharedIcon from '@mui/icons-material/FolderShared';
 
 // constant
@@ -8,7 +9,8 @@ const icons = {
   IconKey, 
   PersonIcon,
   FolderSharedIcon, 
-  IconCode
+  IconCode, 
+  Search
 };
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
@@ -38,6 +40,14 @@ const pages = {
       type: 'item', 
       url: 'pages/app/developer-keys',
       icon: icons.IconCode
+    },
+    {
+      id: 'search', 
+      title: 'Searchs',
+      type: 'item', 
+      url: 'pages/search',
+      icon: icons.Search
+
     }
   ]
 };

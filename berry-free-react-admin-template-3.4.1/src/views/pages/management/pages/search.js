@@ -1,51 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination, IconButton } from '@mui/material';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, TablePagination } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import DialogForm from '../DialogForm';
-import PersonForm from '../forms/person-form';
 import { useCallAPI } from 'hooks/useCallAPI';
 import FaceSearchForm from '../forms/face-search-form';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
-// function createData(photo, name, id, dob, nationality, modifiedDate) {
-//     return {
-//       photo, 
-//       id,
-//       name,
-//       dob, 
-//       nationality, 
-//       modifiedDate
-//     };
-//   }
-const PersonCollectionManagement = () => {
+const createData = async (id) => {
+    try {
+        const response = await callAPI(BACKEND_ENDPOINTS.project.person, "GET", { id }, true);
+        if (response) {
+            const { photo, name, dob, nationality, modifiedDate, collection } = response.data;
+            return { photo, id, name, dob, nationality, modifiedDate, collection };
+        }
+        throw new Error("Invalid response from API");
+    } catch (error) {
+        console.error("Error fetching data for ID:", id, error);
+        return null; // Trả về null nếu có lỗi
+    }
+};
+
+const SearchManagement = () => {
     const { callAPI } = useCallAPI();
 
     const [search, setSearch] = useState('');
     const [openSeach, setOpenSearch] = useState(false);
-    const [openAdd, setOpenAdd] = useState(false);
-
-    const [editPerson, setEditPerson] = useState(null);
-    // For demonstration, no persons are added, which will display the "No Person Found" message.
-
-    // const [persons, setPersons] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalRows, setTotalRows] = useState(0);
-    const persons = [];
 
+    const [persons, setPersons] = useState([]);
+    const [allPersons, setAllPersons] = useState([]);
+
+    useEffect(() => {
+        const loadAllPersonID = async () => {
+            try {
+                const response = await callAPI(BACKEND_ENDPOINTS.project.person, "GET", {}, true);
+                if (response) {
+                    setAllPersons(response.data);
+                }
+            } catch (error) {
+                console.error("Error loading all persons:", error);
+            }
+        };
+        loadAllPersonID();
+    }, [callAPI]);
     // Function to load persons from the server
     const loadPersons = async (page, rowsPerPage) => {
-        const data = await callAPI(BACKEND_ENDPOINTS.project.person, "GET", {pageIndex: page, maxCount: rowsPerPage });
-        setPersons(data.persons);
-        setTotalRows(data.totalCount);
+        // const data = await callAPI(BACKEND_ENDPOINTS.project.person, "GET", { pageIndex: page, maxCount: rowsPerPage });
+        // Tính toán vị trí bắt đầu và kết thúc cho pagination
+        const startIndex = (page - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        // Cắt mảng allPersons để lấy dữ liệu của trang hiện tại
+        const currentPagePersons = allPersons.slice(startIndex, endIndex);
+
+        // Hàm kiểm tra và tạo dữ liệu nếu cần
+        const processedPersons = await Promise.all(
+            currentPagePersons.map(async (person) => {
+                const requiredFields = ["photo", "id", "name", "dob", "nationality", "modifiedDate", "collection"];
+                const isValid = requiredFields.every((field) => field in person);
+
+                if (!isValid) {
+                    return await createData(person.id);
+                }
+                return person;
+            })
+        );
+
+        setPersons(processedPersons.filter((person) => person !== null));
+        // Cập nhật state
+        setPersons(processedPersons);
+        setTotalRows(allPersons.length); // Tổng số hàng
     };
     useEffect(() => {
         loadPersons(page, rowsPerPage);
-    }, [page, rowsPerPage]);
-
+    }, [page, rowsPerPage, allPersons]);
     const handlePageChange = (event, newPage) => {
         setPage(newPage);
     };
@@ -58,72 +88,24 @@ const PersonCollectionManagement = () => {
     const handleOpenSearch = () => {
         setOpenSearch(true);
     };
-    const handleOpenAdd = () => {
-        setEditPerson(null);
-        setOpenAdd(true);
-    };
-
     // Function to handle dialog close
     const handleCloseSearch = () => {
         setOpenSearch(false);
     };
-    const handleCloseAdd = () => {
-        setOpenAdd(false);
-    };
-    const convertToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file); // Đọc file dưới dạng Data URL (Base64)
-            reader.onload = () => resolve(reader.result); // Trả về Base64 khi hoàn thành
-            reader.onerror = (error) => reject(error); // Báo lỗi nếu xảy ra
-        });
-    };
-    const handleSubmit = async (values) => {
-        // Handle the form submission logic here
-        try {
-            // Duyệt qua các file trong images và đọc Base64
-            const base64Images = await Promise.all(
-                values.images.map((image) => convertToBase64(image))
-            );
-            values.images = base64Images;
-        } catch (error) {
-            console.error("Error converting images to Base64:", error);
-        }
+    const handleSearchFace = async (values) => {
+        console.log(values);
+
+
         const body = {
-            ...(values.collection && { collection_id: values.collection }),
-            birth: values.dob,
-            images: values.images,          
-            name: values.name,
-            nationality: values.nationality,
+            collection_id: parseInt(values.collection_id,10),
+            image: values.image,
+            max_results: parseInt(values.limit, 10),
+            min_score: values.confidence_score,
         }
-        await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
-       
-        handleCloseAdd(); // Close dialog after submission
-    };
-    const handleSearchFace = () => {
-        console.log ("call backend")
+        console.log(body);
+        // const response = await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true);
+        // console.log(response);
         handleCloseSearch();
-    }
-
-    const onEdit = (id) => {
-        const personToEdit = persons.find((person) => person.id === id);
-        if (personToEdit) {
-            setOpenAdd(true);  // Mở dialog "Add Person" nhưng sẽ dùng để chỉnh sửa
-            // Truyền dữ liệu người dùng cần chỉnh sửa vào form
-            setEditPerson(personToEdit); // Giả sử bạn đã tạo một state để lưu người dùng đang được chỉnh sửa
-        }
-    }
-
-    const onDelete = async (id) => {
-        try {
-            // Gửi yêu cầu xóa người dùng từ API
-            await callAPI(`/delete_person/${id}`, 'DELETE');
-            
-            // Sau khi xóa thành công, cập nhật lại danh sách người dùng
-            loadPersons(page, rowsPerPage);
-        } catch (error) {
-            console.error('Error deleting person:', error);
-        }
     }
     return (
         <Box sx={{ padding: '20px' }}>
@@ -144,8 +126,8 @@ const PersonCollectionManagement = () => {
                         marginBottom: '20px',
                     }}
                 >
-                    <Typography variant="h5">Persons</Typography>
-                    <Typography variant="body2">Register persons for Face Search</Typography>
+                    <Typography variant="h5">Searchs</Typography>
+                    <Typography variant="body2">Only show face search results by collection</Typography>
                 </Box>
 
                 {/* Search bar and buttons */}
@@ -170,27 +152,17 @@ const PersonCollectionManagement = () => {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     <Box>
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            startIcon={<PersonAddIcon />}
-                            sx={{ marginRight: '10px' }}
-                            onClick={handleOpenAdd} 
-                        >
-                            Add Person
-                        </Button>
+
                         <Button variant="contained" color="error" startIcon={<SearchIcon />} onClick={handleOpenSearch} >
                             Face Search
                         </Button>
+
                     </Box>
                 </Box>
             </Box>
-            <DialogForm open={openAdd} onClose={handleCloseAdd} title={editPerson ? "Edit person details" : "Add person details"}>
-                <PersonForm onSubmit={handleSubmit} person={editPerson}/>
-            </DialogForm>
-            
+
             <DialogForm open={openSeach} onClose={handleCloseSearch} title="Search Face">
-                <FaceSearchForm onSubmit={handleSearchFace}/>
+                <FaceSearchForm onSubmit={handleSearchFace} />
             </DialogForm>
 
             {/* Table Section */}
@@ -204,6 +176,7 @@ const PersonCollectionManagement = () => {
                             <TableCell sx={{ color: '#fff' }}>Date of Birth</TableCell>
                             <TableCell sx={{ color: '#fff' }}>Nationality</TableCell>
                             <TableCell sx={{ color: '#fff' }}>Modified Date</TableCell>
+                            <TableCell sx={{ color: '#fff' }}>Collection</TableCell>
                             <TableCell sx={{ color: '#fff' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
@@ -224,34 +197,24 @@ const PersonCollectionManagement = () => {
                                     <TableCell>{person.dob}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
                                     <TableCell>{person.modifiedDate}</TableCell>
-                                    <TableCell> 
-                                        {/* Nút Sửa */}
-                                        <IconButton onClick={()=>onEdit(person.id)} color="primary">
-                                            <EditIcon />
-                                        </IconButton>
-                                        
-                                        {/* Nút Xóa */}
-                                        <IconButton onClick={() => onDelete(person.id)} color="secondary">
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </TableCell>
+                                    <TableCell>{person.collection}</TableCell>
                                 </TableRow>
                             ))
                         )}
                     </TableBody>
                 </Table>
                 <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={totalRows}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={totalRows}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
                 />
             </TableContainer>
         </Box >
     );
 };
 
-export default PersonCollectionManagement;
+export default SearchManagement;

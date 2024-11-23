@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState} from 'react';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -12,21 +12,15 @@ import {
     Select,
     MenuItem,
 } from '@mui/material';
+import { useSelector } from 'react-redux';
 
-// Mock fetch function to simulate database call
-const fetchCollections = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(['Collection A', 'Collection B', 'Collection C']);
-        }, 1000);
-    });
-};
+
 
 const PersonForm = ({ onSubmit, person = null }) => {
     const scriptedRef = useRef(true); // Reference to handle async logic
     const [images, setImages] = useState(person?.images || []); // Initialize with person images if editing
-    const [collections, setCollections] = useState([]); // State to hold collection options
-    const [loading, setLoading] = useState(true); // State to manage loading state
+    const collections = useSelector(state => state.collections.collections);
+    console.log(collections)
 
     const handleSubmit = async (values) => {
         // Gọi hàm onSubmit với dữ liệu của form và danh sách hình ảnh
@@ -35,21 +29,6 @@ const PersonForm = ({ onSubmit, person = null }) => {
             images,
         });
     };
-
-    // Fetch collections from database on component mount
-    useEffect(() => {
-        const getCollections = async () => {
-            try {
-                const result = await fetchCollections(); // Fetch collections from database
-                setCollections(result);
-            } catch (error) {
-                console.error("Error fetching collections", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        getCollections();
-    }, []);
 
     // Function to handle file uploads
     const handleFileChange = (event) => {
@@ -68,7 +47,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                 name: person?.name || '',
                 dob: person?.dob || '',
                 nationality: person?.nationality || '',
-                collection: person?.collection || '',
+                collection_id: person?.collection_id || '',
                 submit: null
             }}
             validationSchema={Yup.object().shape({
@@ -128,7 +107,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                             label="Date of Birth"
                             sx={{
                                 '& input': {
-                                    color: values.dob ? 'inherit' :'transparent' , // Apply transparent color if dob has value
+                                    color: values.dob ? 'inherit' : 'transparent', // Apply transparent color if dob has value
                                     '&:focus': {
                                         color: 'inherit',
                                     },
@@ -167,17 +146,16 @@ const PersonForm = ({ onSubmit, person = null }) => {
                         <InputLabel htmlFor="collection">Collection (Optional)</InputLabel>
                         <Select
                             id="collection"
-                            name="collection"
-                            value={values.collection}
+                            name="collection_id"
+                            value={values.collection_id}  // Use collection_id here
                             onChange={handleChange}
                             onBlur={handleBlur}
                             label="Collection"
-                            disabled={loading} // Disable the select while loading
                         >
-                            <MenuItem value="">None</MenuItem>
-                            {collections.map((collection, index) => (
-                                <MenuItem key={index} value={collection}>
-                                    {collection}
+                            <MenuItem value=''>None</MenuItem>  {/* Use an empty string as the default value */}
+                            {collections.map((collection) => (
+                                <MenuItem key={collection.id} value={collection.id}>
+                                    {collection.name}
                                 </MenuItem>
                             ))}
                         </Select>

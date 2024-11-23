@@ -9,9 +9,10 @@ import AuthCardWrapper from '../AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 import SelectForm from '../select-project-forms';
 import AuthFooter from 'ui-component/cards/AuthFooter';
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 import { setApiKey } from 'store/actions/authActions';
+import { setProject } from 'store/actions/projectActions';
 // assets
 
 // ===============================|| AUTH3 - SELECTPROJECT ||=============================== //
@@ -19,6 +20,7 @@ import { setApiKey } from 'store/actions/authActions';
 const SelectProject = () => {
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
+  const { callAPI } = useCallAPI();
   const navigate = useNavigate();
   const handleClick = async () => {
     const projectName = window.prompt('Please enter the project name:');
@@ -27,14 +29,67 @@ const SelectProject = () => {
         alert(`Project name entered: ${projectName}`);
         // Bạn có thể xử lý thêm ở đây, ví dụ: lưu tên dự án hoặc điều hướng sang trang khác
         const response = await callAPI(BACKEND_ENDPOINTS.user.project.create, "POST", {project_name: projectName}, true);
-        const data = response.data;
-        setApiKey(data.key);
-        navigate('/pages/poi-management');
+            const data = response.data.info;
+            console.log(response)
+            const project =  {
+              name: data.project_name, // Mapping logic
+              api: data.key,
+              exp: data.expires_at,
+              role: data.admin_key_id? "admin":"dev"
+            }
+            setProject(project);
+            setApiKey(project.api);
+            navigate('/dashboard/default');
       } 
     } catch (error) {
       console.error("Error:", error); // Xử lý lỗi nếu có
     }
-   
+
+    // const availableModels = ["Model A", "Model B", "Model C"]; // Danh sách các model có sẵn
+    // const projectName = window.prompt('Please enter the project name:');
+
+    // // Hiển thị danh sách model
+    // const modelOptions = availableModels
+    //   .map((model, index) => `${index + 1}. ${model}`)
+    //   .join('\n');
+    // const modelChoice = window.prompt(`Please choose a model:\n${modelOptions}`);
+
+    // try {
+    //   if (projectName && modelChoice) {
+    //     const modelIndex = parseInt(modelChoice, 10) - 1;
+
+    //     if (modelIndex >= 0 && modelIndex < availableModels.length) {
+    //       const modelName = availableModels[modelIndex];
+    //       alert(`Project name: ${projectName}\nModel name: ${modelName}`);
+
+    //       // Gửi yêu cầu API
+    //       const response = await callAPI(
+    //         BACKEND_ENDPOINTS.user.project.create,
+    //         "POST",
+    //         { project_name: projectName, model_name: modelName },
+    //         true
+    //       );
+    //       const data = response.data.project;
+    //       const project =  {
+    //         name: data.project_name, // Mapping logic
+    //         api: data.key,
+    //         exp: data.expires_at,
+    //         role: data.admin_key_id? "admin":"dev"
+    //       }
+    //       setProject(project);
+    //       setApiKey(data.key);
+    //       navigate('/pages/poi-management');
+    //     } else {
+    //       alert("Invalid model choice. Please try again.");
+    //     }
+    //   } else {
+    //     alert("Project name and model selection are required!");
+    //   }
+    // } catch (error) {
+    //   console.error("Error:", error); // Xử lý lỗi nếu có
+    // }
+
+
   };
 
   return (
@@ -65,19 +120,19 @@ const SelectProject = () => {
                     </Grid>
                   </Grid>
                   <Grid item xs={12}>
-                    <SelectForm/>
+                    <SelectForm />
                   </Grid>
                   <Grid item xs={12}>
                     <Divider />
                   </Grid>
                   <Grid item xs={12}>
                     <Grid item container direction="column" alignItems="center" xs={12}>
-                      <Typography 
+                      <Typography
                         component="span"
                         variant="subtitle1"
                         sx={{ textDecoration: 'none', cursor: 'pointer' }}
                         onClick={handleClick}
-                        >
+                      >
                         Create New Project ?
                       </Typography>
                     </Grid>

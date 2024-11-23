@@ -33,7 +33,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
@@ -47,6 +47,7 @@ import { loginSuccess } from 'store/actions/authActions';
 const FirebaseLogin = ({ ...others }) => {
   const theme = useTheme();
   const scriptedRef = useScriptRef();
+  const { callAPI } = useCallAPI();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const customization = useSelector((state) => state.customization);
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const FirebaseLogin = ({ ...others }) => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const { userInfo } = useUserInfo();
   const { isVerified, loading, error } = useEmailVerified();
-
+  const [waitResponse, setWaitRespone] = useState(false);
   const dispatch = useDispatch();
   const redirectRoute = useSelector(state => state.auth.redirectRoute);
 
@@ -73,7 +74,6 @@ const FirebaseLogin = ({ ...others }) => {
           console.error("Token decoding error:", error);
           return;
         }
-
         if (isVerified) {
           await loadModels(); // Load models only if verified
           setModelsLoaded(true);
@@ -92,7 +92,6 @@ const FirebaseLogin = ({ ...others }) => {
     try {
       const response = await callAPI(BACKEND_ENDPOINTS.auth.login.password, "POST", { password: password }, true, localStorage.getItem('refresh_token'));
       const data = await response.data;
-      console.log(response);
       if (response) {
         dispatch(loginSuccess(userInfo));
         // Chuyển hướng về route đã lưu trữ trong Redux (nếu có)
@@ -110,7 +109,6 @@ const FirebaseLogin = ({ ...others }) => {
     }
   };
   const startCamera = async () => {
-    console.log(modelsLoaded)
     if (modelsLoaded == false) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -122,8 +120,10 @@ const FirebaseLogin = ({ ...others }) => {
 
       // Start sending images to the server every second
       intervalIdRef.current = setInterval(() => {
-        sendFrameToServer();
-      }, 5000);
+        if (!waitResponse) {
+          sendFrameToServer();
+        } 
+      }, 1000);
     } catch (err) {
       console.error('Error accessing the camera: ', err);
       alert('Unable to access the camera. Please check your permissions.');
@@ -156,12 +156,11 @@ const FirebaseLogin = ({ ...others }) => {
       const imageData = canvas.toDataURL('image/jpeg');
       // Send the image data to the server
       try {
-        console.log("false: ", countFalseRef.current);
         if (countFalseRef.current >= 5) {
           stopCamera();
           setOnlyLogByPassword(true);
-          setIsExistFaceID(false);
         }
+        setWaitRespone(true);
         const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, { withCredentials: true }, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
@@ -182,6 +181,8 @@ const FirebaseLogin = ({ ...others }) => {
       } catch (error) {
         console.error('Error:', error);
         countFalseRef.current += 1;
+      } finally {
+        setWaitRespone(false)
       }
     }
   };

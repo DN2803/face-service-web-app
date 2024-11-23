@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Formik } from 'formik';
 import {
     FormControl,
@@ -10,23 +10,65 @@ import {
     Typography
 } from '@mui/material';
 import ImageUpload from "ui-component/ImageUpload";
+import { useFetchCollections } from 'hooks/useFetchCollections';
 
-const FaceSearchForm = () => {
+// Mock fetch function to simulate database call
+// const fetchCollections = async () => {
+//     return new Promise((resolve) => {
+//         setTimeout(() => {
+//             resolve([
+//                 {
+//                     id: '1',
+//                     name: 'Collection A',
+//                 },
+//                 {
+//                     id: '2',
+//                     name: 'Collection B',
+//                 },
+//                 {
+//                     id: '3',
+//                     name: 'Collection C',
+//                 }
+//             ]);
+//         }, 1000);
+//     });
+// };
+
+const FaceSearchForm = ({ onSubmit, collection = null }) => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const scriptedRef = useRef(true);
+    const [collections, setCollections] = useState([]); // State to hold collection options
+    const [loading, setLoading] = useState(true);
+    const { fetchCollections } = useFetchCollections()
 
     const handleSearch = async (values, image) => {
-        console.log(values);
-        console.log(image);
-        
+        onSubmit({
+            ...values,
+            image,
+        });
     };
 
     const limits = [10, 20, 50];
     const types = [
-        { title: "Strict Search", confidence_score: 70 },
-        { title: "Moderate Search", confidence_score: 66 },
+        { title: "Strict Search", confidence_score: 0.7 },
+        { title: "Moderate Search", confidence_score: 0.66 },
         { title: "Find all similar", confidence_score: 0 },
     ];
+
+    // Fetch collections from database on component mount
+    useEffect(() => {
+        const getCollections = async () => {
+            try {
+                const result = await fetchCollections(); // Fetch collections from database
+                setCollections(result);
+            } catch (error) {
+                console.error("Error fetching collections", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        getCollections();
+    }, []);
 
     return (
         <>
@@ -48,8 +90,10 @@ const FaceSearchForm = () => {
                     sizeAccept={{ width: 800, height: 800 }}
                 />
             </Box>
+
             <Formik
                 initialValues={{
+                    collection_id: collection?.id || '',  // Ensure collection_id is always a string or an empty string if not provided
                     limit: '10',
                     confidence_score: 0,
                 }}
@@ -72,6 +116,28 @@ const FaceSearchForm = () => {
             >
                 {({ handleBlur, handleChange, handleSubmit, isSubmitting, values }) => (
                     <form noValidate onSubmit={handleSubmit}>
+                        {/* Collection Field (Dropdown) */}
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel htmlFor="collection">Collection (Optional)</InputLabel>
+                            <Select
+                                id="collection"
+                                name="collection_id"
+                                value={values.collection_id}  // Use collection_id here
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                label="Collection"
+                                disabled={loading}
+                            >
+                                <MenuItem value=''>None</MenuItem>  {/* Use an empty string as the default value */}
+                                {collections.map((collection) => (
+                                    <MenuItem key={collection.id} value={collection.id}>
+                                        {collection.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        {/* Limit Field (Dropdown) */}
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel htmlFor="limit">Limit</InputLabel>
                             <Select
@@ -90,6 +156,7 @@ const FaceSearchForm = () => {
                             </Select>
                         </FormControl>
 
+                        {/* Type Field (Dropdown) */}
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel htmlFor="type">Type</InputLabel>
                             <Select

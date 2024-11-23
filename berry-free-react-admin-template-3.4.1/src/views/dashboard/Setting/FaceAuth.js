@@ -6,10 +6,11 @@ import SubCard from 'ui-component/cards/SubCard';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { loadModels, detectFace } from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceAuth = () => {
+    const { callAPI } = useCallAPI();
     const [cameraActive, setCameraActive] = useState(false);
     const videoRef = useRef(null);
     const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ const FaceAuth = () => {
     // Dùng useRef để lưu trữ intervalId
     const intervalIdRef = useRef(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
-
+    const [waitResponse, setWaitRespone] = useState(false);
     useEffect(() => {
         const loadAllModels = async () => {
         loadModels();
@@ -29,7 +30,7 @@ const FaceAuth = () => {
     useEffect(() => {
         const checkFaceAuth = async () => {
             try {
-                const response = await callAPI(BACKEND_ENDPOINTS.user.info, "POST", {}, true);                
+                const response = await callAPI(BACKEND_ENDPOINTS.user.info, "GET", {}, true);                
                 if (response) {
                     const info = response.data.info;
                     console.log(info);
@@ -76,8 +77,10 @@ const FaceAuth = () => {
 
             // Start sending images to the server every second
             intervalIdRef.current = setInterval(() => {
-                sendFrameToServer(); 
-            }, 5000);
+                if (!waitResponse) {
+                    sendFrameToServer();
+                } 
+            }, 1000);
         } catch (err) {
             console.error("Error accessing the camera: ", err);
             alert('Unable to access the camera. Please check your permissions.');
@@ -100,7 +103,7 @@ const FaceAuth = () => {
 
             // Convert canvas to data URL
             const imageData = canvas.toDataURL('image/jpeg');
-
+            setWaitRespone(true);
             // Send the image data to the server
             try {
                 const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, true)
@@ -134,7 +137,9 @@ const FaceAuth = () => {
                         clearInterval(intervalIdRef.current);
                         setCameraActive(false); // Update state to hide video component
                     }    
-            }
+            } finally {
+                setWaitRespone(false);
+            } 
         }
     };
 

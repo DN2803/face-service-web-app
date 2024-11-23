@@ -38,7 +38,7 @@ import UpgradePlanCard from './UpgradePlanCard';
 import User1 from 'assets/images/users/user-round.svg';
 
 // assets
-import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons';
+import { IconLogout, IconSearch, IconSettings, IconUser, IconReportSearch } from '@tabler/icons';
 
 // ==============================|| PROFILE MENU ||============================== //
 
@@ -58,15 +58,18 @@ const ProfileSection = () => {
   const anchorRef = useRef(null);
   const dispatch = useDispatch();
 
+  const username = useSelector(state => state.auth.user.username);
   const handleLogout = async () => {
     console.log('Logout');
     dispatch(logout());
     navigate('/');
   };
   const handleAccountSetting = () => {
-    console.log('setting');
     navigate('./dashboard/setting');
   };
+  const handleProjectSetting = () => {
+    navigate('./pages/project')
+  }
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
@@ -167,7 +170,7 @@ const ProfileSection = () => {
                       <Stack direction="row" spacing={0.5} alignItems="center">
                         <Typography variant="h4">Good Morning,</Typography>
                         <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                          Johne Doe
+                          {username}
                         </Typography>
                       </Stack>
                       <Typography variant="subtitle2">Project Admin</Typography>
@@ -263,6 +266,17 @@ const ProfileSection = () => {
                             <IconSettings stroke={1.5} size="1.3rem" />
                           </ListItemIcon>
                           <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
+                        </ListItemButton>
+                        <ListItemButton
+                          sx={{ borderRadius: `${customization.borderRadius}px` }}
+                          selected={selectedIndex === 0}
+                          // onClick={(event) => handleListItemClick(event, 0, '#')}
+                          onClick={handleProjectSetting}
+                        >
+                          <ListItemIcon>
+                            <IconReportSearch stroke={1.5} size="1.3rem" />
+                          </ListItemIcon>
+                          <ListItemText primary={<Typography variant="body2">Select Another Project </Typography>} />
                         </ListItemButton>
                         <ListItemButton
                           sx={{ borderRadius: `${customization.borderRadius}px` }}

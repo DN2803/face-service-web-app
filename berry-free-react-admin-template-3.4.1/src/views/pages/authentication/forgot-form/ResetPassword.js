@@ -27,7 +27,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 
 import { useEmail } from 'hooks/context/EmailContext';
 // ============================|| FIREBASE - RESETPASSWORD ||============================ //
@@ -35,6 +35,8 @@ import { useEmail } from 'hooks/context/EmailContext';
 const FirebaseResetPassword = ({ ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
+    const { callAPI } = useCallAPI();
+
     // const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
     // const customization = useSelector((state) => state.customization);
     const navigate = useNavigate();
