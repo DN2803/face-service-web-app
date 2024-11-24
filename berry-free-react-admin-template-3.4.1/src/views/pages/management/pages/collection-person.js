@@ -133,35 +133,52 @@ const PersonCollectionManagement = () => {
             name: values.name,
             nationality: values.nationality,
         }
-        await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+        if (editPerson) {
+            await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+        }
+        else {
+            await callAPI(BACKEND_ENDPOINTS.project.person, "PATCH", body, true)
+        }
+        
 
         handleCloseAdd(); // Close dialog after submission
     };
-    const handleSearchFace = () => {
-        console.log("call backend")
+    const handleSearchFace = async (values) => {
+        console.log("Searching face with values:", values);
+        const body = {
+            collection_id: parseInt(values.collection_id,10),
+            image: values.image,
+            max_results: parseInt(values.limit, 10),
+            score: values.confidence_score,
+        }
+        const respone = await callAPI(BACKEND_ENDPOINTS.project.search, "POST", body, true);
+
+        if (respone) { 
+            // setResult(respone.data.result);
+            console.log(respone.data);
+        }
+        
         handleCloseSearch();
-    }
+    };
 
-    const onEdit = (id) => {
-        const personToEdit = persons.find((person) => person.id === id);
-        if (personToEdit) {
-            setOpenAdd(true);  // Mở dialog "Add Person" nhưng sẽ dùng để chỉnh sửa
-            // Truyền dữ liệu người dùng cần chỉnh sửa vào form
-            setEditPerson(personToEdit); // Giả sử bạn đã tạo một state để lưu người dùng đang được chỉnh sửa
+    const handleEdit = (id) => {
+        const person = persons.find((p) => p.id === id);
+        if (person) {
+            setEditPerson(person);
+            handleCloseAdd();
         }
-    }
+    };
 
-    const onDelete = async (id) => {
-        try {
-            // Gửi yêu cầu xóa người dùng từ API
-            await callAPI(`/delete_person/${id}`, 'DELETE');
-
-            // Sau khi xóa thành công, cập nhật lại danh sách người dùng
-            loadPersons(page, rowsPerPage);
-        } catch (error) {
-            console.error('Error deleting person:', error);
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this person?")) {
+            try {
+                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${id}`, "DELETE");
+                setPersons((prev) => prev.filter((p) => p.id !== id));
+            } catch (error) {
+                console.error("Error deleting person", id, error);
+            }
         }
-    }
+    };
     return (
         <Box sx={{ padding: '20px' }}>
             <Box sx={{
@@ -263,12 +280,12 @@ const PersonCollectionManagement = () => {
                                     <TableCell>{person.updated_at}</TableCell>
                                     <TableCell>
                                         {/* Nút Sửa */}
-                                        <IconButton onClick={() => onEdit(person.id)} color="primary">
+                                        <IconButton onClick={() => handleEdit(person.id)} color="primary">
                                             <EditIcon />
                                         </IconButton>
 
                                         {/* Nút Xóa */}
-                                        <IconButton onClick={() => onDelete(person.id)} color="secondary">
+                                        <IconButton onClick={() => handleDelete(person.id)} color="secondary">
                                             <DeleteIcon />
                                         </IconButton>
                                     </TableCell>

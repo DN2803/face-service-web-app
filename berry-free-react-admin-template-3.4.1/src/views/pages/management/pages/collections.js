@@ -53,6 +53,7 @@ const CollectionManagement = () => {
         // Handle the form submission logic here
         console.log(values);
         const body = {
+            ...(editCollection &&{id: editCollection.id}),
             name: values.name,
             description: values.description
         }
@@ -74,7 +75,7 @@ const CollectionManagement = () => {
     const onDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this person?")) {
             try {
-                await callAPI(`${BACKEND_ENDPOINTS.project.collection}`, "DELETE", { id: id }, true);
+                await callAPI(`${BACKEND_ENDPOINTS.project.collection}/${id}`, "DELETE", true);
                 setCollections((prev) => prev.filter((collection) => collection.id !== id)); // Remove deleted item from state
             } catch (error) {
                 console.error("Error deleting collection", error);

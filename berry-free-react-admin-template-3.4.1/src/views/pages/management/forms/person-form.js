@@ -1,4 +1,4 @@
-import React, { useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -18,8 +18,10 @@ import { useSelector } from 'react-redux';
 
 const PersonForm = ({ onSubmit, person = null }) => {
     const scriptedRef = useRef(true); // Reference to handle async logic
-    const [images, setImages] = useState(person?.images || []); // Initialize with person images if editing
+    const [images, setImages] = useState([]); // Initialize with person images if editing
+    const [imagesCurrent, setImagesCurrent] = useState(person?.images || []);
     const collections = useSelector(state => state.collections.collections);
+    const [removeImageIDs, setRemoveImageIDs] = useState([]);
     console.log(collections)
 
     const handleSubmit = async (values) => {
@@ -27,25 +29,30 @@ const PersonForm = ({ onSubmit, person = null }) => {
         onSubmit({
             ...values,
             images,
+            removeImageIDs,
         });
     };
 
     // Function to handle file uploads
     const handleFileChange = (event) => {
-        const files = Array.from(event.target.files); // Convert FileList to Array
-        setImages(prevImages => [...prevImages, ...files]); // Add new images to existing array
+        const files = Array.from(event.target.files);
+        setImages(prevImages => [...prevImages, ...files]);
     };
 
     // Function to remove an image from the list
     const handleRemoveImage = (index) => {
         setImages(prevImages => prevImages.filter((_, i) => i !== index));
     };
+    const handleRemoveImageCurrent = (id) => {
+        setImagesCurrent((prevImages) => prevImages.filter((image) => image.id !== id));
+        setRemoveImageIDs((prevIDs) => [...prevIDs, id]);
+    }
 
     return (
         <Formik
             initialValues={{
                 name: person?.name || '',
-                dob: person?.dob || '',
+                dob: person?.birth || '',
                 nationality: person?.nationality || '',
                 collection_id: person?.collection_id || '',
                 submit: null
@@ -174,10 +181,44 @@ const PersonForm = ({ onSubmit, person = null }) => {
                     {/* List of Uploaded Images */}
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="h6">Uploaded Images:</Typography>
+                        {imagesCurrent.map((image, index) => (
+                            <Box
+                                key={image.id} // Dùng image.id để đảm bảo key là duy nhất
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    mb: 1,
+                                }}
+                            >
+                                <img
+                                    src={image.url}
+                                    alt={`Face ${index}`}
+                                    style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        objectFit: 'cover',
+                                        marginRight: '10px',
+                                    }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => handleRemoveImageCurrent(image.id)} // Xóa ảnh theo id
+                                >
+                                    Remove
+                                </Button>
+                            </Box>
+                        ))}
                         {images.length > 0 ? (
                             <Box>
                                 {images.map((image, index) => (
                                     <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                                        <img
+                                            src={typeof image === 'string' ? image : URL.createObjectURL(image)}
+                                            alt={`Uploaded ${index}`}
+                                            style={{ width: '50px', height: '50px', objectFit: 'cover', marginRight: '10px' }}
+                                        />
                                         <Typography>{image.name || image}</Typography>
                                         <Button variant="outlined" color="error" onClick={() => handleRemoveImage(index)}>Remove</Button>
                                     </Box>
@@ -194,7 +235,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                             type="submit"
                             color="primary"
                             variant="contained"
-                            disabled={isSubmitting || !images.length}
+                            disabled={isSubmitting || (!images.length && !removeImageIDs.length) }
                             fullWidth
                         >
                             {person ? 'Update' : 'Submit'}

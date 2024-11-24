@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Button,
     TextField,
@@ -39,6 +39,8 @@ const PersonManagement = () => {
     const [itemsPerPage] = useState(5); // Số mục hiển thị trên mỗi trang
     const [numPerson, setNumPerson] = useState(0);
     const [lastIDs, setLastIDs] = useState([]);
+    const waitResponseRef = useRef(false);
+    // const [searchResult, setSearchResult] = ([]);
 
     useEffect(() => {
         const initializeCollections = async () => {
@@ -56,69 +58,53 @@ const PersonManagement = () => {
 
     const { collections, loading } = useSelector((state) => state.collections);
 
-    useEffect(() => {
-        if (!loading && collections.length) {
-            const loadAllPersons = async () => {
-                try {
-                    const collectionIds = collections.map((collection) => collection.id);
-                    const queryParams = new URLSearchParams({
-                        collection_ids: collectionIds.join(','),
-                        limit: 5
-                    });
-                    const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}?${queryParams.toString()}`, "GET", null, true);
-                    setNumPerson(response.data.count);
-                    setPersons(response.data.persons)
-                    // Cập nhật lastID của trang đầu tiên
-                    setLastIDs((prevLastIDs) => {
-                        const newLastIDs = [...prevLastIDs];
-                        newLastIDs[0] = data.persons[data.persons.length - 1]?.id || null; // Lưu lastID của trang
-                        return newLastIDs;
-                    });
-                    console.log(response);
-                } catch (error) {
-                    console.error("Error loading persons", error);
-                }
-            };
-            loadAllPersons();
-        }
-    }, [collections, loading, callAPI]);
-
-
+    console.log(lastIDs);
     useEffect(() => {
         const loadPersonsForPage = async () => {
             try {
+                console.log(currentPage);
                 // Lấy lastID của trang hiện tại (trang đầu tiên là 0)
-                const lastID = lastIDs[currentPage - 1] || null;
-    
+                const lastID = lastIDs[currentPage - 2] || null;
+
                 // Tạo query params cho API
-                const queryParams = new URLSearchParams({
+                const queryParams = {
                     collection_ids: collections.map(collection => collection.id).join(','),
                     limit: itemsPerPage,
-                    last_id: lastID // Thêm lastID vào query để lấy người tiếp theo
-                });
-    
+                    ...(lastID && {last_id: lastID}) // Thêm lastID vào query để lấy người tiếp theo
+                };
+                waitResponseRef.current = true;
+
                 // Gọi API để lấy dữ liệu cho trang hiện tại
-                const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}?${queryParams.toString()}`, "GET", null, true);
-                setNumPerson(response.data.count);
-                setPersons(response.data.persons);
-    
+                const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}`, "GET", null, true, null, queryParams);
+                if (response.data.persons.length === 0) {
+                    console.log("No more persons to load.");
+                    return;
+                }
+                setNumPerson(numPerson + response.data.count);
+                // setPersons((prevPersons) => [...prevPersons, ...response.data.persons]);
+                setPersons (response.data.persons)
                 // Cập nhật lastID của trang hiện tại
                 setLastIDs((prevLastIDs) => {
                     const newLastIDs = [...prevLastIDs];
                     newLastIDs[currentPage - 1] = response.data.persons[response.data.persons.length - 1]?.id || null;
                     return newLastIDs;
                 });
-    
+
             } catch (error) {
                 console.error("Error loading persons for page", error);
+            } finally {
+                waitResponseRef.current = false;
             }
         };
-    
-        if (collections.length > 0 && !loading) {
+
+        if (!loading && collections.length > 0 && currentPage > 0 && !waitResponseRef.current) {
             loadPersonsForPage();
         }
-    }, [currentPage, collections, loading, callAPI, lastIDs, itemsPerPage]); // Theo dõi currentPage, collections, loading và lastIDs
-    
+    }, [currentPage, collections, loading, itemsPerPage]); // Theo dõi currentPage, collections, loading và lastIDs
+
+    const goToNextPage = (event, value) => {
+        setCurrentPage(value); // Cập nhật trang
+      };
     
 
     // Convert image file to base64
@@ -130,7 +116,7 @@ const PersonManagement = () => {
             reader.readAsDataURL(file);
         });
     };
-    
+
 
     const handleOpenSearch = () => {
         setOpenSearch(true);
@@ -150,14 +136,36 @@ const PersonManagement = () => {
     const handleSubmit = async (values) => {
         try {
             values.images = await Promise.all(values.images.map(convertToBase64));
-            const body = {
-                name: values.name,
-                nationality: values.nationality,
-                birth: values.dob,
-                images: values.images,
-                collection_id: values.collection_id,
-            };
-            await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true);
+            if (editPerson) {
+                const body = {
+                    name: values.name,
+                    nationality: values.nationality,
+                    birth: values.dob,
+                    new_images: values.images,
+                    old_collection_id: editPerson.collection_id,
+                    collection_id: values.collection_id,
+                    removed_image_ids: values.removeImageIDs
+                }
+                const response = await callAPI(`${BACKEND_ENDPOINTS.project.person}/${editPerson.id}`, "PATCH", body, true)
+                setPersons((prevPersons) => {
+                    const newPersons = [...prevPersons];
+                    const index = newPersons.findIndex(person => person.id === editPerson.id);
+                    if (index !== -1) {
+                        newPersons[index] = response.data.person;
+                    }
+                    return newPersons;  // Return the updated array
+                });
+            }
+            else {
+                const body = {
+                    name: values.name,
+                    nationality: values.nationality,
+                    birth: values.dob,
+                    images: values.images,
+                    collection_id: values.collection_id,
+                };
+                await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+            }
             handleCloseAdd();
         } catch (error) {
             console.error("Error submitting person", error);
@@ -167,18 +175,18 @@ const PersonManagement = () => {
     const handleSearchFace = async (values) => {
         console.log("Searching face with values:", values);
         const body = {
-            collection_id: parseInt(values.collection_id,10),
+            collection_id: parseInt(values.collection_id, 10),
             image: values.image,
             max_results: parseInt(values.limit, 10),
             score: values.confidence_score,
         }
         const respone = await callAPI(BACKEND_ENDPOINTS.project.search, "POST", body, true);
 
-        if (respone) { 
-            setResult(respone.data.result);
+        if (respone) {
+            // setSearchResult(respone.data.result);
             console.log(respone.data);
         }
-        
+
         handleCloseSearch();
     };
 
@@ -186,14 +194,15 @@ const PersonManagement = () => {
         const person = persons.find((p) => p.id === id);
         if (person) {
             setEditPerson(person);
-            handleCloseAdd();
+            setOpenAdd(true);
         }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this person?")) {
             try {
-                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${id}`, "DELETE");
+                const person = persons.find((p) => p.id === id);
+                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${id}`, "DELETE", {}, true, null, { collection_id: person.collection_id });
                 setPersons((prev) => prev.filter((p) => p.id !== id));
             } catch (error) {
                 console.error("Error deleting person", id, error);
@@ -271,7 +280,7 @@ const PersonManagement = () => {
                 <Table>
                     <TableHead sx={{ backgroundColor: '#a61d24' }}>
                         <TableRow>
-                            {["Photo", "Name", "ID", "DOB", "Nationality", "Modified Date", "Collection", "Actions"].map((head) => (
+                            {["Photo", "Name", "ID", "Birthday", "Nationality", "Modified Date", "Collection", "Actions"].map((head) => (
                                 <TableCell key={head} sx={{ color: '#fff' }}>{head}</TableCell>
                             ))}
                         </TableRow>
@@ -287,7 +296,7 @@ const PersonManagement = () => {
                             persons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
+                                        <img src={person.images[0].url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
                                     <TableCell>{person.birth}</TableCell>
@@ -304,9 +313,10 @@ const PersonManagement = () => {
                     </TableBody>
                 </Table>
                 <Pagination
-                    count={Math.ceil(numPerson / itemsPerPage)} // Tổng số trang
+                   
+                   count={numPerson ? Math.ceil(numPerson / itemsPerPage) + 1 : 1}
                     page={currentPage}
-                    onChange={(event, value) => setCurrentPage(value)} // Cập nhật trang
+                    onChange={goToNextPage} // Cập nhật trang
                     color="primary"
                 />
             </TableContainer>

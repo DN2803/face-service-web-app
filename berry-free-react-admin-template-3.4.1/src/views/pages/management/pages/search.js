@@ -28,7 +28,7 @@ const SearchManagement = () => {
     const handleSearchFace = async (values) => {
         console.log(values);
         const body = {
-            collection_id: parseInt(values.collection_id,10),
+            collection_id: values.collection_id,
             image: values.image,
             limit: parseInt(values.limit, 10),
             score: values.confidence_score,
@@ -126,7 +126,8 @@ const SearchManagement = () => {
                             currentPersons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
+                                        {/* <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> */}
+                                    </TableCell> 
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
                                     <TableCell>{person.birth}</TableCell>
