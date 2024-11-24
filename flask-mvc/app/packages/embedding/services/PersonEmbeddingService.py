@@ -17,12 +17,12 @@ class PersonEmbeddingService(EmbeddingService):
         print(f'MIN sim: {cos_sim.min()}, MAX sim: {cos_sim.max()}')
         
         indices = np.where(cos_sim > sim_threshold)[0]
-
-        if len(indices) > limit:
-            indices = indices[:limit]
-        
         filtered_df  = df.iloc[indices]
         result = filtered_df['id']
+        result = filtered_df['person_id'].drop_duplicates().tolist()
+
+        if len(result) > limit:
+            result = result[:limit]
 
         return result
 

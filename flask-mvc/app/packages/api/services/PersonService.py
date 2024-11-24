@@ -121,9 +121,8 @@ class PersonService(BaseService):
                 print(f'Ignore deleting unfound/inaccessible person {person_obj.id}!')
 
             self.repository.delete_person(person=person_obj)
-    
+
     #----------------------SEARCH----------------------#
-    
     def search(self, **kwargs):
         collection_id = kwargs['collection_id'],
         image, score, limit = kwargs['image'], kwargs['score'], kwargs['limit']
@@ -132,7 +131,7 @@ class PersonService(BaseService):
         person_df = PersonRepo().get_df(collection_id)
 
         if person_df.empty: return []
-        
+
         # Image Encoding:
         embed_service = PersonEmbeddingService()
         face_obj = PersonImageService.extract_face(image, only_one=True)
@@ -143,10 +142,11 @@ class PersonService(BaseService):
         embed_df = embed_service.repository.get_embeds_df(person_ids)
 
         # Retrieval
-        embed_ids_result = embed_service.retrieval(embed_df, embedding, limit, score)
+        matched_person_ids = embed_service.retrieval(embed_df, embedding, limit, score)
 
-        if embed_ids_result == None:
-            return None
-        
-        result = person_df.loc[person_df['face_embed_id'].isin(embed_ids_result)]
+        if len(matched_person_ids) == 0:
+            return []
+
+        result = person_df.loc[person_df['id'].isin(matched_person_ids)]
+        #TODO: return person images?
         return result.to_json()

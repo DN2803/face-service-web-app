@@ -49,7 +49,7 @@ def person():
 def person_id(person_id):
     try:
         key = _get_api_key()        
-        data = request.json
+        data = request.json if request.method=='PATCH' else request.args
         
         if 'collection_id' not in data:
             raise Exception('The request lacks collection_id parameter!')
@@ -85,7 +85,7 @@ def persons():
 
         if 'collection_ids' not in data:
             raise Exception('The request lacks collection ids!')
-        
+
         collection_ids = [int(id) for id in data['collection_ids'].split(',')]
         data.pop('collection_ids')
         validated = KeyService().validate(key, collection_ids)
@@ -160,8 +160,13 @@ def collection_id(collection_id):
 
         if request.method == 'PATCH':
             data = request.json
-            collection_service.update_collection(key_id, is_admin, collection_id, **data)
-            return jsonify(message='Updated collection successfully!'), 200
+            collection = collection_service.update_collection(
+                key_id,
+                is_admin,
+                collection_id,
+                **data
+            )
+            return jsonify(message='Updated collection successfully!', collection=collection), 200
 
         if request.method == 'DELETE':
             collection_service.delete_collection(key_id, is_admin, collection_id)
@@ -205,11 +210,8 @@ def search():
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
 
-        person_service = PersonService()
+        result = PersonService().search(**data)
 
-        result = person_service.search(**data)
-        print(result)
-        
         return jsonify(result=result), 200
     except Exception as e:
         print(e)
