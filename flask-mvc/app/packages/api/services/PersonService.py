@@ -35,20 +35,22 @@ class PersonService(BaseService):
         images = kwargs.pop('images')
 
         if len(images) == 0: raise Exception('No images found!')
-
-        images = self._person_img_process(images, person.id)
-
-        if len(images) == 0: raise Exception('No faces found in the given images')
-
+        
         validated_data = self.schema.load(data=kwargs)
         person = self.repository.add_person(**validated_data)
+        images = self._person_img_process(images, person.id)
+
+        if len(images) == 0: 
+            self.repository.delete_person(person)
+            raise Exception('No faces found in the given images')
+
         person_info = self.schema.dump(person)
         person_info['images'] = images
 
         return person_info
 
     def update_person(self, person_id, **kwargs):
-        old_collection_id = kwargs['old_collection_id']
+        old_collection_id = kwargs.pop('old_collection_id')
         new_images = kwargs.pop('new_images')
         removed_image_ids = kwargs.pop('removed_image_ids')
         validated_data = self.schema.load(data=kwargs)
@@ -93,8 +95,8 @@ class PersonService(BaseService):
         self.repository.delete_person(person=person_obj)
     
     #----------------------PERSONs----------------------#
-    def get_persons(self, **kwargs):        
-        collection_ids, limit = kwargs['collection_ids'], kwargs['limit']        
+    def get_persons(self, collection_ids, **kwargs):        
+        limit =  kwargs['limit']        
         last_id = kwargs['last_id'] if 'last_id' in kwargs else 0
 
         persons = self.repository.get_persons(limit, last_id, collection_ids)

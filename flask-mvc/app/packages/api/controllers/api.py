@@ -28,7 +28,7 @@ def person():
         if 'collection_id' not in data:
             raise Exception('The request lacks collection_id parameter!')
 
-        validated = KeyService().validate(key, list(data['collection_id']))
+        validated = KeyService().validate(key, [data['collection_id']])
 
         if not validated:
             return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
@@ -66,8 +66,8 @@ def person_id(person_id):
         person_service = PersonService()
 
         if request.method == 'PATCH':
-            person_service.update_person(person_id, **data)
-            return jsonify(message='Updated person successfully!'), 200
+            person = person_service.update_person(person_id, **data)
+            return jsonify(message='Updated person successfully!', person=person), 200
 
         if request.method == 'DELETE':
             person_service.delete_person(person_id, data['collection_id'])
@@ -81,12 +81,14 @@ def person_id(person_id):
 def persons():
     try:
         key = _get_api_key()
-        data = request.args if request.method=='GET' else request.json
-        
+        data = request.args.copy() if request.method=='GET' else request.json
+
         if 'collection_ids' not in data:
             raise Exception('The request lacks collection ids!')
-
-        validated = KeyService().validate(key, data['collection_ids'])
+        
+        collection_ids = [int(id) for id in data['collection_ids'].split(',')]
+        data.pop('collection_ids')
+        validated = KeyService().validate(key, collection_ids)
 
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
@@ -96,7 +98,7 @@ def persons():
             if 'limit' not in data:
                 raise Exception('The request lacks max number of result!')
 
-            persons = person_service.get_persons(**data)
+            persons = person_service.get_persons(collection_ids, **data)
 
             response = jsonify(
                 count=len(persons),
