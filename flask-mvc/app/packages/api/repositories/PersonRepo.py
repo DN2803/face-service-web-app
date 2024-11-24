@@ -17,7 +17,7 @@ class PersonRepo(BaseRepository):
         return df
 
     def update_info(self, person, **kwargs):
-        self._update_by_obj(person,**kwargs)
+        return self._update_by_obj(person,**kwargs)
 
     def delete_person(self, person):
         self._delete(person)

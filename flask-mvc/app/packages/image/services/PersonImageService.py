@@ -22,12 +22,15 @@ class PersonImageService(ImageService):
 
         return img_obj.id, download_link
     
-    def get_link_by_person_id(self, person_id):
+    def get_images_by_person_id(self, person_id):
         result = []
         img_objs = self.repository.get_by_person_id(person_id)
-
+        
         for img_obj in img_objs:
             url = self.get_download_link(img_obj.img_url) #img_url is a path at the moment
-            result.append(url)
+            result.append({'id': img_obj.id, 'url': url})
         
         return result
+
+    def get_image_objs_by_person_id(self, person_id) -> list:
+        return self.repository.get_by_person_id(person_id)

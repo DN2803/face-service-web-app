@@ -21,7 +21,6 @@ class UserImageService(ImageService):
         old_img = self.repository.get_by_user_id(user_id)
 
         if old_img:
-            self._delete_on_cloud(old_img.img_url)
             self.remove(old_img)
 
         img_obj = self.repository.add_img(img_url=img_path, user_id=user_id)

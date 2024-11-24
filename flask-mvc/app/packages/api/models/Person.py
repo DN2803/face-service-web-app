@@ -10,10 +10,6 @@ class Person(TimestampMixin, BaseModel):
         db.Integer,
         db.ForeignKey('collection.id',name='person-collection-fk', ondelete='CASCADE')
     )
-    face_embed_id = db.Column(
-        db.Integer,
-        db.ForeignKey('person_face_embedding.id',name='person-faceEmbed-fk', ondelete='SET NULL')
-    )
     person_face_image = db.relationship(
         'PersonFaceImage',
         backref='person',

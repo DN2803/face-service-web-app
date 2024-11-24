@@ -17,11 +17,12 @@ class PersonEmbeddingRepo(BaseRepository):
     
     def get_embedding(self, id):
         return self._get_by('id',id)
-
-    def get_embeds_df(self, ids):
-        result = self.session.query.with_entities(self.model.id, self.model.embedding).filter(
-            self.model.id.in_(ids)
+    
+    def get_embeds_df(self, person_ids):
+        result = self.session.query.with_entities(self.model.person_id, self.model.embedding).filter(
+            self.model.person_id.in_(person_ids)
         ).all()
-        df = pd.DataFrame(result, columns=['id', 'embedding'])
+
+        df = pd.DataFrame(result, columns=['person_id', 'embedding'])
         df['embedding'] = df['embedding'].apply(pickle.loads)
         return df

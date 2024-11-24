@@ -21,6 +21,6 @@ class KeyRepo(BaseRepository):
             return obj
         else:
             return None
-        
+
     def update_key(self, key, **kwargs):
-        self._update_by_obj(key, **kwargs)
+        return self._update_by_obj(key, **kwargs)

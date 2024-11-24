@@ -3,6 +3,8 @@ from flask_limiter import Limiter
 
 from app import app
 from app.packages.api.services.KeyService import KeyService
+from app.packages.api.services.PersonService import PersonService
+from app.packages.api.services.CollectionService import CollectionService
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/project')
 
@@ -16,50 +18,60 @@ __key_limiter = Limiter(
     default_limits=['200 per day']
 )
 
-@api_bp.route('/person', methods=['POST','GET','PATCH','DELETE'])
+@api_bp.route('/person', methods=['POST', 'PATCH', 'DELETE'])
 @__key_limiter.limit('20 per minute')
 def person():
     try:
-        key_service = KeyService()
-        key = _get_api_key()
-        key_id, is_admin = key_service.check_key(key)
-
-        if not key_id:
-            return jsonify(error='Invalid API Key!'), 401
-
+        key = _get_api_key()        
         data = request.json
+        
+        if 'collection_id' not in data:
+            raise Exception('The request lacks collection_id parameter!')
+
+        validated = KeyService().validate(key, list(data['collection_id']))
+
+        if not validated:
+            return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
 
         if request.method == 'POST':
-            person_info = key_service.add_person(key_id, is_admin, **data)
+            person_info = PersonService().add_person(**data)
             response = jsonify(
                 person_info=person_info,
                 message="Added new Person successfully."
             )
             return response, 201
+    except Exception as e:
+        print(e)
+        return jsonify(error = str(e)), 400
 
-        if request.method == 'GET':
-            person_info = key_service.get_person(key_id, is_admin, data['person_id'])
-            
-            if not person_info:
-                raise Exception('Person not found or inaccessible!')
-
-            response = jsonify(
-                person_info=person_info
-            )
-            return response, 200
+@api_bp.route('/person/<int:person_id>', methods=['PATCH', 'DELETE'])
+@__key_limiter.limit('20 per minute')
+def person_id(person_id):
+    try:
+        key = _get_api_key()        
+        data = request.json
         
-        if request.method == 'PATCH':
-            if key_service.update_person(key_id, is_admin, data['person_id']):
-                return jsonify(message='Update Successfully!'), 200
-            else:
-                raise Exception('Person not found or inaccessible!')
-            
-        if request.method == 'DELETE':
-            if key_service.delete_person(key_id, is_admin, data['person_id']):
-                return jsonify(message='Delete Successfully!'), 200
-            else:
-                raise Exception('Person not found or inaccessible!')
+        if 'collection_id' not in data:
+            raise Exception('The request lacks collection_id parameter!')
 
+        collection_ids = [data['collection_id']]
+
+        if 'old_collection_id' in data: collection_ids.append(data['old_collection_id'])
+
+        validated = KeyService().validate(key, collection_ids)
+
+        if not validated:
+            return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
+
+        person_service = PersonService()
+
+        if request.method == 'PATCH':
+            person_service.update_person(person_id, **data)
+            return jsonify(message='Updated person successfully!'), 200
+
+        if request.method == 'DELETE':
+            person_service.delete_person(person_id, data['collection_id'])
+            return jsonify(message='Deleted person successfully!'), 200
     except Exception as e:
         print(e)
         return jsonify(error = str(e)), 400
@@ -68,30 +80,23 @@ def person():
 @__key_limiter.limit('20 per minute')
 def persons():
     try:
-        key_service = KeyService()
         key = _get_api_key()
-        key_id, is_admin = key_service.check_key(key)
+        data = request.args if request.method=='GET' else request.json
+        
+        if 'collection_ids' not in data:
+            raise Exception('The request lacks collection ids!')
 
-        if not key_id:
-            return jsonify(error='Invalid API Key!'), 401
+        validated = KeyService().validate(key, data['collection_ids'])
 
+        if not validated:
+            return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
+
+        person_service = PersonService()
         if request.method == 'GET':
-            # Lấy dữ liệu từ query parameters
-            collection_ids = request.args.get('collection_ids')  # Lấy chuỗi collection_ids
-            limit = request.args.get('limit', type=int)  # Lấy limit (mặc định None)
+            if 'limit' not in data:
+                raise Exception('The request lacks max number of result!')
 
-            if not collection_ids:
-                raise Exception('Not enough parameters!')
-
-            # Chuyển chuỗi collection_ids thành danh sách
-            collection_ids = [int(id) for id in collection_ids.split(',')]
-
-            # Gọi service xử lý
-            data = {
-                'collection_ids': collection_ids,
-                'limit': limit
-            }
-            persons = key_service.get_persons(key_id, is_admin, **data)
+            persons = person_service.get_persons(**data)
 
             response = jsonify(
                 count=len(persons),
@@ -100,60 +105,65 @@ def persons():
             return response, 200
 
         if request.method == 'DELETE':
-            data = request.json  # Body chỉ dùng cho DELETE
-            if not data or 'person_id' not in data:
+            if not data or 'person_ids' not in data:
                 raise Exception('Not enough parameters!')
 
-            if key_service.delete_person(key_id, is_admin, data['person_id']):
+            if person_service.delete_persons(**data):
                 return jsonify(message='Delete Successfully!'), 200
             else:
                 raise Exception('Person not found or inaccessible!')
-
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400
 
-@api_bp.route('/collection', methods=['POST','GET','PATCH','DELETE'])
+@api_bp.route('/collection', methods=['POST'])
 @__key_limiter.limit('20 per minute')
 def collection():
     try:
-        key_service = KeyService()
         key = _get_api_key()
-        key_id, is_admin = key_service.check_key(key)
+        key_id, is_admin = KeyService().check_key(key)
 
         if not key_id:
             return jsonify(error='Invalid API Key!'), 401
 
+        collection_service = CollectionService()
         data = request.json
 
         if request.method == 'POST':
             if not is_admin:
                 raise Exception('Cannot create a collection with Dev Key!')
 
-            info = key_service.add_collection(key_id, **data)
+            info = collection_service.add_collection(key_id, **data)
 
             response = jsonify(
                 collection_info=info,
                 message="Added new Collection successfully."
             )
             return response, 201
+    except Exception as e:
+        print(e)
+        return jsonify(error = str(e)), 400
 
-        if request.method == 'GET':
-            info = key_service.get_collection(key_id, is_admin, data['person_id'])
-            
-            if not info: 
-                raise Exception('Collection not found or inaccessible!')
-            
-            response = jsonify(
-                collection_info=info
-            )
-            return response, 200
-        
+@api_bp.route('/collection/<int:collection_id>', methods=['PATCH','DELETE'])
+@__key_limiter.limit('20 per minute')
+def collection_id(collection_id):
+    try:
+        key = _get_api_key()
+        key_id, is_admin = KeyService().check_key(key)
+
+        if not key_id:
+            return jsonify(error='Invalid API Key!'), 401
+
+        collection_service = CollectionService()
+
         if request.method == 'PATCH':
-            pass
+            data = request.json
+            collection_service.update_collection(key_id, is_admin, collection_id, **data)
+            return jsonify(message='Updated collection successfully!'), 200
 
         if request.method == 'DELETE':
-            pass
+            collection_service.delete_collection(key_id, is_admin, collection_id)
+            return jsonify(message='Deleted collection successfully!'), 200
     except Exception as e:
         print(e)
         return jsonify(error = str(e)), 400
@@ -162,21 +172,19 @@ def collection():
 @__key_limiter.limit('20 per minute')
 def collections():
     try:
-        key_service = KeyService()
         key = _get_api_key()
-        key_id, is_admin = key_service.check_key(key)
+        key_id, is_admin = KeyService().check_key(key)
 
         if not key_id:
             return jsonify(error='Invalid API Key!'), 401
 
-        if request.method == 'GET':
-            collections = key_service.get_collections(key_id, is_admin)
+        collections = CollectionService().get_collections(key_id, is_admin)
 
-            response = jsonify(
-                count=len(collections),
-                collections=collections
-            )
-            return response, 200
+        response = jsonify(
+            count=len(collections),
+            collections=collections
+        )
+        return response, 200
     except Exception as e:
         print(e)
         return jsonify(error = str(e)), 400
@@ -185,16 +193,19 @@ def collections():
 @__key_limiter.limit('20 per minute')
 def search():
     try:
-        key_service = KeyService()
         key = _get_api_key()
-        key_id, is_admin = key_service.check_key(key)
-
-        if not key_id:
-            return jsonify(error='Invalid API Key!'), 401
-
         data = request.json
+        if 'collection_id' not in data:
+            raise Exception('The request lacks collection id!')
 
-        result = key_service.search(key_id, is_admin, **data)
+        validated = KeyService().validate(key, data['collection_id'])
+
+        if not validated:
+            return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
+
+        person_service = PersonService()
+
+        result = person_service.search(**data)
         print(result)
         
         return jsonify(result=result), 200

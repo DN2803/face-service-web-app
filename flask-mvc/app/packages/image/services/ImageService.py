@@ -77,8 +77,9 @@ class ImageService(BaseService):
         content = self.__compress(img_np)        
         return storage_app.upload(file_path, content)
 
-    def _delete_on_cloud(self, file_path):
-        return storage_app.delete(file_path)
+    def _remove_on_cloud(self, file_path):
+        storage_app.delete(file_path)
 
     def remove(self, img_obj):
+        self._remove_on_cloud(img_obj.img_url)
         self.repository._delete(img_obj)

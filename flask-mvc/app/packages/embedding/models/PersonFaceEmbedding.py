@@ -8,3 +8,8 @@ class PersonFaceEmbedding(BaseModel):
         db.ForeignKey('person_face_image.id',name='embed-pface-fk',ondelete='CASCADE'),
         nullable=False
     )
+    person_id = db.Column(
+        db.Integer,
+        db.ForeignKey('person.id',name='embed-person-fk'),
+        nullable=False
+    )

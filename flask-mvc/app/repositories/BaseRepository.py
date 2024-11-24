@@ -59,6 +59,8 @@ class BaseRepository:
 
         self.session.commit()
 
+        return obj
+
     def _delete(self, obj):
         self.session.delete(obj)
         self.session.commit()

@@ -19,3 +19,17 @@ class CollectionRepo(BaseRepository):
 
     def get_collections_by_key_id(self, admin_key_id):
         return self._get_by('admin_key_id',admin_key_id, all=True)
+    
+    def check_admin_access(self, admin_key_id, collection_id):
+        obj = CollectionRepo().get_collection_by_id(collection_id)
+
+        if not obj or obj.admin_key_id != admin_key_id: 
+            return False
+        
+        return True
+    
+    def update(self, collection, **kwargs):
+        self._update_by_obj(collection, **kwargs)
+
+    def delete(self, collection):
+        self._delete(collection)

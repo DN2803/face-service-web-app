@@ -26,10 +26,14 @@ class PersonEmbeddingService(EmbeddingService):
 
         return result
 
-    def add_embedding(self, embed: list[float], image_id):
+    def add_embedding(self, embed: list[float], image_id, person_id):
         binary_embed = pickle.dumps(embed)
+        embed = self.repository.add_embed(
+            embedding = binary_embed,
+            image_id = image_id,
+            person_id=person_id
+        )
 
-        embed = self.repository.add_embed(embedding = binary_embed, image_id = image_id)
         return embed
 
     def get_embedding(self, embed_id):
