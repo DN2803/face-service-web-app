@@ -5,22 +5,24 @@ import MuiTypography from '@mui/material/Typography';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-
+import { ClipLoader } from 'react-spinners';
 // Image Upload Component
 import ImageUpload from 'ui-component/ImageUpload';
 
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 const FaceComparisonPage = () => {
+    const { callAPI } = useCallAPI();
     const [uploadedImage1, setUploadedImage1] = useState(null);
     const [uploadedImage2, setUploadedImage2] = useState(null);
     const [comparisonResult, setComparisonResult] = useState(null); // Store the comparison result
     const [result, setResult] = useState(false);
+    const [isLoading, setIsLoading] = useState(false); 
     const handleCompare = async () => {
         // Simulate face comparison process
         if (uploadedImage1 && uploadedImage2) {
-
+            setIsLoading(true);
             try {
                 const response = await callAPI(BACKEND_ENDPOINTS.demo_function.comparison, "POST", {
                     image1: uploadedImage1,
@@ -35,10 +37,13 @@ const FaceComparisonPage = () => {
             }
             catch (error){
                 console.error("Error:", error)
+            } finally {
+                // Kết thúc trạng thái loading
+                setIsLoading(false);
             }
         } else {
             alert('Please upload both images.');
-        }
+        } 
     };
 
     const handleReset = () => {
@@ -90,6 +95,7 @@ const FaceComparisonPage = () => {
                         </MuiTypography>
                         <Box sx={{ width: "100%", display: 'flex', flexDirection: 'column', alignItems: 'left' }}>
                             <Box sx={{ mt: 2, width: '100%' }}>
+                                {isLoading && <ClipLoader size={50} color={"#123abc"} />}
                                 {comparisonResult !== null && (
                                     <MuiTypography variant="body1" gutterBottom>
                                         Match Score: {comparisonResult * 100}% {comparisonResult ? '✅ Match' : '❌ No Match'}

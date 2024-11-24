@@ -11,36 +11,16 @@ import {
     Select,
     MenuItem,
 } from '@mui/material';
-import { callAPI } from 'utils/api_caller';
-import { BACKEND_ENDPOINTS } from 'services/constant';
+import { useFetchProjects } from "hooks/useFetchProjects";
 import { setApiKey } from 'store/actions/authActions';
-
-const fetchProjects = async () => {
-    
-    const response = await callAPI(BACKEND_ENDPOINTS.user.project.get, "POST", {}, { withCredentials: true });
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            if (Array.isArray(response.data.projects)) {
-                resolve(response.data.projects.map((project) => {
-                    // Replace with desired mapping logic
-                    return {
-                        name: project[0],
-                        api: project[1],
-                    };
-                }));
-            } else {
-                console.error("projects is not an array:", response.data.projects);
-                resolve([]);
-            }
-        }, 1000);
-    });
-};
+import { setProject } from 'store/actions/projectActions';
 
 const SelectForm = (... others) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { fetchProjects } = useFetchProjects();
     useEffect(() => {
         const getProjects = async () => {
             try {
@@ -57,8 +37,10 @@ const SelectForm = (... others) => {
 
     const handleAccessAPI = async (api) => {
         console.log("Accessed API:", api);
+        const project = projects.find((project) => project.api === api);
+        dispatch(setProject(project));
         dispatch(setApiKey(api));
-        navigate('/pages/poi-management');
+        navigate('/dashboard/default');
     };
 
     return (

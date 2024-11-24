@@ -22,7 +22,7 @@ import useScriptRef from 'hooks/useScriptRef';
 import AnimateButton from 'ui-component/extended/AnimateButton';
 
 
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 import { useUserInfo } from 'hooks';
@@ -33,6 +33,8 @@ import { useEmailVerified } from 'hooks';
 const FirebaseEmailLogin = ({ ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
+    const { callAPI } = useCallAPI();
+
     // const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
     // const customization = useSelector((state) => state.customization);
     const navigate = useNavigate();
@@ -58,8 +60,8 @@ const FirebaseEmailLogin = ({ ...others }) => {
           console.log(response)
           if (data) {
             setUserInfo({
-                username: data['user_name'],
-                faceid: data['is_faceid']
+                username: data.info['name'],
+                faceid: data.info['verified']
               });
             localStorage.setItem('refresh_token', data.refresh_token);
             navigate('/pages/login/login3')

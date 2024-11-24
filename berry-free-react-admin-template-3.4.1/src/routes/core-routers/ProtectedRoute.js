@@ -8,8 +8,6 @@ const ProtectedRoute = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const isAuthenticated = useSelector(state => state.auth.user);
-
-  console.log("auth: ", isAuthenticated);
   useEffect(() => {
     if (!isAuthenticated) {
       // Lưu trữ route hiện tại vào Redux trước khi chuyển hướng

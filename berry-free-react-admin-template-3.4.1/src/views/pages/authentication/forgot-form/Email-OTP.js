@@ -24,7 +24,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 
 
 
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 // import { Password } from '@mui/icons-material';
 
 import { useEmail } from 'hooks/context/EmailContext';
@@ -34,6 +34,8 @@ import { useEmail } from 'hooks/context/EmailContext';
 const FirebaseForgotPassword = ({ ...others }) => {
     const theme = useTheme();
     const scriptedRef = useScriptRef();
+    const { callAPI } = useCallAPI();
+
     // const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
     // const customization = useSelector((state) => state.customization);
     const navigate = useNavigate();

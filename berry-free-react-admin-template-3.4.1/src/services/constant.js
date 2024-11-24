@@ -27,6 +27,13 @@ export const BACKEND_ENDPOINTS = {
       comparison: "/demo/comparison",
       liveness: "/demo/anti-spoofing",
       search: "/demo/search"
+    }, 
+    project: {
+      person: "/project/person",
+      collection: "/project/collection",
+      persons: "/project/persons",
+      collections: "/project/collections",
+      search: "/project/search",
     }
   };
   

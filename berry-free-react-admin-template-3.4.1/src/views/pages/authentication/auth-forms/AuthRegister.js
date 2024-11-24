@@ -36,7 +36,7 @@ import { strengthColor, strengthIndicator } from 'utils/password-strength';
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 // ===========================|| FIREBASE - REGISTER ||=========================== //
@@ -44,6 +44,7 @@ import { BACKEND_ENDPOINTS } from 'services/constant';
 const FirebaseRegister = ({ ...others }) => {
   const theme = useTheme();
   const scriptedRef = useScriptRef();
+  const { callAPI } = useCallAPI();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const customization = useSelector((state) => state.customization);
   const [showPassword, setShowPassword] = useState(false);
@@ -59,10 +60,11 @@ const FirebaseRegister = ({ ...others }) => {
   const handleRegister = async (name, email, password) => {
     console.error('Register:', name, email, password);
     try {
-      const responseCheckEmail = await callAPI(BACKEND_ENDPOINTS.auth.register.checkMail, "POST", { email });
+      const responseCheckEmail = await callAPI(BACKEND_ENDPOINTS.auth.register.checkMail, "POST", { email: email });
+      
       if (responseCheckEmail) {
         try {
-          const responseSubmit = await callAPI(BACKEND_ENDPOINTS.auth.register.submit, "POST", { name, email, password });
+          const responseSubmit = await callAPI(BACKEND_ENDPOINTS.auth.register.submit, "POST", { name: name, email: email, password: password });
           const data = responseSubmit.data;
           if (responseSubmit) {
             console.log("Đăng ký thành công:", data);

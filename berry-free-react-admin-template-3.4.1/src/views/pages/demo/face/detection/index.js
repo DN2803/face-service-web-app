@@ -5,19 +5,23 @@ import MuiTypography from '@mui/material/Typography';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
+import { ClipLoader } from 'react-spinners';
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
 import ImageUpload from 'ui-component/ImageUpload';
 import detection_demo_img from 'assets/images/data_test_image/detection';
-import { callAPI } from 'utils/api_caller';
+import { useCallAPI } from 'hooks/useCallAPI';
 import { convertAndCacheImage } from 'utils/imageCache';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceDetectionPage = () => {
+    const { callAPI } = useCallAPI();
+
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageResult, setImageResult] = useState(null);
     const [numPeople, setNumPeople] = useState("0");
     const [landmarks, setLandmarks] = useState([]); // State to store landmarks
     const canvasRef = useRef(null); // Reference to the canvas
+    const [isLoading, setIsLoading] = useState(false); 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas) {
@@ -86,8 +90,7 @@ const FaceDetectionPage = () => {
     };
 
     const handleDetection = async (imageData) => {
-        console.log(uploadedImage)
-        console.log(imageData)
+        setIsLoading(true);
         try {
             const response = await callAPI(BACKEND_ENDPOINTS.demo_function.detection, "POST", { image: imageData });
             if (response) {
@@ -101,6 +104,9 @@ const FaceDetectionPage = () => {
             }
         } catch (error) {
             console.error("Error:", error);
+        } finally {
+            // Kết thúc trạng thái loading
+            setIsLoading(false);
         }
     };
 
@@ -157,6 +163,7 @@ const FaceDetectionPage = () => {
 
                     <Grid item xs={12} sm={6} md={5}>
                         <MuiTypography variant="subtitle1" gutterBottom> Result</MuiTypography>
+                        {isLoading && <ClipLoader size={50} color={"#123abc"} />}
                         <MuiTypography variant="body1" gutterBottom>
                             {numPeople === "0" ? "No people detected." : `There are ${numPeople} people detected.`}
                         </MuiTypography>

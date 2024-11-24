@@ -1,14 +1,17 @@
 import React from 'react';
 import { Grid, Paper, Typography, Button, Box } from '@mui/material';
-import image from 'assets/images/noData.svg';
+// import image from 'assets/images/noData.svg';
+import { useSelector } from 'react-redux';
 
 const Dashboard = () => {
   // Project metadata
-  const projectMetadata = {
-    name: 'Hello',
-    role: 'Developer',
-    scopes: 'All '
-  };
+  const projectMetadata = useSelector(state => state.project.selectedProject);
+  console.log(projectMetadata);
+
+  const remainDays = (exp) => {
+    const  currentTime = Math.floor(Date.now() / 1000);
+    return Math.round((exp - currentTime) / (24 * 60 * 60));
+  }
 
   return (
     <Box sx={{ padding: 3 }}>
@@ -36,22 +39,12 @@ const Dashboard = () => {
               API Developer Key
             </Typography>
             <Typography variant="body1">
-              8sSgMGiMWVlNDRk***********************
+              {projectMetadata.api}
             </Typography>
           </Paper>
         </Grid>
 
-        {/* API Programming Guide Section */}
-        <Grid item xs={12} sm={6}>
-          <Paper elevation={3} sx={{ padding: 3 }}>
-            <Typography variant="h6" color="primary">
-              API Programming Guide
-            </Typography>
-            <Typography variant="body1">
-              Python SDK • Google Colab • C++ SDK • REST API
-            </Typography>
-          </Paper>
-        </Grid>
+       
 
         {/* Plan Details and Days Remaining */}
         <Grid item xs={12} sm={6}>
@@ -63,7 +56,7 @@ const Dashboard = () => {
               License expiry: 15 Nov 2024 (UTC +07:00)
             </Typography>
             <Typography variant="h2" color="error" sx={{ marginTop: 2 }}>
-              2
+              {remainDays(projectMetadata.exp)}
             </Typography>
             <Typography variant="body1" color="error">
               Days remaining
@@ -74,7 +67,7 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* API Calls Status */}
+        {/* API Calls Status
         <Grid item xs={12} sm={6}>
           <Paper elevation={3} sx={{ padding: 3, textAlign: 'center' }}>
             <img src={image} alt="API Call Icon" style={{ width: 80, height: 80 }} />
@@ -85,7 +78,7 @@ const Dashboard = () => {
               Read the API Programming Guide to get started on your first Face Recognition code.
             </Typography>
           </Paper>
-        </Grid>
+        </Grid> */}
 
       </Grid>
     </Box>

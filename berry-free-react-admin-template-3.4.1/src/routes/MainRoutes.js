@@ -8,6 +8,7 @@ import PersonManagement from 'views/pages/management/pages/person';
 import CollectionManagement from 'views/pages/management/pages/collections';
 import DeveloperManagement from 'views/pages/management/pages/developers';
 import CollectionPersonManagement from 'views/pages/management/pages/collection-person';
+import SearchManagement from 'views/pages/management/pages/search';
 // import { element } from 'prop-types';
 
 // dashboard routing
@@ -112,6 +113,19 @@ const MainRoutes = {
           element: (
             <ProtectedRoute>
               <DeveloperManagement/>
+            </ProtectedRoute>
+          )
+        }
+      ]
+    },
+    {
+      path: 'pages', 
+      children: [
+        {
+          path: 'search',
+          element: (
+            <ProtectedRoute>
+              <SearchManagement/>
             </ProtectedRoute>
           )
         }

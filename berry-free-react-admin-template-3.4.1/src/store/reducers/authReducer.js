@@ -28,6 +28,7 @@ const authReducer = (state = initialState, action) => {
                 ...state,
                 user: null,
                 apiKey: null,
+                redirectRoute: null,
             };
         
         default:
