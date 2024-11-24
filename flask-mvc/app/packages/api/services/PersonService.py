@@ -73,8 +73,8 @@ class PersonService(BaseService):
         if len(images) == 0 and len(old_images) == len(removed_image_list):
             raise Exception('Unable delete all images as no new images were added!')
 
-        for i in range(0, len(removed_image_list)):
-            img_service.remove(removed_image_list.pop(i))
+        while len(removed_image_list) > 0:
+            img_service.remove(removed_image_list.pop(0))
 
         for rest_img in removed_image_list:
             images.append({'id': rest_img.id, 'url': rest_img.img_url})
@@ -89,7 +89,7 @@ class PersonService(BaseService):
     def delete_person(self, person_id, collection_id):
         person_obj = self.repository.get_person(person_id)
 
-        if not person_obj or person_obj.collection_id != collection_id:
+        if not person_obj or person_obj.collection_id != int(collection_id):
             raise Exception('Person not found or inaccessible!')
 
         self.repository.delete_person(person=person_obj)
@@ -124,7 +124,7 @@ class PersonService(BaseService):
 
     #----------------------SEARCH----------------------#
     def search(self, **kwargs):
-        collection_id = kwargs['collection_id'],
+        collection_id = kwargs.pop('collection_id')
         image, score, limit = kwargs['image'], kwargs['score'], kwargs['limit']
 
         # Get persons by collection_id
@@ -148,5 +148,6 @@ class PersonService(BaseService):
             return []
 
         result = person_df.loc[person_df['id'].isin(matched_person_ids)]
+        result= result.to_dict(orient='records')
         #TODO: return person images?
-        return result.to_json()
+        return result

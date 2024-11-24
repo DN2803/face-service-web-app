@@ -19,7 +19,7 @@ class PersonEmbeddingRepo(BaseRepository):
         return self._get_by('id',id)
     
     def get_embeds_df(self, person_ids):
-        result = self.session.query.with_entities(self.model.person_id, self.model.embedding).filter(
+        result = self.session.query(self.model).with_entities(self.model.person_id, self.model.embedding).filter(
             self.model.person_id.in_(person_ids)
         ).all()
 

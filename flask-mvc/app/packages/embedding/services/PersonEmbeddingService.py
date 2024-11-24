@@ -18,7 +18,6 @@ class PersonEmbeddingService(EmbeddingService):
         
         indices = np.where(cos_sim > sim_threshold)[0]
         filtered_df  = df.iloc[indices]
-        result = filtered_df['id']
         result = filtered_df['person_id'].drop_duplicates().tolist()
 
         if len(result) > limit:

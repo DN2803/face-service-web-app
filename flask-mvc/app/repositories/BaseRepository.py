@@ -40,7 +40,7 @@ class BaseRepository:
         query = None
 
         if filter:
-            query = self.session.query.filter_by(**filter).statement
+            query = self.session.query(self.model).filter_by(**filter).statement
         else:
             query = self.session.query(self.model).statement
 

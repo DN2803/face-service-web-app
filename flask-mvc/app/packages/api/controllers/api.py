@@ -205,7 +205,7 @@ def search():
         if 'collection_id' not in data:
             raise Exception('The request lacks collection id!')
 
-        validated = KeyService().validate(key, data['collection_id'])
+        validated = KeyService().validate(key, [data['collection_id']])
 
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
