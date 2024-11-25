@@ -15,6 +15,10 @@ class CollectionService(BaseService):
     #----------------------COLLECTION----------------------#
     def add_collection(self, key_id, **kwargs):
         validated_data = self.schema.load(data=kwargs)
+
+        if validated_data['name'] == 'Base':
+            raise Exception("Naming a collection 'Base' is invalid.")
+
         validated_data['admin_key_id'] = key_id
         collection_obj = self.repository.add_collection(**validated_data)
 
@@ -36,7 +40,7 @@ class CollectionService(BaseService):
     def delete_collection(self, key_id, is_admin, collection_id):
         if not self.check_access(key_id, is_admin, collection_id):
             raise Exception(f'Collection {collection_id} is inaccessible!')
-        
+
         collection_obj = self.repository.get_collection_by_id(collection_id)
         self.repository.delete(collection_obj)
 

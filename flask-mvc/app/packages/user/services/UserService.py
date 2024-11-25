@@ -8,6 +8,7 @@ from app.packages.api.services.KeyService import KeyService
 from app.packages.api.models.Key import KeySchema
 import time
 from deepface.commons.image_utils import load_image_from_base64
+
 class UserService(BaseService):
     def __init__(self):
         self.schema = UserSchema()
