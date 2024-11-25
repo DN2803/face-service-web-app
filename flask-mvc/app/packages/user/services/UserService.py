@@ -7,6 +7,7 @@ from app.packages.api.repositories.UserKeyRepo import UserKeyRepo
 from app.packages.api.services.KeyService import KeyService
 from app.packages.api.models.Key import KeySchema
 import time
+from deepface.commons.image_utils import load_image_from_base64
 
 class UserService(BaseService):
     def __init__(self):
@@ -27,13 +28,12 @@ class UserService(BaseService):
         embed_service = UserEmbeddingService()
 
         try:
-            face_objs = face_service.extract_face(img, only_one=True)
+            img_np = load_image_from_base64(img)
+            face_objs = face_service.extract_face(img_np, only_one=True)
         except Exception as e:
-            error_file_path = f'{user_id}_{time.time()}.jpg'
-
-            with open(error_file_path, 'wb') as f:
-                f.write(img)
-
+            import cv2
+            error_file_path = f'../Image/User/error_{user_id}_{time.time()}.jpg'
+            cv2.imwrite(error_file_path, img_np)
             raise e
         
         face_img = face_objs[0]['face']
