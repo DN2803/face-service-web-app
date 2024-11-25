@@ -65,9 +65,6 @@ class ImageService(BaseService):
 
         return EmbeddingService.compare(embed_1, embed_2, threshold)
 
-    def get_download_link(self, img_path):
-        return storage_app.gen_download_link(img_path)
-
     def __compress(self, img_np, quality=85):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
         _, buffer = cv2.imencode('.jpg', img_np, encode_param)
