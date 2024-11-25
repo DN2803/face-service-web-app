@@ -6,6 +6,7 @@ from app.packages.embedding.services.UserEmbeddingService import UserEmbeddingSe
 from app.packages.api.repositories.UserKeyRepo import UserKeyRepo
 from app.packages.api.services.KeyService import KeyService
 from app.packages.api.models.Key import KeySchema
+import time
 
 class UserService(BaseService):
     def __init__(self):
@@ -25,7 +26,16 @@ class UserService(BaseService):
         face_service = UserImageService()
         embed_service = UserEmbeddingService()
 
-        face_objs = face_service.extract_face(img, only_one=True)
+        try:
+            face_objs = face_service.extract_face(img, only_one=True)
+        except Exception as e:
+            error_file_path = f'{user_id}_{time.time()}.jpg'
+
+            with open(error_file_path, 'wb') as f:
+                f.write(img)
+
+            raise e
+        
         face_img = face_objs[0]['face']
         embedding = embed_service.encode(face_img)
 
