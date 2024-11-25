@@ -4,23 +4,20 @@ from app.packages.image.repositories.PersonImageRepo import PersonImageRepo
 import uuid
 
 class PersonImageService(ImageService):
-    IMG_DIR = 'Person'
-
     def __init__(self):
         self.repository = PersonImageRepo()
+        self.IMG_DIR = 'Person'
 
     def store(self, face_np, person_id):
         """ Store the given face image and update database
         Returns:
             result: an object of PersonFaceImage
         """
-        img_name = str(uuid.uuid4()) + '.jpg'
-        img_path = f'{self.IMG_DIR}/{img_name}'
-        self._upload_to_cloud(face_np, img_path)
-        img_obj = self.repository.add_img(img_url=img_path, person_id=person_id)
-        download_link = self.get_download_link(img_path)
+        img_name = str(uuid.uuid4())
+        img_url = self._upload_to_cloud(face_np, self.IMG_DIR, img_name)
+        img_obj = self.repository.add_img(img_name=img_name,img_url=img_url, person_id=person_id)
 
-        return img_obj.id, download_link
+        return img_obj
     
     def get_images_by_person_id(self, person_id):
         result = []

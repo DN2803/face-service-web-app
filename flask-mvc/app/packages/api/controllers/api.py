@@ -76,7 +76,7 @@ def person_id(person_id):
         print(e)
         return jsonify(error = str(e)), 400
 
-@api_bp.route('/persons', methods=['GET', 'DELETE'])
+@api_bp.route('/persons', methods=['GET'])
 @__key_limiter.limit('20 per minute')
 def persons():
     try:
@@ -106,14 +106,14 @@ def persons():
             )
             return response, 200
 
-        if request.method == 'DELETE':
-            if not data or 'person_ids' not in data:
-                raise Exception('Not enough parameters!')
+        # if request.method == 'DELETE':
+        #     if not data or 'person_ids' not in data:
+        #         raise Exception('Not enough parameters!')
 
-            if person_service.delete_persons(**data):
-                return jsonify(message='Delete Successfully!'), 200
-            else:
-                raise Exception('Person not found or inaccessible!')
+        #     if person_service.delete_persons(**data):
+        #         return jsonify(message='Delete Successfully!'), 200
+        #     else:
+        #         raise Exception('Person not found or inaccessible!')
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400

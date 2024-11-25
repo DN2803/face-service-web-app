@@ -1,17 +1,10 @@
 import os
 
 class CloudStorageConfig:
-    def __init__(self):        
-        CloudStorageConfig.ENDPOINT = 'https://graph.microsoft.com/v1.0'
-        CloudStorageConfig.CLIENT_ID = os.getenv('CLIENT_ID')
-        CloudStorageConfig.CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-        CloudStorageConfig.TENANT_ID = os.getenv('TENANT_ID')
-        CloudStorageConfig.SCOPES = ['Files.ReadWrite']
-        CloudStorageConfig.AUTHORITY_URL=f'https://login.microsoftonline.com/{self.TENANT_ID}'
-        
-        with open('refresh_token.txt') as f:
-            refresh_token = f.read()
-        CloudStorageConfig.REFRESH_TOKEN = refresh_token
+    def __init__(self):
+        CloudStorageConfig.CLOUD_NAME = os.getenv('CLOUD_NAME')
+        CloudStorageConfig.CLOUD_API_KEY = os.getenv('CLOUD_API_KEY')
+        CloudStorageConfig.CLOUD_API_SECRET = os.getenv('CLOUD_API_SECRET')
 
 from dotenv import load_dotenv
 def _get_config():

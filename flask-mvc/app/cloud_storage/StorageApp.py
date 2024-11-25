@@ -1,108 +1,35 @@
-import msal
-import time
-import httpx
+from app.config.CloudStorageConfig import config as cloud_config
 
-from app.config.CloudStorageConfig import config
+import cloudinary
+import cloudinary.uploader as uploader
+import cloudinary.api
 
-class StorageApp: #TODO: singleton with n instances
-    app = None
-    access_token = ''
-    token_exp = None
-    refresh_token = config.REFRESH_TOKEN
-    scopes = config.SCOPES
-
-    endpoint = f'{config.ENDPOINT}/me/drive/items/root:/Image Storage'
-    headers = {
-        'Content-Type': 'application/octet-stream'
-    }
-    payload = {
-        'type': 'view',
-        'scope': 'anonymous'
-    }
+class StorageApp:
+    config = cloudinary.config(
+        cloud_name = cloud_config.CLOUD_NAME, 
+        api_key = cloud_config.CLOUD_API_KEY, 
+        api_secret = cloud_config.CLOUD_API_SECRET,
+        secure=True
+    )
 
     def __init__(self):
-        self.app = msal.ConfidentialClientApplication(
-            client_id = config.CLIENT_ID,
-            client_credential = config.CLIENT_SECRET,
-            authority = config.AUTHORITY_URL
+        print(f'Setting up and configure the Cloudinary SDK: Credentials: {self.config.cloud_name}, {self.config.api_key}')
+
+    def upload(self, file, folder, public_id):
+        response = uploader.upload(
+            file=file,
+            folder=folder,
+            public_id=public_id,
+            resource_type='image',
+            format='jpg'
         )
-        try:
-            self.__gen_access_token()
-        except Exception as e:
-            print(e)
 
-    def __gen_access_token(self):
-        token_response = self.app.acquire_token_by_refresh_token(self.refresh_token, self.scopes)
-
-        if 'access_token' in token_response:
-            self.access_token = token_response['access_token']
-            self.token_exp = token_response['id_token_claims']['exp']
-            self.refresh_token = token_response['refresh_token']
-            self.headers['Authorization'] = f'Bearer {self.access_token}'
-            
-            with open('refresh_token.txt', 'w') as f:
-                f.write(self.refresh_token)
-                print('New refresh token has been saved!')
-        else:
-            raise Exception('Failed to get access_token: '+ str(token_response))
-
-    # def __gen_share_link(self, folder_name, file_name):
-    #     url = f'{self.endpoint}/{folder_name}/{file_name}:/createLink'
-    #     response = httpx.post(url, headers=self.headers, json=self.payload)
-
-    #     if response.is_success:
-    #         return response.json()['link']['webUrl']
-    #     else:
-    #         raise Exception('Failed to create OneDrive share link!')
-
-    def upload(self, file_path, content):
-        # no need to check if file_name is available cause using uuid 
-        url = f'{self.endpoint}/{file_path}:/content'
-        
-        if time.time() > self.token_exp:
-            self.__gen_access_token()
-
-        response = httpx.put(url, headers=self.headers, data=content)
-
-        if not response.is_success:
-            raise Exception('Failed to upload to OneDrive!')
-
-    def get_file(self, file_path):
-        url = f'{self.endpoint}/{file_path}:/content'
-
-        if time.time() > self.token_exp:
-            self.__gen_access_token()
-
-        response = httpx.get(url, headers=self.headers)
-
-        if response.is_success:
-            download_response = httpx.get(response.headers['location'])
-            return download_response.content
-        else:
-            raise Exception('Failed to generate download link!')
-
-    def gen_download_link(self, file_path):
-        url = f'{self.endpoint}/{file_path}:/content'
-
-        if time.time() > self.token_exp:
-            self.__gen_access_token()
-
-        response = httpx.get(url, headers=self.headers, follow_redirects=True)
-
-        if response.is_success:
-            return str(response.url)
-        else:
-            raise Exception('Failed to generate download link!')
+        return response['secure_url']
 
     def delete(self, file_path):
-        url = f'{self.endpoint}/{file_path}'
+        response = uploader.destroy(public_id=file_path, resource_type = 'image')
 
-        if time.time() > self.token_exp:
-            self.__gen_access_token()
+        if response['result'] != 'ok':
+            print(f'Failed to delete {file_path} on Cloudinary')
 
-        response = httpx.delete(url, headers=self.headers)
-
-        if not response.is_success:
-            raise Exception(f'Failed to delete {file_path} from OneDrive!')
-        
 storage_app = StorageApp()

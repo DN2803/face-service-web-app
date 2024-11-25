@@ -10,6 +10,7 @@ import cv2
 class ImageService(BaseService):
     def __init__(self, repository: ImageRepo):
         super().__init__(repository)
+        self.IMG_DIR = None
 
     @staticmethod 
     def extract_face(img_path, anti_spoofing=False, only_one = False):
@@ -73,13 +74,14 @@ class ImageService(BaseService):
         
         return buffer.tobytes()
 
-    def _upload_to_cloud(self, img_np, file_path):
+    def _upload_to_cloud(self, img_np, folder, file_name):
         content = self.__compress(img_np)        
-        return storage_app.upload(file_path, content)
+        return storage_app.upload(content, folder, file_name)
 
     def _remove_on_cloud(self, file_path):
         storage_app.delete(file_path)
 
     def remove(self, img_obj):
-        self._remove_on_cloud(img_obj.img_url)
+        file_path = f'{self.IMG_DIR}/{img_obj.img_name}'
+        self._remove_on_cloud(file_path)
         self.repository._delete(img_obj)

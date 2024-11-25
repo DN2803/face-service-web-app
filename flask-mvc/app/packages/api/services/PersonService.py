@@ -20,11 +20,11 @@ class PersonService(BaseService):
                 face_objs = img_service.extract_face(image, only_one=True)
                 face_img = face_objs[0]['face']
 
-                img_id, img_url = img_service.store(face_img, person_id)
-                result.append({'id': img_id, 'url': img_url})
+                img_obj = img_service.store(face_img, person_id)
+                result.append({'id': img_obj.id, 'url': img_obj.img_url})
 
                 embedding = embed_service.encode(face_img)
-                embed_service.add_embedding(embedding, img_id, person_id)
+                embed_service.add_embedding(embedding, img_obj.id, person_id)
             except Exception as e:
                 print('Ignore invalid image storing: ' + str(e))
                 continue
@@ -62,21 +62,22 @@ class PersonService(BaseService):
         # Do the Image process first
         img_service = PersonImageService()
         old_images = img_service.get_image_objs_by_person_id(person_obj.id)
-        removed_image_list = []
+        validated_removed_image_ids = []
 
-        for old_image in old_images:
-            if old_image.id in removed_image_ids:
-                removed_image_list.append(old_image)
+        for i in range(0, len(old_images)):
+            if old_images[i].id in removed_image_ids:
+                validated_removed_image_ids.append(i)
 
         images = self._person_img_process(new_images, person_id)
 
-        if len(images) == 0 and len(old_images) == len(removed_image_list):
+        if len(images) == 0 and len(old_images) == len(validated_removed_image_ids):
             raise Exception('Unable delete all images as no new images were added!')
 
-        while len(removed_image_list) > 0:
-            img_service.remove(removed_image_list.pop(0))
+        while len(validated_removed_image_ids) > 0:
+            index = validated_removed_image_ids.pop()
+            img_service.remove(old_images.pop(index))
 
-        for rest_img in removed_image_list:
+        for rest_img in old_images:
             images.append({'id': rest_img.id, 'url': rest_img.img_url})
 
         # Then update person infomation
@@ -92,8 +93,15 @@ class PersonService(BaseService):
         if not person_obj or person_obj.collection_id != int(collection_id):
             raise Exception('Person not found or inaccessible!')
 
+        #remove cloud images
+        img_service = PersonImageService()
+        image_objs = img_service.get_image_objs_by_person_id(person_id)
+
+        for image_obj in image_objs:
+            img_service.remove(image_obj)
+
         self.repository.delete_person(person=person_obj)
-    
+
     #----------------------PERSONs----------------------#
     def get_persons(self, collection_ids, **kwargs):        
         limit =  kwargs['limit']        
@@ -110,17 +118,17 @@ class PersonService(BaseService):
             result.append(info)
 
         return result
-    
-    def delete_persons(self, **kwargs):
-        person_ids, collection_ids = kwargs['person_ids'], kwargs['collection_ids']
+
+    # def delete_persons(self, **kwargs):
+    #     person_ids, collection_ids = kwargs['person_ids'], kwargs['collection_ids']
         
-        for person_id in person_ids:
-            person_obj = self.repository.get_person(person_id)
+    #     for person_id in person_ids:
+    #         person_obj = self.repository.get_person(person_id)
 
-            if not person_obj or person_obj.collection_id not in collection_ids:
-                print(f'Ignore deleting unfound/inaccessible person {person_obj.id}!')
+    #         if not person_obj or person_obj.collection_id not in collection_ids:
+    #             print(f'Ignore deleting unfound/inaccessible person {person_obj.id}!')
 
-            self.repository.delete_person(person=person_obj)
+    #         self.repository.delete_person(person=person_obj)
 
     #----------------------SEARCH----------------------#
     def search(self, **kwargs):
