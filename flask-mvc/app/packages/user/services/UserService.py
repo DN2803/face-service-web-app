@@ -30,27 +30,22 @@ class UserService(BaseService):
         try:
             img_np = load_image_from_base64(img)
             face_objs = face_service.extract_face(img_np, only_one=True)
+
+            face_img = face_objs[0]['face']
+            embedding = embed_service.encode(face_img)
+
+            img_obj = face_service.store(face_img, user.id)
+            embed = embed_service.add_embedding(embedding, img_obj.id)
+
+            self.repository.add_face_embed(user, embed.id)
+
+            return str("User Face ID registered successfully.")
         except Exception as e:
             import cv2
             error_file_path = f'../Image/User/error_{user_id}_{time.time()}.jpg'
             cv2.imwrite(error_file_path, img_np)
             raise e
-        
-        face_img = face_objs[0]['face']
-        embedding = embed_service.encode(face_img)
 
-        if not user.verified: #add
-            retrieval_res = embed_service.retrieval(embedding, sim_threshold=0.7)
-
-            if len(retrieval_res) != 0:
-                return str("This Face ID is already registered to another user.")
-
-        img_obj = face_service.store(face_img, user.id)
-        embed = embed_service.add_embedding(embedding, img_obj.id)
-
-        self.repository.add_face_embed(user, embed.id)
-
-        return str("User Face ID registered successfully.")
 
     def get_base_info(self, user_id):
         user = self.repository.get_user_by_id(user_id)

@@ -1,11 +1,8 @@
 from app.services.BaseService import BaseService
 from app.packages.api.models.Key import KeySchema
 from app.packages.api.repositories.KeyRepo import KeyRepo
-from app.packages.api.repositories.PersonRepo import PersonRepo
 from app.packages.api.repositories.CollectionRepo import CollectionRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
-from app.packages.embedding.services.PersonEmbeddingService import PersonEmbeddingService
-from app.packages.image.services.PersonImageService import PersonImageService
 
 import time
 import secrets
