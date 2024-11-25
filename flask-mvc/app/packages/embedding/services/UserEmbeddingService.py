@@ -8,20 +8,20 @@ class UserEmbeddingService(EmbeddingService):
     def __init__(self):
         self.repository = UserEmbeddingRepo()
 
-    def retrieval(self, embedding: np.ndarray, sim_threshold = 0.7):
-        df = self.repository.get_embed_df()
+    # def retrieval(self, embedding: np.ndarray, sim_threshold = 0.7):
+    #     df = self.repository.get_embed_df()
 
-        if df.empty: return []
-        db_embed_np = np.array(df['embedding'].tolist())
+    #     if df.empty: return []
+    #     db_embed_np = np.array(df['embedding'].tolist())
         
-        cos_sim = embedding @ db_embed_np.T
-        print(f'MIN sim: {cos_sim.min()}, MAX sim: {cos_sim.max()}')
+    #     cos_sim = embedding @ db_embed_np.T
+    #     print(f'MIN sim: {cos_sim.min()}, MAX sim: {cos_sim.max()}')
         
-        indices = np.where(cos_sim > sim_threshold)[0]
-        filtered_df  = df.iloc[indices]
-        result = filtered_df['id'].to_list() #TODO: need to sort it?
+    #     indices = np.where(cos_sim > sim_threshold)[0]
+    #     filtered_df  = df.iloc[indices]
+    #     result = filtered_df['id'].to_list() #TODO: need to sort it?
 
-        return result
+    #     return result
 
     def add_embedding(self, embed: list[float], image_id):
         binary_embed = pickle.dumps(embed)

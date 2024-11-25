@@ -52,7 +52,7 @@ class ImageService(BaseService):
         )
 
         if only_one and len(face_objs) != 1:
-            raise Exception(f'There is not exactly one person in this image!')
+            raise Exception(f'There is not exactly one person in this image! ({len(face_objs)})')
 
         return face_objs
 
