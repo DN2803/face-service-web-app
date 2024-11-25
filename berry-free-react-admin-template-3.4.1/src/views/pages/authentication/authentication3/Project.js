@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import { Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -22,6 +23,7 @@ const SelectProject = () => {
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const { callAPI } = useCallAPI();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const handleClick = async () => {
     const projectName = window.prompt('Please enter the project name:');
     try {
@@ -37,59 +39,13 @@ const SelectProject = () => {
               exp: data.expires_at,
               role: data.admin_key_id? "admin":"dev"
             }
-            setProject(project);
-            setApiKey(project.api);
+            dispatch(setProject(project));
+            dispatch(setApiKey(project.api));
             navigate('/dashboard/default');
       } 
     } catch (error) {
       console.error("Error:", error); // Xử lý lỗi nếu có
     }
-
-    // const availableModels = ["Model A", "Model B", "Model C"]; // Danh sách các model có sẵn
-    // const projectName = window.prompt('Please enter the project name:');
-
-    // // Hiển thị danh sách model
-    // const modelOptions = availableModels
-    //   .map((model, index) => `${index + 1}. ${model}`)
-    //   .join('\n');
-    // const modelChoice = window.prompt(`Please choose a model:\n${modelOptions}`);
-
-    // try {
-    //   if (projectName && modelChoice) {
-    //     const modelIndex = parseInt(modelChoice, 10) - 1;
-
-    //     if (modelIndex >= 0 && modelIndex < availableModels.length) {
-    //       const modelName = availableModels[modelIndex];
-    //       alert(`Project name: ${projectName}\nModel name: ${modelName}`);
-
-    //       // Gửi yêu cầu API
-    //       const response = await callAPI(
-    //         BACKEND_ENDPOINTS.user.project.create,
-    //         "POST",
-    //         { project_name: projectName, model_name: modelName },
-    //         true
-    //       );
-    //       const data = response.data.project;
-    //       const project =  {
-    //         name: data.project_name, // Mapping logic
-    //         api: data.key,
-    //         exp: data.expires_at,
-    //         role: data.admin_key_id? "admin":"dev"
-    //       }
-    //       setProject(project);
-    //       setApiKey(data.key);
-    //       navigate('/pages/poi-management');
-    //     } else {
-    //       alert("Invalid model choice. Please try again.");
-    //     }
-    //   } else {
-    //     alert("Project name and model selection are required!");
-    //   }
-    // } catch (error) {
-    //   console.error("Error:", error); // Xử lý lỗi nếu có
-    // }
-
-
   };
 
   return (

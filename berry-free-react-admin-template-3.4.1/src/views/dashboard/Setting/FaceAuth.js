@@ -19,7 +19,7 @@ const FaceAuth = () => {
     // Dùng useRef để lưu trữ intervalId
     const intervalIdRef = useRef(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
-    const [waitResponse, setWaitRespone] = useState(false);
+    const waitResponseRef = useRef(false);
     useEffect(() => {
         const loadAllModels = async () => {
         loadModels();
@@ -77,7 +77,7 @@ const FaceAuth = () => {
 
             // Start sending images to the server every second
             intervalIdRef.current = setInterval(() => {
-                if (!waitResponse) {
+                if (!waitResponseRef.current) {
                     sendFrameToServer();
                 } 
             }, 1000);
@@ -89,11 +89,14 @@ const FaceAuth = () => {
 
     const sendFrameToServer = async () => {
         if (videoRef.current) {
+            if (waitResponseRef.current) {
+                return;
+            }
             const detections = await detectFace(videoRef.current);
             if (!detections) {
                 return;
             }
-            
+            waitResponseRef.current = true;
             console.log(detections)
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -103,7 +106,6 @@ const FaceAuth = () => {
 
             // Convert canvas to data URL
             const imageData = canvas.toDataURL('image/jpeg');
-            setWaitRespone(true);
             // Send the image data to the server
             try {
                 const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", {image: imageData}, true)
@@ -138,7 +140,7 @@ const FaceAuth = () => {
                         setCameraActive(false); // Update state to hide video component
                     }    
             } finally {
-                setWaitRespone(false);
+                waitResponseRef.current = false;
             } 
         }
     };
@@ -182,6 +184,7 @@ const FaceAuth = () => {
                             </Fab>
                             {cameraActive && (
                                 <div style={{ marginTop: '20px' }}>
+                                    <Typography>Please look directly at the camera.</Typography>
                                     <video
                                         ref={videoRef}
                                         width="320"

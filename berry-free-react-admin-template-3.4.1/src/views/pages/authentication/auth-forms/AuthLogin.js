@@ -63,7 +63,7 @@ const FirebaseLogin = ({ ...others }) => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const { userInfo } = useUserInfo();
   const { isVerified, loading, error } = useEmailVerified();
-  const [waitResponse, setWaitRespone] = useState(false);
+  const waitResponseRef = useRef(false);
   const dispatch = useDispatch();
   const redirectRoute = useSelector(state => state.auth.redirectRoute);
 
@@ -120,9 +120,8 @@ const FirebaseLogin = ({ ...others }) => {
 
       // Start sending images to the server every second
       intervalIdRef.current = setInterval(() => {
-        if (!waitResponse) {
+        if (!waitResponseRef.current)
           sendFrameToServer();
-        } 
       }, 1000);
     } catch (err) {
       console.error('Error accessing the camera: ', err);
@@ -141,10 +140,14 @@ const FirebaseLogin = ({ ...others }) => {
     }
   };
   const sendFrameToServer = async () => {
+    if (waitResponseRef.current) {
+      console.log('chờ phản hồi từ server');
+      return;
+    }
     if (videoRef.current) {
+      waitResponseRef.current = true;
       const detections = await detectFace(videoRef.current);
       if (!detections) {
-        countFalseRef.current += 1;
         return;
       }
       const canvas = document.createElement('canvas');
@@ -156,11 +159,12 @@ const FirebaseLogin = ({ ...others }) => {
       const imageData = canvas.toDataURL('image/jpeg');
       // Send the image data to the server
       try {
+        
         if (countFalseRef.current >= 5) {
           stopCamera();
           setOnlyLogByPassword(true);
         }
-        setWaitRespone(true);
+
         const response = await callAPI(BACKEND_ENDPOINTS.auth.login.faceid, "POST", { image: imageData }, { withCredentials: true }, localStorage.getItem('refresh_token'));
         // Await the JSON response
         const data = await response.data;
@@ -182,7 +186,7 @@ const FirebaseLogin = ({ ...others }) => {
         console.error('Error:', error);
         countFalseRef.current += 1;
       } finally {
-        setWaitRespone(false)
+        waitResponseRef.current = false;
       }
     }
   };
@@ -258,6 +262,7 @@ const FirebaseLogin = ({ ...others }) => {
                 </AnimateButton>
                 {cameraActive && (
                   <div style={{ marginTop: '20px' }}>
+                    <Typography>Please look directly at the camera.</Typography>
                     <video ref={videoRef} width="320" height="240" style={{ border: '1px solid black' }} autoPlay playsInline>
                       {/* Add empty track for accessibility */}
                       <track kind="captions" />
