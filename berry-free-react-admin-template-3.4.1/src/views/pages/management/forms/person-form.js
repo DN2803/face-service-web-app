@@ -192,7 +192,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                                 }}
                             >
                                 <img
-                                    src={image.url}
+                                    src={image.img_url}
                                     alt={`Face ${index}`}
                                     style={{
                                         width: '50px',

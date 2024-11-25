@@ -5,7 +5,6 @@ const isBase64Image = (image) => {
 export async function convertAndCacheImage(imagePath) {
     // Kiểm tra xem hình ảnh có sẵn trong cache không
     let cachedImage = sessionStorage.getItem(imagePath);
-    console.log(cachedImage);
     if (isBase64Image(cachedImage)) {
         return cachedImage;
     } else {

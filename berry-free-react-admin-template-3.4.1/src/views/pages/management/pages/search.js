@@ -26,16 +26,13 @@ const SearchManagement = () => {
         setOpenSearch(false);
     };
     const handleSearchFace = async (values) => {
-        console.log(values);
         const body = {
             collection_id: values.collection_id,
             image: values.image,
             limit: parseInt(values.limit, 10),
             score: values.confidence_score,
         }
-        console.log(body);
         const response = await callAPI(BACKEND_ENDPOINTS.project.search, "POST", body, true);
-        console.log(response);
         setPersons(response.data.result);
         handleCloseSearch();
     }
@@ -126,7 +123,7 @@ const SearchManagement = () => {
                             currentPersons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        {/* <img src={person.images[0]} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> */}
+                                        <img src={person.images[0].img_url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} />
                                     </TableCell> 
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>

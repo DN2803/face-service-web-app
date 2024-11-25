@@ -80,8 +80,11 @@ const PersonManagement = () => {
                     console.log("No more persons to load.");
                     return;
                 }
-                setNumPerson(numPerson + response.data.count);
-                // setPersons((prevPersons) => [...prevPersons, ...response.data.persons]);
+                if (!lastIDs[currentPage - 1]){
+                    setNumPerson(numPerson + response.data.count);
+                }
+                
+                //setPersons((prevPersons) => [...prevPersons, ...response.data.persons]);
                 setPersons (response.data.persons)
                 // Cập nhật lastID của trang hiện tại
                 setLastIDs((prevLastIDs) => {
@@ -296,7 +299,7 @@ const PersonManagement = () => {
                             persons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        <img src={person.images[0].url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
+                                        <img src={person.images[0].img_url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
                                     <TableCell>{person.birth}</TableCell>
@@ -313,8 +316,7 @@ const PersonManagement = () => {
                     </TableBody>
                 </Table>
                 <Pagination
-                   
-                   count={numPerson ? Math.ceil(numPerson / itemsPerPage) + 1 : 1}
+                    count={numPerson % 5 == 0? Math.ceil(numPerson / itemsPerPage) + 1 : Math.ceil(numPerson / itemsPerPage)}
                     page={currentPage}
                     onChange={goToNextPage} // Cập nhật trang
                     color="primary"
