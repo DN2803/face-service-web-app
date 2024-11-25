@@ -142,7 +142,8 @@ class PersonService(BaseService):
 
         # Image Encoding:
         embed_service = PersonEmbeddingService()
-        face_obj = PersonImageService.extract_face(image, only_one=True)
+        img_service = PersonImageService()
+        face_obj = img_service.extract_face(image, only_one=True)
         embedding = embed_service.encode(face_obj[0]['face'])
 
         # Get embeddings df by person_ids
@@ -156,6 +157,11 @@ class PersonService(BaseService):
             return []
 
         result = person_df.loc[person_df['id'].isin(matched_person_ids)]
-        result= result.to_dict(orient='records')
-        #TODO: return person images?
-        return result
+        images = []
+
+        for matched_person_id in matched_person_ids:
+            images.append(img_service.get_images_by_person_id(matched_person_id))
+
+        result['images'] = images
+
+        return result.to_dict(orient='records')

@@ -18,16 +18,17 @@ class PersonImageService(ImageService):
         img_obj = self.repository.add_img(img_name=img_name,img_url=img_url, person_id=person_id)
 
         return img_obj
-    
+
     def get_images_by_person_id(self, person_id):
-        result = []
-        img_objs = self.repository.get_by_person_id(person_id)
-        
-        for img_obj in img_objs:
-            url = self.get_download_link(img_obj.img_url) #img_url is a path at the moment
-            result.append({'id': img_obj.id, 'url': url})
-        
-        return result
+        """
+        Get images id and url for frontend usage
+
+        Returns:
+            results (List[Dict[str, str]]): list of dictionaries, where each dictionary contains
+            - 'id': image id
+            - 'url': image url
+        """
+        return self.repository.get_images(person_id)
 
     def get_image_objs_by_person_id(self, person_id) -> list:
         return self.repository.get_by_person_id(person_id)
