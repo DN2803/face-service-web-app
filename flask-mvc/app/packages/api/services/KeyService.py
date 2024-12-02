@@ -53,7 +53,7 @@ class KeyService(BaseService):
 
         return None, None
 
-    def check_access(self, key_id, is_admin, collection_ids):
+    def _check_access(self, key_id, is_admin, collection_ids):
         check_access_func = CollectionRepo().check_admin_access if is_admin \
                         else AccessCollectionRepo().check_access
 
@@ -70,4 +70,4 @@ class KeyService(BaseService):
 
         if key_id == None: return False
 
-        return self.check_access(key_id, is_admin, collection_ids)
+        return self._check_access(key_id, is_admin, collection_ids)

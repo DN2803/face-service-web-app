@@ -132,11 +132,11 @@ class PersonService(BaseService):
 
     #----------------------SEARCH----------------------#
     def search(self, **kwargs):
-        collection_id = kwargs.pop('collection_id')
+        collection_ids = kwargs.pop('collection_ids')
         image, score, limit = kwargs['image'], kwargs['score'], kwargs['limit']
 
         # Get persons by collection_id
-        person_df = PersonRepo().get_df(collection_id)
+        person_df = PersonRepo().get_df(collection_ids)
 
         if person_df.empty: return []
 

@@ -2,6 +2,8 @@ from app.repositories.BaseRepository import BaseRepository
 from app.packages.api.models.Person import Person
 from app.config.Database import db
 
+import pandas as pd
+
 class PersonRepo(BaseRepository):
     def __init__(self):
         super().__init__(Person, db.session)
@@ -12,8 +14,13 @@ class PersonRepo(BaseRepository):
     def get_person(self, person_id):
         return self._get_by('id', person_id)
 
-    def get_df(self, collection_id):
-        df = self._get_dataframe(None,'collection_id', collection_id)
+    def get_df(self, collection_ids):
+        query = self.session.query(self.model).filter(
+            (self.model.collection_id.in_(collection_ids))
+        ).all().statement
+
+        df = pd.read_sql(query, con=db.engine)
+
         return df
 
     def update_info(self, person, **kwargs):

@@ -17,7 +17,7 @@ class UserEmbeddingRepo(BaseRepository):
     def get_embedding(self, id):
         return self._get_by('id',id)
 
-    def get_embed_df(self):
-        df = self._get_dataframe(drop_cols=['image_id'])
-        df['embedding'] = df['embedding'].apply(pickle.loads)
-        return df
+    # def get_embed_df(self):
+    #     df = self._get_dataframe(drop_cols=['image_id'])
+    #     df['embedding'] = df['embedding'].apply(pickle.loads)
+    #     return df

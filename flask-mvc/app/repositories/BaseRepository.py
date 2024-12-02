@@ -31,25 +31,22 @@ class BaseRepository:
         else:
             return self.model.query.filter_by(**filter).first()
 
-    def _get_dataframe(self, drop_cols, filter_col=None, filter_value=None):
-        filter = dict()
+    # def _get_dataframe(self, select_cols=None, filter_col=None, filter_value=None):
+    #     if select_cols:
+    #         model_columns = [getattr(self.model, col) for col in select_cols]
+    #     else:
+    #         model_columns = self.model
 
-        if filter_col and filter_value:
-            filter[filter_col]=filter_value
+    #     filter = dict()
 
-        query = None
+    #     if filter_col and filter_value:
+    #         filter[filter_col]=filter_value
 
-        if filter:
-            query = self.session.query(self.model).filter_by(**filter).statement
-        else:
-            query = self.session.query(self.model).statement
+    #     query = self.session.query(model_columns).filter(**filter).statement
 
-        df = pd.read_sql(query, con=db.engine)
-        
-        if drop_cols:
-            df = df.drop(columns=drop_cols)
+    #     df = pd.read_sql(query, con=db.engine)
 
-        return df
+    #     return df
 
     def _update_by_obj(self, obj, **kwargs):
         for key, value in kwargs.items():
