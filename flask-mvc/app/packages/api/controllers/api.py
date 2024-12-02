@@ -200,7 +200,8 @@ def search():
     try:
         key = _get_api_key()
         data = request.json
-        if 'collection_ids' not in data:
+        
+        if 'collection_ids' not in data or len(data['collection_ids']) == 0:
             raise Exception('The request lacks collection_ids parameter!')
 
         validated = KeyService().validate(key, data['collection_ids'])

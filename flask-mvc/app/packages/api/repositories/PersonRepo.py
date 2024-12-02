@@ -17,7 +17,7 @@ class PersonRepo(BaseRepository):
     def get_df(self, collection_ids):
         query = self.session.query(self.model).filter(
             (self.model.collection_id.in_(collection_ids))
-        ).all().statement
+        ).statement
 
         df = pd.read_sql(query, con=db.engine)
 
