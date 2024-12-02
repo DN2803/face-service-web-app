@@ -32,16 +32,13 @@ class BaseRepository:
             return self.model.query.filter_by(**filter).first()
 
     def _get_dataframe(self, select_cols=None, filter_col=None, filter_value=None):
-        filter = dict()
-
-        if filter_col and filter_value:
-            filter[filter_col]=filter_value
+        filter_col_attr = getattr(self.model, filter_col) 
 
         if select_cols:
             model_columns = [getattr(self.model, col) for col in select_cols]
-            query = self.session.query(*model_columns).filter(**filter).statement
+            query = self.session.query(*model_columns).filter(filter_col_attr == filter_value).statement
         else:
-            query = self.session.query(self.model).filter(**filter).statement
+            query = self.session.query(self.model).filter(filter_col_attr == filter_value).statement
 
         df = pd.read_sql(query, con=db.engine)
 

@@ -10,5 +10,9 @@ class PersonImageRepo(ImageRepo):
         return self._get_by('person_id', person_id, all=True)
 
     def get_images(self, person_id):
-        df = self._get_dataframe(['id','img_url'],'person_id', person_id)
+        df = self._get_dataframe(
+            select_cols=['id','img_url'],
+            filter_col='person_id',
+            filter_value=person_id
+        )
         return df.to_dict(orient='records')
