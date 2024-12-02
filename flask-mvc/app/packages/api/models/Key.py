@@ -4,11 +4,15 @@ from app.packages.api.models.Collection import Collection
 from app.packages.api.models.AccessCollection import AccessCollection
 
 class Key(BaseModel):
-    key = db.Column(db.String(32), nullable=False)
+    key = db.Column(db.String(32), unique=True, nullable=False) #indexing
     project_name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.Integer, nullable=False)
     expires_at = db.Column(db.Integer, nullable=False)
-    admin_key_id = db.Column(db.Integer, db.ForeignKey('key.id',name='key-admin-fk', ondelete='CASCADE'))
+    admin_key_id = db.Column(
+        db.Integer,
+        db.ForeignKey('key.id',name='key-admin-fk', ondelete='CASCADE'),
+        index=True,
+    )
 
     dev_key_id = db.relationship(
         'Key', 

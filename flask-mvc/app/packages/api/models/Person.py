@@ -8,7 +8,9 @@ class Person(TimestampMixin, BaseModel):
     nationality = db.Column(db.String(50))
     collection_id = db.Column(
         db.Integer,
-        db.ForeignKey('collection.id',name='person-collection-fk', ondelete='CASCADE')
+        db.ForeignKey('collection.id',name='person-collection-fk', ondelete='CASCADE'),
+        index=True,
+        # nullable=False # commented cause input schema doesn't requires collection_id
     )
     person_face_image = db.relationship(
         'PersonFaceImage',

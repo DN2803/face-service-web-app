@@ -6,7 +6,12 @@ from app.packages.api.models.AccessCollection import AccessCollection
 class Collection(TimestampMixin, BaseModel):
     name = db.Column(db.Unicode(40), nullable=False)
     description = db.Column(db.Unicode(40), nullable=False)
-    admin_key_id = db.Column(db.Integer, db.ForeignKey('key.id',name='collection-key-fk', ondelete='CASCADE'),  nullable=False)
+    admin_key_id = db.Column(
+        db.Integer,
+        db.ForeignKey('key.id',name='collection-key-fk', ondelete='CASCADE'),
+        index=True,
+        nullable=False
+    )
 
     persons = db.relationship('Person', backref='collection', cascade='all, delete-orphan')
     access = db.relationship('AccessCollection', backref='collection-access', cascade='all, delete-orphan')

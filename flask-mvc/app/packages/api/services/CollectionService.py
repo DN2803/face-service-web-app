@@ -50,7 +50,6 @@ class CollectionService(BaseService):
 
         if is_admin:
             collections = CollectionRepo().get_collections_by_key_id(key_id)
-            
         else:
             collection_ids = AccessCollectionRepo().get_collection_ids(key_id)
             collections = CollectionRepo().get_collections(collection_ids)

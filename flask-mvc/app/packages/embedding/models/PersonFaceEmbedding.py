@@ -6,10 +6,12 @@ class PersonFaceEmbedding(BaseModel):
     image_id = db.Column(
         db.Integer,
         db.ForeignKey('person_face_image.id',name='embed-pface-fk',ondelete='CASCADE'),
+        index=True,
         nullable=False
     )
     person_id = db.Column(
         db.Integer,
         db.ForeignKey('person.id',name='embed-person-fk'),
+        index=True,
         nullable=False
     )
