@@ -2,15 +2,12 @@ from app.services.BaseService import BaseService
 from app.packages.api.models.Collection import CollectionSchema
 from app.packages.api.repositories.CollectionRepo import CollectionRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
+from app.packages.api.services.KeyService import KeyService
 
 class CollectionService(BaseService):
     def __init__(self):
         self.repository = CollectionRepo()
         self.schema = CollectionSchema()
-
-    def check_access(self, key_id, is_admin, collection_id):
-        check_access_func = CollectionRepo().check_admin_access if is_admin else AccessCollectionRepo().check_access
-        return check_access_func(key_id, collection_id)
 
     #----------------------COLLECTION----------------------#
     def add_collection(self, key_id, **kwargs):
@@ -25,22 +22,15 @@ class CollectionService(BaseService):
         res = self.schema.dump(collection_obj)
         return res
 
-    def update_collection(self, key_id, is_admin, collection_id, **kwargs):
+    def update_collection(self, collection_id, **kwargs):
         validated_data = self.schema.load(data=kwargs)
-
-        if not self.check_access(key_id, is_admin, collection_id):
-            raise Exception(f'Collection {collection_id} is inaccessible!')
-
         collection_obj = self.repository.get_collection_by_id(collection_id)
         collection_obj = self.repository.update(collection=collection_obj, **validated_data)
         result = self.schema.dump(collection_obj)
 
         return result
 
-    def delete_collection(self, key_id, is_admin, collection_id):
-        if not self.check_access(key_id, is_admin, collection_id):
-            raise Exception(f'Collection {collection_id} is inaccessible!')
-
+    def delete_collection(self, collection_id):
         collection_obj = self.repository.get_collection_by_id(collection_id)
         self.repository.delete(collection_obj)
 

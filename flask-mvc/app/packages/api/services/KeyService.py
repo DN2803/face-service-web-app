@@ -53,13 +53,9 @@ class KeyService(BaseService):
 
         return None, None
 
-    def validate(self, key, collection_ids):
-        """Check key and access collection permission"""
-        key_id, is_admin = self.check_key(key)
-
-        if key_id == None: return False
-        
-        check_access_func = CollectionRepo().check_admin_access if is_admin else AccessCollectionRepo().check_access
+    def check_access(self, key_id, is_admin, collection_ids):
+        check_access_func = CollectionRepo().check_admin_access if is_admin \
+                        else AccessCollectionRepo().check_access
 
         for collection_id in collection_ids:
             is_accessible = check_access_func(key_id, collection_id)
@@ -67,3 +63,11 @@ class KeyService(BaseService):
             if not is_accessible: return False
 
         return True
+
+    def validate(self, key, collection_ids):
+        """Check key and access collection permission"""
+        key_id, is_admin = self.check_key(key)
+
+        if key_id == None: return False
+
+        return self.check_access(key_id, is_admin, collection_ids)

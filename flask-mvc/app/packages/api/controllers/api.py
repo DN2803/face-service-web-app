@@ -151,25 +151,23 @@ def collection():
 def collection_id(collection_id):
     try:
         key = _get_api_key()
-        key_id, is_admin = KeyService().check_key(key)
+        validated = KeyService().validate(key, [collection_id])
 
-        if not key_id:
-            return jsonify(error='Invalid API Key!'), 401
+        if not validated:
+            return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
 
         collection_service = CollectionService()
 
         if request.method == 'PATCH':
             data = request.json
             collection = collection_service.update_collection(
-                key_id,
-                is_admin,
                 collection_id,
                 **data
             )
             return jsonify(message='Updated collection successfully!', collection=collection), 200
 
         if request.method == 'DELETE':
-            collection_service.delete_collection(key_id, is_admin, collection_id)
+            collection_service.delete_collection(collection_id)
             return jsonify(message='Deleted collection successfully!'), 200
     except Exception as e:
         print(e)
@@ -202,10 +200,10 @@ def search():
     try:
         key = _get_api_key()
         data = request.json
-        if 'collection_id' not in data:
-            raise Exception('The request lacks collection id!')
+        if 'collection_ids' not in data:
+            raise Exception('The request lacks collection_ids parameter!')
 
-        validated = KeyService().validate(key, [data['collection_id']])
+        validated = KeyService().validate(key, data['collection_ids'])
 
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
