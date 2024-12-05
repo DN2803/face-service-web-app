@@ -10,22 +10,21 @@ import {
     Box,
     Select,
     MenuItem,
-    CircularProgress
+    CircularProgress,
+    Checkbox
 } from '@mui/material';
+import { useFetchCollections } from 'hooks/useFetchCollections';
 
-// Mock fetch function to simulate database call
-const fetchCollections = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(['Collection A', 'Collection B', 'Collection C']);
-        }, 1000);
-    });
-};
-
-const DeveloperForm = ({ onSubmit }) => {
-    const scriptedRef = useRef(null); // Reference to handle async logic
+const DeveloperForm = ({ onSubmit, developer = null }) => {
+    const scriptedRef = useRef(true); // Reference to handle async logic
     const [collections, setCollections] = useState([]); // Store the collections
     const [loading, setLoading] = useState(true); // Loading state for fetching collections
+    const { fetchCollections } = useFetchCollections();
+    const handleSubmit = async (values) => {
+        onSubmit({
+            ...values,
+        });
+    };
 
     useEffect(() => {
         const getCollections = async () => {
@@ -35,25 +34,24 @@ const DeveloperForm = ({ onSubmit }) => {
         };
         getCollections();
     }, []);
-
+    
     return (
         <Formik
             initialValues={{
-                name: '',
-                email: '',
-                assignedCollection: '',
+                email: developer?.email || '',
+                collection_id: developer?.collection_ids||'',
                 submit: null
             }}
             validationSchema={Yup.object().shape({
-                name: Yup.string().max(255).required('Name is required'),
                 email: Yup.string().email('Must be a valid email').required('Email is required'),
-                assignedCollection: Yup.string().required('Assigned Collection is required')
+                collection_id: Yup.array().min(1, 'At least one collection must be selected')
             })}
             onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                 try {
+                    console.log(scriptedRef.current)
                     if (scriptedRef.current) {
                         // Call onSubmit prop to handle form submission
-                        await onSubmit(values);
+                        await handleSubmit(values);
                         setStatus({ success: true });
                         setSubmitting(false);
                     }
@@ -67,29 +65,10 @@ const DeveloperForm = ({ onSubmit }) => {
                 }
             }}
         >
-            {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values, setFieldValue }) => (
+            {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
                 <form noValidate onSubmit={handleSubmit}>
                     {/* Empty space above Name Field */}
                     <Box sx={{ mb: 2, height: '20px' }} />
-
-                    {/* Name Field */}
-                    <FormControl fullWidth error={Boolean(touched.name && errors.name)} sx={{ mb: 2 }}>
-                        <InputLabel htmlFor="name">Name</InputLabel>
-                        <OutlinedInput
-                            id="name"
-                            type="text"
-                            value={values.name}
-                            name="name"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            label="Name*"
-                        />
-                        {touched.name && errors.name && (
-                            <FormHelperText error id="name-error">
-                                {errors.name}
-                            </FormHelperText>
-                        )}
-                    </FormControl>
 
                     {/* Organizational Email Field */}
                     <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ mb: 2 }}>
@@ -119,21 +98,37 @@ const DeveloperForm = ({ onSubmit }) => {
                             </Box>
                         ) : (
                             <Select
-                                labelId="assigned-collection-label"
-                                id="assigned-collection"
-                                name="assignedCollection"
-                                value={values.assignedCollection}
+                                id="collection"
+                                name="collection_id"
+                                value={values.collection_id || []} // Ensure value is an array for multiple
+                                onChange={(event) => {
+                                    const { value } = event.target;
+                                    // Update the selected values (handle array toggle logic if needed)
+                                    handleChange({
+                                        target: {
+                                            name: "collection_id",
+                                            value: typeof value === "string" ? value.split(",") : value,
+                                        },
+                                    });
+                                }}
                                 onBlur={handleBlur}
-                                onChange={(event) => setFieldValue('assignedCollection', event.target.value)}
-                                label="Assigned Collection"
+                                label="Collection"
+                                disabled={loading}
+                                multiple // Allow multiple selection
+                                renderValue={(selected) =>
+                                    // Render selected collections as comma-separated string
+                                    collections
+                                        .filter((collection) => selected.includes(collection.id))
+                                        .map((collection) => collection.name)
+                                        .join(", ")
+                                }
                             >
-                                <MenuItem value="">Select a collection</MenuItem>
-                                {collections.map((collection, index) => (
-                                    <MenuItem key={index} value={collection}>
-                                        {collection}
+                                {collections.map((collection) => (
+                                    <MenuItem key={collection.id} value={collection.id}>
+                                        <Checkbox checked={values.collection_id?.includes(collection.id) || false} />
+                                        {collection.name}
                                     </MenuItem>
                                 ))}
-                                <MenuItem value="All">All</MenuItem> {/* "All" option */}
                             </Select>
                         )}
                         {touched.assignedCollection && errors.assignedCollection && (

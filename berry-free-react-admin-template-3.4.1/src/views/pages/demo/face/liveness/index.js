@@ -40,7 +40,7 @@ const FaceLivenessPage = () => {
             if (response) {
                 console.log(response.data);
                 setResult(true);
-                setApproved(response.data["result"]["is_real"]);
+                setApproved(response.data["result"]["is_real"] && response.data["result"]["antispoof_score"] > 0.66);
             }
         } catch (error) {
             console.error("Error:", error);

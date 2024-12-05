@@ -42,7 +42,7 @@ export const useCallAPI = () => {
                 params,
                 withCredentials: withCredentials
             });
-
+            
             return response; // Trả về response nếu thành công
         } catch (error) {
             if (error.response.data.error ==='Signature has expired' && error.response.status === 400) {

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Pagination } from '@mui/material';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Pagination, IconButton} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import DialogForm from '../DialogForm';
 import { useCallAPI } from 'hooks/useCallAPI';
 import FaceSearchForm from '../forms/face-search-form';
+import PersonForm from '../forms/person-form';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 const SearchManagement = () => {
@@ -11,10 +13,11 @@ const SearchManagement = () => {
 
     const [search, setSearch] = useState('');
     const [openSeach, setOpenSearch] = useState(false);
+    const [openAdd, setOpenAdd] = useState(false);
     const [persons, setPersons] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); 
     const [itemsPerPage] = useState(5); 
-
+    const [editPerson, setEditPerson] = useState(null);
 
 
     // Function to handle dialog open
@@ -27,18 +30,95 @@ const SearchManagement = () => {
     };
     const handleSearchFace = async (values) => {
         const body = {
-            collection_id: values.collection_id,
+            collection_ids: values.collection_id,
             image: values.image,
             limit: parseInt(values.limit, 10),
             score: values.confidence_score,
         }
+        console.log(body);
         const response = await callAPI(BACKEND_ENDPOINTS.project.search, "POST", body, true);
+        console.log(response);
         setPersons(response.data.result);
         handleCloseSearch();
     }
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentPersons = persons.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Convert image file to base64
+    const convertToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
+    };
+    const handleCloseAdd = () => {
+        setOpenAdd(false);
+    };
+    // Handle add/edit submission
+    const handleSubmit = async (values) => {
+        try {
+            values.images = await Promise.all(values.images.map(convertToBase64));
+            if (editPerson) {
+                const body = {
+                    name: values.name,
+                    nationality: values.nationality,
+                    birth: values.dob,
+                    new_images: values.images,
+                    old_collection_id: editPerson.collection_id,
+                    collection_id: values.collection_id,
+                    removed_image_ids: values.removeImageIDs
+                }
+                const response = await callAPI(`${BACKEND_ENDPOINTS.project.person}/${editPerson.id}`, "PATCH", body, true)
+                
+                setPersons((prevPersons) => {
+                    const newPersons = [...prevPersons];
+                    const index = newPersons.findIndex(person => person.id === editPerson.id);
+                    if (index !== -1) {
+                        newPersons[index] = response.data.person;
+                    }
+                    return newPersons;  // Return the updated array
+                });
+            }
+            else {
+                const body = {
+                    name: values.name,
+                    nationality: values.nationality,
+                    birth: values.dob,
+                    images: values.images,
+                    collection_id: values.collection_id,
+                };
+                await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+            }
+            handleCloseAdd();
+        } catch (error) {
+            console.error("Error submitting person", error);
+            alert(error.response.data.error);
+            setOpenAdd(false);
+        }
+    };
+
+    const handleEdit = (id) => {
+        const person = persons.find((p) => p.id === id);
+        if (person) {
+            setEditPerson(person);
+            setOpenAdd(true);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this person?")) {
+            try {
+                const person = persons.find((p) => p.id === id);
+                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${id}`, "DELETE", {}, true, null, { collection_id: person.collection_id });
+                setPersons((prev) => prev.filter((p) => p.id !== id));
+            } catch (error) {
+                console.error("Error deleting person", id, error);
+            }
+        }
+    };
     return (
         <Box sx={{ padding: '20px' }}>
             <Box sx={{
@@ -92,7 +172,9 @@ const SearchManagement = () => {
                     </Box>
                 </Box>
             </Box>
-
+            <DialogForm open={openAdd} onClose={handleCloseAdd} title={editPerson ? "Edit Person" : "Add Person"}>
+                <PersonForm onSubmit={handleSubmit} person={editPerson} />
+            </DialogForm>
             <DialogForm open={openSeach} onClose={handleCloseSearch} title="Search Face">
                 <FaceSearchForm onSubmit={handleSearchFace} />
             </DialogForm>
@@ -131,6 +213,10 @@ const SearchManagement = () => {
                                     <TableCell>{person.nationality}</TableCell>
                                     <TableCell>{person.updated_at}</TableCell>
                                     <TableCell>{person.collection_id}</TableCell>
+                                    <TableCell>
+                                        <IconButton color="primary" onClick={() => handleEdit(person.id)}><EditIcon /></IconButton>
+                                        <IconButton color="secondary" onClick={() => handleDelete(person.id)}><DeleteIcon /></IconButton>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}

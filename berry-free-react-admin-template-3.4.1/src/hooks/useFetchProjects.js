@@ -14,7 +14,8 @@ export const useFetchProjects = () => {
                     name: project.project_name, // Mapping logic
                     api: project.key,
                     exp: project.expires_at,
-                    role: project.admin_key_id? "dev":"admin"
+                    role: project.admin_key_id? "dev":"admin",
+                    ...(project.admin_key_id? owner: project.projectOwner)
                 }));
             } else {
                 console.error("projects is not an array:", response.data.projects);

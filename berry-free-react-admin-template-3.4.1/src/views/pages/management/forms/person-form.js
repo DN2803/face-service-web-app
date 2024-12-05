@@ -13,7 +13,7 @@ import {
     MenuItem,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
-
+import { format } from "date-fns";
 
 
 const PersonForm = ({ onSubmit, person = null }) => {
@@ -22,10 +22,9 @@ const PersonForm = ({ onSubmit, person = null }) => {
     const [imagesCurrent, setImagesCurrent] = useState(person?.images || []);
     const collections = useSelector(state => state.collections.collections);
     const [removeImageIDs, setRemoveImageIDs] = useState([]);
-    console.log(collections)
-
     const handleSubmit = async (values) => {
         // Gọi hàm onSubmit với dữ liệu của form và danh sách hình ảnh
+        values.dob = format(new Date(values.dob), "yyyy-MM-dd");
         onSubmit({
             ...values,
             images,
@@ -107,7 +106,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                         <OutlinedInput
                             id="dob"
                             type="date"
-                            value={values.dob}
+                            value={values.dob? format(new Date(values.dob), "yyyy-MM-dd"): values.dob}
                             name="dob"
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -235,7 +234,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                             type="submit"
                             color="primary"
                             variant="contained"
-                            disabled={isSubmitting || (!images.length && !removeImageIDs.length) }
+                            disabled={isSubmitting || (!person && !images.length) || (!person && !removeImageIDs.length && !images.length)}
                             fullWidth
                         >
                             {person ? 'Update' : 'Submit'}

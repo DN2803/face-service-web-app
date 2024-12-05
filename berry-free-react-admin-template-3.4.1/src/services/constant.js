@@ -34,6 +34,7 @@ export const BACKEND_ENDPOINTS = {
       persons: "/project/persons",
       collections: "/project/collections",
       search: "/project/search",
+      team: "/project/team-management",
     }
   };
   
