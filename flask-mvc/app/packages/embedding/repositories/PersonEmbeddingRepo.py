@@ -14,15 +14,17 @@ class PersonEmbeddingRepo(BaseRepository):
             return self._create(**kwargs)
         except Exception as e:
             raise e
-    
-    def get_embedding(self, id):
-        return self._get_by('id',id)
-    
-    def get_embeds_df(self, person_ids):
-        result = self.session.query(self.model).with_entities(self.model.person_id, self.model.embedding).filter(
-            self.model.person_id.in_(person_ids)
-        ).all()
 
-        df = pd.DataFrame(result, columns=['person_id', 'embedding'])
+    def get_embedding(self, id):
+        return self._get_by('all', 'id', 'equal', id)
+
+    def get_embeds_df(self, person_ids):
+        df = self._get_by(
+            select_cols=['person_id', 'embedding'], 
+            column = 'person_id', 
+            operator = 'in',
+            value = person_ids,
+            return_type='df')
+
         df['embedding'] = df['embedding'].apply(pickle.loads)
         return df

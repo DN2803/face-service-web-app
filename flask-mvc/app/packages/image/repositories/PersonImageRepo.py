@@ -7,12 +7,14 @@ class PersonImageRepo(ImageRepo):
         super().__init__(PersonFaceImage, db.session)
 
     def get_by_person_id(self, person_id):
-        return self._get_by('person_id', person_id, all=True)
+        return self._get_by('all', 'person_id', 'equal', person_id, all=True)
 
     def get_images(self, person_id):
-        df = self._get_dataframe(
-            select_cols=['id','img_url'],
-            filter_col='person_id',
-            filter_value=person_id
+        df = self._get_by(
+            select_cols = ['id','img_url'],
+            column = 'person_id',
+            operator = 'equal',
+            value = person_id,
+            return_type='df'
         )
         return df.to_dict(orient='records')

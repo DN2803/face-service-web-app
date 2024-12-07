@@ -12,16 +12,10 @@ class PersonRepo(BaseRepository):
         return self._create(**kwargs)
 
     def get_person(self, person_id):
-        return self._get_by('id', person_id)
+        return self._get_by('all', 'id', 'equal', person_id)
 
     def get_df(self, collection_ids):
-        query = self.session.query(self.model).filter(
-            (self.model.collection_id.in_(collection_ids))
-        ).statement
-
-        df = pd.read_sql(query, con=db.engine)
-
-        return df
+        return self._get_by('all', 'collection_id', 'in', collection_ids, return_type='df')
 
     def update_info(self, person, **kwargs):
         return self._update_by_obj(person,**kwargs)
