@@ -27,7 +27,7 @@ class AccessCollectionRepo(BaseRepository):
 
     def get_collection_ids(self, key_id):
         coll_id_df =  self._get_by(
-            select_cols=['collection_id'],
+            select_cols='all',
             column='key_id',
             operator='equal',
             value=key_id
