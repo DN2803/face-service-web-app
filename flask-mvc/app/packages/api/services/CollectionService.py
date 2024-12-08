@@ -2,7 +2,6 @@ from app.services.BaseService import BaseService
 from app.packages.api.models.Collection import CollectionSchema
 from app.packages.api.repositories.CollectionRepo import CollectionRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
-from app.packages.api.services.KeyService import KeyService
 
 class CollectionService(BaseService):
     def __init__(self):
