@@ -30,6 +30,7 @@ class KeyRepo(BaseRepository):
                 self.model.key,
                 User.name,
                 User.email,
+                AccessCollection.key_id,
                 func.concat(
                     literal('['),
                     func.group_concat(AccessCollection.collection_id), # SQL LITE
@@ -40,7 +41,7 @@ class KeyRepo(BaseRepository):
             .join(UserKey, self.model.id == UserKey.key_id)
             .join(User, UserKey.user_id == User.id)
             .join(AccessCollection, self.model.id == AccessCollection.key_id)
-            .group_by(self.model.key_id)
+            .group_by(AccessCollection.key_id)
             .statement
         )
         return pd.read_sql(query, con=db.engine)
