@@ -10,17 +10,19 @@ import {
     Box,
     Select,
     MenuItem,
+    Tooltip
 } from '@mui/material';
 import { useFetchProjects } from "hooks/useFetchProjects";
 import { setApiKey } from 'store/actions/authActions';
 import { setProject } from 'store/actions/projectActions';
 
-const SelectForm = (... others) => {
+const SelectForm = (...others) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { fetchProjects } = useFetchProjects();
+
     useEffect(() => {
         const getProjects = async () => {
             try {
@@ -49,11 +51,11 @@ const SelectForm = (... others) => {
                 project: '',
             }}
             validationSchema={Yup.object().shape({
-                project: Yup.string().required('Project is required'), 
+                project: Yup.string().required('Project is required'),
             })}
             onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                 try {
-                    console.log(values.project)
+                    console.log(values.project);
                     await handleAccessAPI(values.project); // Await API call to complete
                     setStatus({ success: true });
                 } catch (err) {
@@ -64,13 +66,13 @@ const SelectForm = (... others) => {
                     setSubmitting(false);
                 }
             }}
-        >
+        >   
             {({ handleBlur, handleChange, handleSubmit, isSubmitting, values }) => (
                 <form noValidate onSubmit={handleSubmit} {...others}>
                     {/* Empty space above Name Field */}
                     <Box sx={{ mb: 2, height: '20px' }} /> {/* Adjust height as needed */}
 
-                    <FormControl fullWidth sx={{ mb: 2 }}>
+                    <FormControl fullWidth sx={{ mb: 2 }} disabled={loading}>
                         <InputLabel htmlFor="project">Project</InputLabel>
                         <Select
                             id="project"
@@ -79,11 +81,24 @@ const SelectForm = (... others) => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                             label="Project"
-                            disabled={loading} // Disable the select while loading
+                            disabled={loading}  // Disable while loading
                         >
                             {projects.map((project) => (
                                 <MenuItem key={project.api} value={project.api}>
-                                    {project.name}
+                                    <Tooltip 
+                                        title={(
+                                            <>
+                                                <div><strong>Project Name:</strong> {project.name}</div>
+                                                {project.owner && <div><strong>Project Owner:</strong> {project.owner}</div>}
+                                                <div><strong>Role:</strong> {project.role}</div>
+                                            </>
+                                        )}
+                                        disableInteractive 
+                                        arrow 
+                                        placement="right"
+                                    >
+                                        <span>{project.name}</span>
+                                    </Tooltip>
                                 </MenuItem>
                             ))}
                         </Select>
@@ -91,7 +106,15 @@ const SelectForm = (... others) => {
 
                     {/* Submit Button */}
                     <Box>
-                        <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
+                        <Button 
+                            disableElevation 
+                            disabled={isSubmitting} 
+                            fullWidth 
+                            size="large" 
+                            type="submit" 
+                            variant="contained" 
+                            color="secondary"
+                        >
                             Next
                         </Button>
                     </Box>

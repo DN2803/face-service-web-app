@@ -37,7 +37,7 @@ const SelectProject = () => {
               name: data.project_name, // Mapping logic
               api: data.key,
               exp: data.expires_at,
-              role: data.admin_key_id? "admin":"dev"
+              role: data.admin_key_id? "dev":"admin"
             }
             dispatch(setProject(project));
             dispatch(setApiKey(project.api));

@@ -7,32 +7,12 @@ import {
     Box,
     Select,
     MenuItem,
-    Typography
+    Typography, 
+    Checkbox
 } from '@mui/material';
 import ImageUpload from "ui-component/ImageUpload";
 import { useFetchCollections } from 'hooks/useFetchCollections';
 
-// Mock fetch function to simulate database call
-// const fetchCollections = async () => {
-//     return new Promise((resolve) => {
-//         setTimeout(() => {
-//             resolve([
-//                 {
-//                     id: '1',
-//                     name: 'Collection A',
-//                 },
-//                 {
-//                     id: '2',
-//                     name: 'Collection B',
-//                 },
-//                 {
-//                     id: '3',
-//                     name: 'Collection C',
-//                 }
-//             ]);
-//         }, 1000);
-//     });
-// };
 
 const FaceSearchForm = ({ onSubmit, collection = null }) => {
     const [uploadedImage, setUploadedImage] = useState(null);
@@ -119,7 +99,7 @@ const FaceSearchForm = ({ onSubmit, collection = null }) => {
                         {/* Collection Field (Dropdown) */}
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel htmlFor="collection">Collection (Optional)</InputLabel>
-                            <Select
+                            {/* <Select
                                 id="collection"
                                 name="collection_id"
                                 value={values.collection_id}  // Use collection_id here
@@ -128,13 +108,47 @@ const FaceSearchForm = ({ onSubmit, collection = null }) => {
                                 label="Collection"
                                 disabled={loading}
                             >
-                                <MenuItem value=''>None</MenuItem>  {/* Use an empty string as the default value */}
+                                <MenuItem value=''>None</MenuItem> 
                                 {collections.map((collection) => (
                                     <MenuItem key={collection.id} value={collection.id}>
                                         {collection.name}
                                     </MenuItem>
                                 ))}
+                            </Select> */}
+                            <Select
+                                id="collection"
+                                name="collection_id"
+                                value={values.collection_id || []} // Ensure value is an array for multiple
+                                onChange={(event) => {
+                                    const { value } = event.target;
+                                    // Update the selected values (handle array toggle logic if needed)
+                                    handleChange({
+                                        target: {
+                                            name: "collection_id",
+                                            value: typeof value === "string" ? value.split(",") : value,
+                                        },
+                                    });
+                                }}
+                                onBlur={handleBlur}
+                                label="Collection"
+                                disabled={loading}
+                                multiple // Allow multiple selection
+                                renderValue={(selected) =>
+                                    // Render selected collections as comma-separated string
+                                    collections
+                                        .filter((collection) => selected.includes(collection.id))
+                                        .map((collection) => collection.name)
+                                        .join(", ")
+                                }
+                            >
+                                {collections.map((collection) => (
+                                    <MenuItem key={collection.id} value={collection.id}>
+                                        <Checkbox checked={values.collection_id?.includes(collection.id) || false} />
+                                        {collection.name}
+                                    </MenuItem>
+                                ))}
                             </Select>
+
                         </FormControl>
 
                         {/* Limit Field (Dropdown) */}

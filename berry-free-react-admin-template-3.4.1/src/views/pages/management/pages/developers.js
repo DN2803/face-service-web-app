@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
-import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, IconButton } from '@mui/material';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import DialogForm from '../DialogForm';
 import DeveloperForm from '../forms/developer-form';
+import ApiKeyDisplay from 'ui-component/APIKeyDisplay';
+import { useCallAPI } from 'hooks/useCallAPI';
 
 const DeveloperManagement = () => {
+    const { callAPI } = useCallAPI();
+    const admin_info = useSelector(state => state.auth);
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
-    const developers = []; // For demonstration, no collection are added, which will display the "No Collection Found" message.
+    const [developers, setDevelopers] = useState([]); 
+    const [editDeveloper, setEditDeveloper] = useState(null);
     // Function to handle dialog open
     const handleOpen = () => {
+        setEditDeveloper(null)
         setOpen(true);
     };
 
@@ -21,8 +30,37 @@ const DeveloperManagement = () => {
 
     const handleSubmit = async (values) => {
         // Handle the form submission logic here
-        console.log(values);
+        const body = {
+            "dev-email": values.email,
+            "scopes": values.collection_id
+        }
+        if (editDeveloper) {
+            await callAPI(BACKEND_ENDPOINTS.project.team, "PATCH", body, true);
+        }
+        else {
+            await callAPI(BACKEND_ENDPOINTS.project.team, "POST", body, true)
+        }
         handleClose(); // Close dialog after submission
+    };
+    const onEdit = (developerToEdit) => {
+        if ( developerToEdit) {
+            setEditCollection(collectionToEdit);
+            setOpen(true);
+        }
+    }
+    const onDelete = async (deletedDeveloper) => {
+        if (window.confirm("Are you sure you want to delete this developer?")) {
+            const param = {
+                'dev-key': deletedDeveloper.key
+            }
+            try {
+                await callAPI(`${BACKEND_ENDPOINTS.project.team}`, "DELETE", true, null, param);
+                setDevelopers((prev) => prev.filter((developer) => developer.key !== deletedDeveloper.key)); // Remove deleted item from state
+            } catch (error) {
+                console.error("Error deleting developer", error);
+            }
+        }
+
     };
 
 
@@ -76,7 +114,7 @@ const DeveloperManagement = () => {
                             color="warning"
                             startIcon={<AdminPanelSettingsIcon />}
                             sx={{ marginRight: '10px' }}
-                            onClick={handleOpen} 
+                            onClick={handleOpen}
                         >
                             Add Developer
                         </Button>
@@ -84,7 +122,7 @@ const DeveloperManagement = () => {
                 </Box>
             </Box>
             <DialogForm open={open} onClose={handleClose} title="Add Developer details">
-                <DeveloperForm onSubmit={handleSubmit}/>
+                <DeveloperForm onSubmit={handleSubmit} />
             </DialogForm>
             {/* Table Section */}
             <TableContainer component={Paper}>
@@ -99,6 +137,11 @@ const DeveloperManagement = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
+                        <TableRow>
+                            <TableCell><ApiKeyDisplay apiKey={admin_info.apiKey}/></TableCell>
+                            <TableCell>{admin_info.user.username}</TableCell>
+
+                        </TableRow>
                         {developers.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} align="center">
@@ -106,13 +149,22 @@ const DeveloperManagement = () => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            developers.map((developer) => (
-                                <TableRow key={developer.id}>
-                                    <TableCell>{developer.name}</TableCell>
+                            developers.map((developer, index) => (
+                                <TableRow key={index}>
+                                    <TableCell><ApiKeyDisplay apiKey={developer.key}/></TableCell>
                                     <TableCell>{developer.email}</TableCell>
                                     <TableCell>{developer.collections}</TableCell>
                                     <TableCell> {developer.lastUsed} </TableCell>
-                                    <TableCell> {/* Add action buttons here */} </TableCell>
+                                    <TableCell> {/* Nút Sửa */}
+                                        <IconButton onClick={() => onEdit(developer)} color="primary">
+                                            <EditIcon />
+                                        </IconButton>
+
+                                        {/* Nút Xóa */}
+                                        <IconButton onClick={() => onDelete(developer)} color="secondary">
+                                            <DeleteIcon />
+                                        </IconButton> 
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}

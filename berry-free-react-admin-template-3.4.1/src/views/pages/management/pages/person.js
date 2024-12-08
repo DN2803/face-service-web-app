@@ -36,7 +36,7 @@ const PersonManagement = () => {
     const [persons, setPersons] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
     const { fetchCollections } = useFetchCollections();
-    const [itemsPerPage] = useState(5); // Số mục hiển thị trên mỗi trang
+    const [itemsPerPage] = useState(10); // Số mục hiển thị trên mỗi trang
     const [numPerson, setNumPerson] = useState(0);
     const [lastIDs, setLastIDs] = useState([]);
     const waitResponseRef = useRef(false);
@@ -172,6 +172,8 @@ const PersonManagement = () => {
             handleCloseAdd();
         } catch (error) {
             console.error("Error submitting person", error);
+            alert(error.response.data.error);
+            setOpenAdd(false);
         }
     };
 
