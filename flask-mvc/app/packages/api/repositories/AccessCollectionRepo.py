@@ -26,9 +26,10 @@ class AccessCollectionRepo(BaseRepository):
         return True if obj else False
 
     def get_collection_ids(self, key_id):
-        coll_id_df =  self._get_dataframe(
-            drop_cols=['key_id'],
-            filter_col='key_id',
-            filter_value=key_id
+        coll_id_df =  self._get_by(
+            select_cols=['collection_id'],
+            column='key_id',
+            operator='equal',
+            value=key_id
         )
         return coll_id_df['collection_id'].tolist()
