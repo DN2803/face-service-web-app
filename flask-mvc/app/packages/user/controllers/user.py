@@ -38,11 +38,12 @@ def user_project():
     try:
         verify_jwt_in_request(fresh=True)
         user_id = get_jwt_identity()
-        data = request.json
 
         if request.method == 'GET':
             projects = ProjectService().get_projects(user_id)
             return jsonify(projects=projects), 200
+
+        data = request.json
 
         if request.method == 'POST':
             info = ProjectService().create_project(user_id, data['project_name'])
