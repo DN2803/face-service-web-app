@@ -21,6 +21,8 @@ class KeyRepo(BaseRepository):
     def get_devs_info_df(self, admin_key_id):
         from app.packages.api.models.UserKey import UserKey
         from app.packages.user.models.User import User
+        from app.packages.api.models.AccessCollection import AccessCollection
+        from sqlalchemy import func, literal
         import pandas as pd
 
         query = (
@@ -28,10 +30,17 @@ class KeyRepo(BaseRepository):
                 self.model.key,
                 User.name,
                 User.email,
+                func.concat(
+                    literal('['),
+                    func.group_concat(self.model.collection_id), # SQL LITE
+                    literal("]")
+                ).label('scopes')
             )
             .filter(self.model.admin_key_id == admin_key_id)
             .join(UserKey, self.model.id == UserKey.key_id)
             .join(User, UserKey.user_id == User.id)
+            .join(self.model.id == AccessCollection.key_id)
+            .group_by(self.model.key_id)
             .statement
         )
         return pd.read_sql(query, con=db.engine)

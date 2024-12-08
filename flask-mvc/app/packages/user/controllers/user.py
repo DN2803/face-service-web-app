@@ -76,8 +76,7 @@ from flask_jwt_extended import decode_token
 @user_bp.route('/my-project/team', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def team_management():
     try:
-        verify_jwt_in_request(fresh=True)
-        user_id = get_jwt_identity()
+        verify_jwt_in_request(fresh=True, locations='cookies')
 
         key = request.headers.get('X-API-Key')
         key_auth_service = KeyAuthService()
@@ -101,8 +100,8 @@ def team_management():
             raise Exception('Given collections is inaccessible!')
 
         if request.method == 'POST':
-            payload = decode_token(data['dev_token'])
-            dev_id = payload['user_id']
+            verify_jwt_in_request(refresh=True, locations='json')
+            dev_id = get_jwt_identity()
 
             dev_key = ProjectService().add_dev(admin_key_obj, dev_id, data['scopes'])
             response = jsonify(
