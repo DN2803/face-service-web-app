@@ -39,7 +39,7 @@ class KeyRepo(BaseRepository):
             .filter(self.model.admin_key_id == admin_key_id)
             .join(UserKey, self.model.id == UserKey.key_id)
             .join(User, UserKey.user_id == User.id)
-            .join(self.model.id == AccessCollection.key_id)
+            .join(AccessCollection, self.model.id == AccessCollection.key_id)
             .group_by(self.model.key_id)
             .statement
         )
