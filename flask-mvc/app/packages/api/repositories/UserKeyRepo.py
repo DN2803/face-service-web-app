@@ -6,19 +6,19 @@ class UserKeyRepo(BaseRepository):
     def __init__(self):
         super().__init__(UserKey, db.session)
 
-    def add(self, user_id, key_id):
+    def add_ownership(self, user_id, key_id):
         self._create(user_id=user_id,key_id=key_id)
 
     def get_key_ids(self, user_id):
-        return self._get_by('all', 'user_id', 'equal', user_id, all=True)
+        """Get all key_ids belongs to a user_id"""
+        df = self._get_by(['key_id'], 'user_id', 'equal', user_id, return_type='df')
+        return df['key_id'].tolist()
 
     def get_user_id(self, key_id):
-        return self._get_by('all', 'key_id', 'equal', key_id)
-    
-    def check_ownership(self, user_id, key_id):
+        """Get user_id of the owner of the key_id"""
         obj = self._get_by('all', 'key_id', 'equal', key_id)
+        return obj.user_id
 
-        if not obj or obj.user_id != user_id:
-            return False
-
-        return True
+    def get_by_key_ids(self, key_ids):
+        """Find all user_key records by a given key_ids list"""
+        return self._get_by('all', 'key_id', 'in', key_ids, return_type='df')

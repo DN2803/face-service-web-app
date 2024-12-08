@@ -34,11 +34,11 @@ def indentify():
     try:
         data = request.json
         info = AuthService().check_email(data['email'])
-        
+
         if info:
             refresh_token = AuthService.gen_token(info['id'], refresh=True)
             response = jsonify(message="Email exists", info=info, refresh_token=refresh_token)
-            
+
             return response, 200
         else:
             raise Exception('This email does not exist')

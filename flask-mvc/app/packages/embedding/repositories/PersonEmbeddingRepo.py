@@ -2,7 +2,6 @@ from app.repositories.BaseRepository import BaseRepository
 from app.packages.embedding.models.PersonFaceEmbedding import PersonFaceEmbedding
 from app.config.Database import db
 
-import pandas as pd
 import pickle
 
 class PersonEmbeddingRepo(BaseRepository):

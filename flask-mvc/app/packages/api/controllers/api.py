@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_limiter import Limiter
 
 from app import app
-from app.packages.api.services.KeyService import KeyService
+from app.packages.api.services.KeyAuthService import KeyAuthService
 from app.packages.api.services.PersonService import PersonService
 from app.packages.api.services.CollectionService import CollectionService
 
@@ -18,17 +18,17 @@ __key_limiter = Limiter(
     default_limits=['200 per day']
 )
 
-@api_bp.route('/person', methods=['POST', 'PATCH', 'DELETE'])
+@api_bp.route('/person', methods=['POST'])
 @__key_limiter.limit('20 per minute')
 def person():
     try:
-        key = _get_api_key()        
+        key = _get_api_key()
         data = request.json
         
         if 'collection_id' not in data:
             raise Exception('The request lacks collection_id parameter!')
 
-        validated = KeyService().validate(key, [data['collection_id']])
+        validated = KeyAuthService().validate(key, [data['collection_id']])
 
         if not validated:
             return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
@@ -48,7 +48,7 @@ def person():
 @__key_limiter.limit('20 per minute')
 def person_id(person_id):
     try:
-        key = _get_api_key()        
+        key = _get_api_key()
         data = request.json if request.method=='PATCH' else request.args
         
         if 'collection_id' not in data:
@@ -58,7 +58,7 @@ def person_id(person_id):
 
         if 'old_collection_id' in data: collection_ids.append(data['old_collection_id'])
 
-        validated = KeyService().validate(key, collection_ids)
+        validated = KeyAuthService().validate(key, collection_ids)
 
         if not validated:
             return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
@@ -88,7 +88,7 @@ def persons():
 
         collection_ids = [int(id) for id in data['collection_ids'].split(',')]
         data.pop('collection_ids')
-        validated = KeyService().validate(key, collection_ids)
+        validated = KeyAuthService().validate(key, collection_ids)
 
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401
@@ -123,9 +123,9 @@ def persons():
 def collection():
     try:
         key = _get_api_key()
-        key_id, is_admin = KeyService().check_key(key)
+        key_obj, is_admin = KeyAuthService().check_key(key)
 
-        if not key_id:
+        if not key_obj:
             return jsonify(error='Invalid API Key!'), 401
 
         collection_service = CollectionService()
@@ -135,7 +135,7 @@ def collection():
             if not is_admin:
                 raise Exception('Cannot create a collection with Dev Key!')
 
-            info = collection_service.add_collection(key_id, **data)
+            info = collection_service.add_collection(key_obj.id, **data)
 
             response = jsonify(
                 collection_info=info,
@@ -151,7 +151,7 @@ def collection():
 def collection_id(collection_id):
     try:
         key = _get_api_key()
-        validated = KeyService().validate(key, [collection_id])
+        validated = KeyAuthService().validate(key, [collection_id])
 
         if not validated:
             return jsonify(error='Invalid API Key or collection is inaccessible!'), 401
@@ -178,12 +178,12 @@ def collection_id(collection_id):
 def collections():
     try:
         key = _get_api_key()
-        key_id, is_admin = KeyService().check_key(key)
+        key_obj, is_admin = KeyAuthService().check_key(key)
 
-        if not key_id:
+        if not key_obj:
             return jsonify(error='Invalid API Key!'), 401
 
-        collections = CollectionService().get_collections(key_id, is_admin)
+        collections = CollectionService().get_collections(key_obj.id, is_admin)
 
         response = jsonify(
             count=len(collections),
@@ -204,7 +204,7 @@ def search():
         if 'collection_ids' not in data or len(data['collection_ids']) == 0:
             raise Exception('The request lacks collection_ids parameter!')
 
-        validated = KeyService().validate(key, data['collection_ids'])
+        validated = KeyAuthService().validate(key, data['collection_ids'])
 
         if not validated:
             return jsonify(error='Invalid API Key or one or more collections is inaccessible!'), 401

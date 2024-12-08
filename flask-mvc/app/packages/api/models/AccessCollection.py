@@ -9,4 +9,5 @@ class AccessCollection(db.Model):
     key_id = db.Column(
         db.Integer,
         db.ForeignKey('key.id', name='access-key-fk', ondelete='CASCADE'),
-        primary_key=True)
+        primary_key=True
+    )

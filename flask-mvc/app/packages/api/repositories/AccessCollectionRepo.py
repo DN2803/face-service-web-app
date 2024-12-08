@@ -9,6 +9,15 @@ class AccessCollectionRepo(BaseRepository):
     def add_access(self, collection_id, key_id):
         return self._create(collection_id=collection_id, key_id=key_id)
 
+    def add_multiple_access(self, key_id, collection_ids):
+        accesses = [
+            {
+                'key_id': key_id,
+                'collection_id': collection_id
+            } for collection_id in collection_ids
+        ]
+        self._batch_insert(accesses)
+
     def check_access(self, key_id, collection_id):
         obj = self.model.query.filter(
             (self.model.key_id == key_id) & (self.model.collection_id == collection_id)

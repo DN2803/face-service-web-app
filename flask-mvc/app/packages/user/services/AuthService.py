@@ -32,7 +32,7 @@ class AuthService(BaseService):
 
     def check_email(self, email):
         user = self.repository.get_user_by_email(email)
-        
+
         if user:
             info = self.schema.dump(user)
             info.pop('password')

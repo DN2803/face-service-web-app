@@ -1,13 +1,7 @@
 from app.services.BaseService import BaseService
 
 from deepface import DeepFace
-import pickle
 import numpy as np
-import pandas as pd
-# import torch
-# import torch.nn.functional as F
-
-# __device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class EmbeddingService(BaseService):
     def __init__(self, repository):

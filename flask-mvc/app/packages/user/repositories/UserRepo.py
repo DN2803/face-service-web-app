@@ -12,6 +12,9 @@ class UserRepo(BaseRepository):
     def get_user_by_id(self, id):
         return self._get_by('all', 'id', 'equal', id)
 
+    def get_dev_by_ids(self, ids):
+        return self._get_by(['id', 'name','email'], 'id', 'in', ids, return_type='df')
+
     def get_user_by_email(self, email):
         return self._get_by('all','email', 'equal', email)
 

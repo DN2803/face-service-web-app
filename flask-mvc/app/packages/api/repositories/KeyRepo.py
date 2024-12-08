@@ -9,8 +9,8 @@ class KeyRepo(BaseRepository):
     def add_key(self, **kwargs):
         return self._create(**kwargs)
 
-    def get_key_by_id(self, key_id):
-        return self._get_by('all', 'id', 'equal', key_id)
+    def get_key_by_ids(self, key_id, all=True):
+        return self._get_by('all', 'id', 'equal', key_id, all)
 
     def check_key_exists(self, key):
         return self._get_by('all', 'key', 'equal', key)
@@ -18,5 +18,23 @@ class KeyRepo(BaseRepository):
     def update_key(self, key, **kwargs):
         return self._update_by_obj(key, **kwargs)
 
-    def get_dev_keys(self, admin_key_id):
-        return self._get_by('all', 'admin_key_id', 'equal', admin_key_id, all=True)
+    def get_devs_info_df(self, admin_key_id):
+        from app.packages.api.models.UserKey import UserKey
+        from app.packages.user.models.User import User
+        import pandas as pd
+
+        query = (
+            self.session.query(
+                self.model.key,
+                User.name,
+                User.email,
+            )
+            .filter(self.model.admin_key_id == admin_key_id)
+            .join(UserKey, self.model.id == UserKey.key_id)
+            .join(User, UserKey.user_id == User.id)
+            .statement
+        )
+        return pd.read_sql(query, con=db.engine)
+
+    def remove_key(self, key):
+        self._delete(key)

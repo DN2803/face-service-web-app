@@ -5,7 +5,7 @@ class BaseRepository:
     def __init__(self, model, session):
         self.model = model
         self.session = session
-    
+
     # CRUD
     def _create(self, **kwargs):
         obj = self.model()
@@ -17,32 +17,34 @@ class BaseRepository:
         self.session.commit()
         return obj
 
-    def _get_by(self, column: str, value, all = False):
+    def _batch_insert(self, data_list):
+        self.session.bulk_insert_mappings(self.model, data_list)
+        self.session.commit()
+
+    def _get_by(
+        self,
+        select_cols: str|list[str], #SELECT
+        column: str, operator: str, value, #WHERE
+        all = False,
+        return_type='obj'
+    ):
+        if select_cols == 'all':
+            query = self.session.query(self.model)
+        elif isinstance(select_cols, list):
+            model_columns = [getattr(self.model, col) for col in select_cols]
+            query = self.session.query(*model_columns)
+
         column_attr = getattr(self.model, column, None)
 
-        if column_attr is None:
-            raise Exception(f'{self.model.__name__} table does not have "{column}" column')
+        if operator == 'equal' and isinstance(value, str):
+            query = query.filter(column_attr == value)
+        elif operator == 'in' and isinstance(value, list):
+            query = query.filter(column_attr.in_(value))
 
-        filter = dict()
-        filter[column] = value
-
-        if all:
-            return self.model.query.filter_by(**filter).all()
-        else:
-            return self.model.query.filter_by(**filter).first()
-
-    def _get_dataframe(self, select_cols=None, filter_col=None, filter_value=None):
-        filter_col_attr = getattr(self.model, filter_col) 
-
-        if select_cols:
-            model_columns = [getattr(self.model, col) for col in select_cols]
-            query = self.session.query(*model_columns).filter(filter_col_attr == filter_value).statement
-        else:
-            query = self.session.query(self.model).filter(filter_col_attr == filter_value).statement
-
-        df = pd.read_sql(query, con=db.engine)
-
-        return df
+        if return_type == 'obj':
+            return query.all() if all else query.first()
+        elif return_type == 'df':
+            return pd.read_sql(query.statement, con=db.engine)
 
     def _update_by_obj(self, obj, **kwargs):
         for key, value in kwargs.items():

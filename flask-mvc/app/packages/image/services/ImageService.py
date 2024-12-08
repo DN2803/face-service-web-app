@@ -3,7 +3,6 @@ from app.packages.image.repositories.ImageRepo import ImageRepo
 from app.packages.embedding.services.EmbeddingService import EmbeddingService
 from app.cloud_storage.StorageApp import storage_app
 
-import base64
 from deepface import DeepFace
 import cv2
 
@@ -18,28 +17,27 @@ class ImageService(BaseService):
         Extract faces from a given image
 
         Args:
-            img_path (str or np.ndarray): Path to the first image. Accepts exact image path
-                as a string, numpy array (BGR), or base64 encoded images.
+        ----
+        - img_path (str or np.ndarray): Path to the first image. Accepts exact image path
+            as a string, numpy array (BGR), or base64 encoded images.
 
-            anti_spoofing (boolean): Flag to enable anti spoofing (default is False).
+        - anti_spoofing (boolean): Flag to enable anti spoofing (default is False).
 
         Returns:
-            results (List[Dict[str, Any]]): A list of dictionaries, where each dictionary contains:
+        ----
+        results (List[Dict[str, Any]]): A list of dictionaries, where each dictionary contains:
 
-            - "face" (np.ndarray): The detected face as a NumPy array.
+        - "face" (np.ndarray): The detected face as a NumPy array.
 
-            - "facial_area" (Dict[str, Any]): The detected face's regions as a dictionary containing:
-                + keys 'x', 'y', 'w', 'h' with int values
-                + keys 'left_eye', 'right_eye' with a tuple of 2 ints as values. left and right eyes
-                    are eyes on the left and right respectively with respect to the person itself
-                    instead of observer.
-
-            - "confidence" (float): The confidence score associated with the detected face.
-
-            - "is_real" (boolean): antispoofing analyze result. this key is just available in the
+        - "facial_area" (Dict[str, Any]): The detected face's regions as a dictionary containing:
+            * keys 'x', 'y', 'w', 'h' with int values
+            * keys 'left_eye', 'right_eye' with a tuple of 2 ints as values. left and right eyes
+                are eyes on the left and right respectively with respect to the person itself
+                instead of observer.
+            * "confidence" (float): The confidence score associated with the detected face.
+            * "is_real" (boolean): antispoofing analyze result. this key is just available in the
                 result only if anti_spoofing is set to True in input arguments.
-
-            - "antispoof_score" (float): score of antispoofing analyze result. this key is
+            * "antispoof_score" (float): score of antispoofing analyze result. this key is
                 just available in the result only if anti_spoofing is set to True in input arguments.
         """
         face_objs = DeepFace.extract_faces(

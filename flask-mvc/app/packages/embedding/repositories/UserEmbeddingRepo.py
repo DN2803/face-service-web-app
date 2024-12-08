@@ -2,7 +2,6 @@ from app.repositories.BaseRepository import BaseRepository
 from app.packages.embedding.models.UserFaceEmbedding import UserFaceEmbedding
 from app.config.Database import db
 
-
 class UserEmbeddingRepo(BaseRepository):
     def __init__(self):
         super().__init__(UserFaceEmbedding, db.session)
