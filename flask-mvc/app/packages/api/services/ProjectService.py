@@ -68,7 +68,7 @@ class ProjectService(BaseService):
             'project_name': admin_key_obj.project_name,
             'created_at': created_at,
             'expires_at': admin_key_obj.expires_at,
-            'admin_key_id': admin_key_obj.admin_key_id
+            'admin_key_id': admin_key_obj.id
         }
 
         dev_key_obj = self.repository.add_key(**data)
