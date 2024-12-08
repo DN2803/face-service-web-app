@@ -9,8 +9,8 @@ class KeyRepo(BaseRepository):
     def add_key(self, **kwargs):
         return self._create(**kwargs)
 
-    def get_key_by_ids(self, key_id, all=True):
-        return self._get_by('all', 'id', 'equal', key_id, all)
+    def get_key_by_ids(self, key_ids, all=True):
+        return self._get_by('all', 'id', 'in', key_ids, all)
 
     def check_key_exists(self, key):
         return self._get_by('all', 'key', 'equal', key)
