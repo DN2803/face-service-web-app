@@ -30,7 +30,7 @@ class CollectionRepo(BaseRepository):
         return self._get_by(
             select_cols='all',
             column='admin_key_id',
-            operator='in',
+            operator='equal',
             value=admin_key_id,
             all=True
         )

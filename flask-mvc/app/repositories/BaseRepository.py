@@ -36,10 +36,12 @@ class BaseRepository:
 
         column_attr = getattr(self.model, column, None)
 
-        if operator == 'equal' and isinstance(value, str):
+        if operator == 'equal':
             query = query.filter(column_attr == value)
         elif operator == 'in' and isinstance(value, list):
             query = query.filter(column_attr.in_(value))
+        else:
+            raise Exception('The given operator does not match value type!')
 
         if return_type == 'obj':
             return query.all() if all else query.first()

@@ -15,7 +15,7 @@ class KeyAuthService(BaseService):
         key_obj = self.repository.check_key_exists(key)
 
         if key_obj:
-            if int(time.time()) < key_obj.expires_at:
+            if int(time.time()) > key_obj.expires_at:
                 raise Exception('The given API-Key has expired!')
 
             is_admin = False if key_obj.admin_key_id else True
