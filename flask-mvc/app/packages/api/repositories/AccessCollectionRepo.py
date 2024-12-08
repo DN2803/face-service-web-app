@@ -30,6 +30,7 @@ class AccessCollectionRepo(BaseRepository):
             select_cols='all',
             column='key_id',
             operator='equal',
-            value=key_id
+            value=key_id,
+            return_type='df'
         )
         return coll_id_df['collection_id'].tolist()
