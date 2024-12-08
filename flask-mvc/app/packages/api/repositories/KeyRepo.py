@@ -32,7 +32,7 @@ class KeyRepo(BaseRepository):
                 User.email,
                 func.concat(
                     literal('['),
-                    func.group_concat(self.model.collection_id), # SQL LITE
+                    func.group_concat(AccessCollection.collection_id), # SQL LITE
                     literal("]")
                 ).label('scopes')
             )
