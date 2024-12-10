@@ -18,12 +18,9 @@ class AccessCollectionRepo(BaseRepository):
         ]
         self._batch_insert(accesses)
 
-    def check_access(self, key_id, collection_id):
-        obj = self.model.query.filter(
-            (self.model.key_id == key_id) & (self.model.collection_id == collection_id)
-        ).first()
-
-        return True if obj else False
+    def get_accessible_collections(self, key_id):
+        df = self._get_by('collection_id', 'key_id', 'equal', key_id, return_type='df')
+        return df['collection_id'].to_list()
 
     def get_collection_ids(self, key_id):
         coll_id_df =  self._get_by(

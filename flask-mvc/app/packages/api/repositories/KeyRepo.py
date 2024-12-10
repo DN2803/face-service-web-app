@@ -1,6 +1,12 @@
 from app.repositories.BaseRepository import BaseRepository
 from app.packages.api.models.Key import Key
+from app.packages.user.models.User import User
+from app.packages.api.models.AccessCollection import AccessCollection
 from app.config.Database import db
+
+from sqlalchemy.orm import aliased
+from sqlalchemy import func, literal
+import pandas as pd
 
 class KeyRepo(BaseRepository):
     def __init__(self):
@@ -19,12 +25,6 @@ class KeyRepo(BaseRepository):
         return self._update_by_obj(key, **kwargs)
 
     def get_devs_info_df(self, admin_key_id):
-        from app.packages.api.models.UserKey import UserKey
-        from app.packages.user.models.User import User
-        from app.packages.api.models.AccessCollection import AccessCollection
-        from sqlalchemy import func, literal
-        import pandas as pd
-
         query = (
             self.session.query(
                 self.model.key,
@@ -38,10 +38,26 @@ class KeyRepo(BaseRepository):
                 ).label('scopes')
             )
             .filter(self.model.admin_key_id == admin_key_id)
-            .join(UserKey, self.model.id == UserKey.key_id)
-            .join(User, UserKey.user_id == User.id)
+            .join(User, self.model.user_id == User.id)
             .join(AccessCollection, self.model.id == AccessCollection.key_id)
             .group_by(AccessCollection.key_id)
+            .statement
+        )
+        return pd.read_sql(query, con=db.engine)
+
+    def get_projects(self, user_id):
+        Admin_Key = aliased(Key)
+        query = (
+            self.session.query(
+                self.model.key,
+                self.model.project_name,
+                self.model.expires_at,
+                Admin_Key.project_name.label('original_name'),
+                User.name.label('admin')
+            )
+            .filter(self.model.user_id == user_id)
+            .join(Admin_Key, self.model.admin_key_id == Admin_Key.id)
+            .join(User, User.id == Admin_Key.user_id)
             .statement
         )
         return pd.read_sql(query, con=db.engine)

@@ -1,7 +1,5 @@
 from app.services.BaseService import BaseService
-from app.packages.api.models.Key import KeySchema
 from app.packages.api.repositories.KeyRepo import KeyRepo
-from app.packages.api.repositories.CollectionRepo import CollectionRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
 
 import time
@@ -9,7 +7,6 @@ import time
 class KeyAuthService(BaseService):
     def __init__(self):
         self.repository = KeyRepo()
-        self.schema = KeySchema()
 
     def check_key(self, key):
         key_obj = self.repository.check_key_exists(key)
@@ -23,16 +20,10 @@ class KeyAuthService(BaseService):
 
         return None, None
 
-    def check_access(self, key_id, is_admin, collection_ids):
-        check_access_func = CollectionRepo().check_admin_access if is_admin \
-                        else AccessCollectionRepo().check_access
-
-        for collection_id in collection_ids:
-            is_accessible = check_access_func(key_id, collection_id)
-
-            if not is_accessible: return False
-
-        return True
+    def check_access(self, key_id, collection_ids):
+        accessible_collections = AccessCollectionRepo().get_accessible_collections(key_id)
+        is_accessible = set(collection_ids).issubset(accessible_collections)
+        return is_accessible
 
     def validate(self, key, collection_ids):
         """Check key and access collection permission"""

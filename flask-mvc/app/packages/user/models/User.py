@@ -1,6 +1,7 @@
 from app.config.Database import db
 from app.models.BaseModel import BaseModel, TimestampMixin
 from app.packages.image.models.UserFaceImage import UserFaceImage
+from app.packages.api.models.Key import Key
 
 class User(TimestampMixin, BaseModel):
     #info
@@ -16,6 +17,7 @@ class User(TimestampMixin, BaseModel):
     )
 
     user_face_image = db.relationship('UserFaceImage', backref='user', cascade='all, delete-orphan')
+    user_api_key = db.relationship('Key', backref='user', cascade='all, delete-orphan')
 
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import fields, validate

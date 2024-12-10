@@ -13,6 +13,11 @@ class Key(BaseModel):
         db.ForeignKey('key.id',name='key-admin-fk', ondelete='CASCADE'),
         index=True,
     )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id',name='key-user-fk', ondelete='CASCADE'),
+        index=True,
+    )
 
     dev_key_id = db.relationship(
         'Key', 
