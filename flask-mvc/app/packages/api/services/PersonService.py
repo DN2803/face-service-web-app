@@ -62,19 +62,20 @@ class PersonService(BaseService):
         # Do the Image process first
         img_service = PersonImageService()
         old_images = img_service.get_image_objs_by_person_id(person_obj.id)
-        validated_removed_image_ids = []
+        removed_image_indices = []
 
         for i in range(0, len(old_images)):
             if old_images[i].id in removed_image_ids:
-                validated_removed_image_ids.append(i)
+                removed_image_indices.append(i)
 
         images = self._person_img_process(new_images, person_id)
 
-        if len(images) == 0 and len(old_images) == len(validated_removed_image_ids):
-            raise Exception('Unable delete all images as no new images were added!')
+        if len(images) == 0 and len(old_images) == len(removed_image_indices):
+            raise Exception('Unable to delete all images as no new images were added!')
 
-        while len(validated_removed_image_ids) > 0:
-            index = validated_removed_image_ids.pop()
+        removed_image_indices.sort(reverse=True)
+
+        for index in removed_image_indices:
             img_service.remove(old_images.pop(index))
 
         for rest_img in old_images:

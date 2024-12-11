@@ -16,17 +16,17 @@ class AuthService(BaseService):
     
     @staticmethod
     def gen_token(user_id, refresh=False):
-        token = ''
-
         if refresh:
-            token = create_refresh_token(identity=user_id,
-                                        expires_delta=timedelta(days=30)
-                                        )
+            token = create_refresh_token(
+                identity=user_id,
+                expires_delta=timedelta(days=30)
+            )
         else:
-            token = create_access_token(identity=user_id,
-                                        expires_delta=timedelta(hours=1),
-                                        fresh=True
-                                        )
+            token = create_access_token(
+                identity=user_id,
+                expires_delta=timedelta(hours=1),
+                fresh=True
+            )
 
         return token
 
@@ -50,14 +50,15 @@ class AuthService(BaseService):
 
     def validate_login(self, id, password):
         user = self.repository.get_user_by_id(id)
+
         if user and check_password_hash(user.password, password):
             return True
-        
+
         return False
 
     def validate_face_login(self, id, img, threshold = 0.7):
         user = self.repository.get_user_by_id(id)
-        
+
         if user.verified:
             face_service = UserImageService()
             embed_service = UserEmbeddingService()

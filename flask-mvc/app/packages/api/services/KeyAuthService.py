@@ -21,22 +21,20 @@ class KeyAuthService(BaseService):
         return None, None
 
     def check_access(self, key_id, collection_ids):
-        accessible_collections = AccessCollectionRepo().get_accessible_collections(key_id)
-        is_accessible = set(collection_ids).issubset(accessible_collections)
-        return is_accessible
+        return AccessCollectionRepo().check_access(key_id, collection_ids)
 
     def validate(self, key, collection_ids):
         """Check key and access collection permission"""
-        key_obj, is_admin = self.check_key(key)
+        key_obj, _ = self.check_key(key)
 
         if key_obj == None: return False
 
-        return self.check_access(key_obj.id, is_admin, collection_ids)
+        return self.check_access(key_obj.id, collection_ids)
 
     def update_key(self, key, **kwargs):
         key_obj = self.repository.check_key_exists(key)
-        
+
         if not key_obj:
             raise Exception('Given API Key does not exist!')
-        
+
         self.repository.update_key(key_obj, **kwargs)

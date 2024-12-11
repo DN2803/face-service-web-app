@@ -34,14 +34,10 @@ class CollectionService(BaseService):
         self.repository.delete(collection_obj)
 
     #----------------------COLLECTIONs----------------------#
-    def get_collections(self, key_id, is_admin):
-        collections = None
+    def get_collections(self, key_id):
+        access_objs = AccessCollectionRepo().get_accesses(key_id)
+        collection_ids = [access_obj.id for access_obj in access_objs]
+        collection_objs = self.repository.get_collections(collection_ids)
+        result =  self.schema.dump(collection_objs, many=True)
 
-        if is_admin:
-            collections = CollectionRepo().get_collections_by_key_id(key_id)
-        else:
-            collection_ids = AccessCollectionRepo().get_collection_ids(key_id)
-            collections = CollectionRepo().get_collections(collection_ids)
-
-        result =  CollectionSchema(many=True).dump(collections)
         return result

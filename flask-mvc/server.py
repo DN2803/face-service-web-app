@@ -11,6 +11,7 @@ from flask_jwt_extended import JWTManager
 if __name__ == '__main__':
     app.config['JWT_SECRET_KEY'] = config.JWT_SECRET_KEY
     app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+    app.config['JWT_REFRESH_JSON_KEY'] = 'dev_token'
     app.config['JWT_COOKIE_SECURE'] = config.JWT_COOKIE_SECURE
     app.config['JWT_COOKIE_CSRF_PROTECT'] = False
     jwt = JWTManager(app)

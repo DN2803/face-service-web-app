@@ -10,7 +10,7 @@ user_bp = Blueprint('user', __name__, url_prefix='/api/user')
 @user_bp.route('/register-face-id', methods=['POST'])
 def register_face_id():
     try:
-        verify_jwt_in_request(fresh=True)
+        verify_jwt_in_request(fresh=True, locations='cookies')
         user_id = get_jwt_identity()
         data = request.json
         message = UserService().add_face_id(user_id, data['image'])
@@ -23,7 +23,7 @@ def register_face_id():
 @user_bp.route('/my-info', methods=['GET'])
 def get_info():
     try:
-        verify_jwt_in_request(fresh=True)
+        verify_jwt_in_request(fresh=True, locations='cookies')
         user_id = get_jwt_identity()
         
         info = UserService().get_base_info(user_id)
@@ -36,23 +36,25 @@ def get_info():
 @user_bp.route('/my-project', methods=['GET', 'POST', 'PATCH'])
 def user_project():
     try:
-        verify_jwt_in_request(fresh=True)
+        verify_jwt_in_request(fresh=True, locations='cookies')
         user_id = get_jwt_identity()
 
+        project_service = ProjectService()
+
         if request.method == 'GET':
-            projects = ProjectService().get_projects(user_id)
+            projects = project_service.get_projects(user_id)
             return jsonify(projects=projects), 200
 
         data = request.json
 
         if request.method == 'POST':
-            info = ProjectService().create_project(user_id, data['project_name'])
+            info = project_service.create_project(user_id, data['project_name'])
             response = jsonify(
                 info=info,
                 message='Created new Project successfully!'
             )
             return response, 201
-        
+
         if request.method == 'PATCH':
             key = request.headers.get('X-API-Key')
 
@@ -64,14 +66,12 @@ def user_project():
             if not key_obj: 
                 return jsonify(error='Invalid API Key!'), 401
 
-            ProjectService().rename_project(key_obj, data['new_project_name'])
+            project_service.rename_project(key_obj, data['new_project_name'])
 
             return jsonify(message="The project's name has been changed successfully!"), 200
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400
-
-from flask_jwt_extended import decode_token
 
 @user_bp.route('/my-project/team', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def team_management():
@@ -86,39 +86,51 @@ def team_management():
 
         if not is_admin: raise Exception('Given API Key is not an admin key!')
 
+        project_service = ProjectService()
+
         if request.method == 'GET':
-            team = ProjectService().get_project_team(admin_key_obj.id)
+            team = project_service.get_project_team(admin_key_obj.id)
             return jsonify(team=team), 200
 
         if request.method == 'DELETE':
-            #TODO: delete func
-            pass
+            project_service.delete_dev(admin_key_obj.id, request.args['dev_key'])
 
         data = request.json
-
-        if not key_auth_service.check_access(admin_key_obj.id, True, data['scopes']):
-            raise Exception('Given collections is inaccessible!')
 
         if request.method == 'POST':
             verify_jwt_in_request(refresh=True, locations='json')
             dev_id = get_jwt_identity()
+            scope = data['scope']
 
-            dev_key = ProjectService().add_dev(admin_key_obj, dev_id, data['scopes'])
+            if len(scope) == 0: raise Exception('A scope must include at least one collection id!')
+
+            if not key_auth_service.check_access(admin_key_obj.id, ):
+                raise Exception('Given collection ids in "scope" is inaccessible!')
+
+            dev_key = project_service.add_dev(admin_key_obj, dev_id, scope)
             response = jsonify(
                 dev_key=dev_key,
                 message='Added new developer to the project successfully!'
             )
             return response, 201
 
-        # if request.method == 'PATCH':
-        #     #old and new scope
-        #     key = request.headers.get('X-API-Key')
-            
-        #     if 'new_project_name' not in data:
-        #         raise Exception('The request lacks new_project_name parameter.')
+        if request.method == 'PATCH':
+            collection_ids = data['scope']['new_col_ids'] + data['scope']['removed_col_ids']
 
-        #     ProjectService().rename_project(user_id, key, data['new_project_name'])
-        #     return jsonify(message="The project's name has been changed successfully!"), 200
+            if not key_auth_service.check_access(admin_key_obj.id, collection_ids):
+                raise Exception('Given collection ids in "scope" is inaccessible!')
+
+            new_scope = project_service.update_dev_scope(
+                admin_key_id = admin_key_obj.id, 
+                dev_key = data['dev_key'],
+                new_ids = data['scope']['new_col_ids'],
+                removed_ids = data['scope']['removed_col_ids']
+            )
+            response = jsonify(
+                new_scope=new_scope,
+                message="The developer's scope has been changed successfully"
+            )
+            return response, 200
     except Exception as e:
         print(e)
         return jsonify(error=str(e)), 400

@@ -18,16 +18,15 @@ class AccessCollectionRepo(BaseRepository):
         ]
         self._batch_insert(accesses)
 
-    def get_accessible_collections(self, key_id):
-        df = self._get_by('collection_id', 'key_id', 'equal', key_id, return_type='df')
-        return df['collection_id'].to_list()
+    def check_access(self, key_id, collection_ids):
+        access_objs = self.model.query.filter(
+            (self.model.key_id == key_id) & (self.model.collection_id.in_(collection_ids))
+        ).all()
 
-    def get_collection_ids(self, key_id):
-        coll_id_df =  self._get_by(
-            select_cols='all',
-            column='key_id',
-            operator='equal',
-            value=key_id,
-            return_type='df'
-        )
-        return coll_id_df['collection_id'].tolist()
+        return len(access_objs) == len(collection_ids)
+
+    def get_accesses(self, key_id) -> list:
+        return self._get_by('all', 'key_id', 'equal', key_id, 'all')
+
+    def remove_access(self, access_obj):
+        self._delete(access_obj)
