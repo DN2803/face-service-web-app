@@ -100,7 +100,7 @@ class ProjectService(BaseService):
 
         # add new
         access_col_repo.add_multiple_access(dev_key_obj.id, new_ids)
-        new_scope = new_ids + [dev_access_obj.id for dev_access_obj in dev_access_objs]
+        new_scope = new_ids + [dev_access_obj.collection_id for dev_access_obj in dev_access_objs]
 
         return new_scope
 

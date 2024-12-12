@@ -46,17 +46,27 @@ class KeyRepo(BaseRepository):
         return pd.read_sql(query, con=db.engine)
 
     def get_projects(self, user_id):
-        Admin_Key = aliased(Key)
-        query = (
+        filter_query = (
             self.session.query(
                 self.model.key,
                 self.model.project_name,
                 self.model.expires_at,
+                self.model.admin_key_id
+            )
+            .filter(self.model.user_id == user_id)
+            .subquery('filter_query')
+        )
+
+        Admin_Key = aliased(Key)
+        query = (
+            self.session.query(
+                filter_query.c.key,
+                filter_query.c.project_name,
+                filter_query.c.expires_at,
                 Admin_Key.project_name.label('original_name'),
                 User.name.label('admin')
             )
-            .filter(self.model.user_id == user_id)
-            .join(Admin_Key, self.model.admin_key_id == Admin_Key.id, isouter=True)
+            .join(Admin_Key, filter_query.c.admin_key_id == Admin_Key.id, isouter=True)
             .join(User, User.id == Admin_Key.user_id, isouter=True)
             .statement
         )
