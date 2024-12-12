@@ -56,7 +56,7 @@ class KeyRepo(BaseRepository):
                 User.name.label('admin')
             )
             .filter(self.model.user_id == user_id)
-            .join(Admin_Key, self.model.admin_key_id == Admin_Key.id)
+            .join(Admin_Key, self.model.admin_key_id == Admin_Key.id, isouter=True)
             .join(User, User.id == Admin_Key.user_id)
             .statement
         )
