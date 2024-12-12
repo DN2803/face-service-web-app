@@ -57,7 +57,7 @@ class KeyRepo(BaseRepository):
             )
             .filter(self.model.user_id == user_id)
             .join(Admin_Key, self.model.admin_key_id == Admin_Key.id, isouter=True)
-            .join(User, User.id == Admin_Key.user_id)
+            .join(User, User.id == Admin_Key.user_id, isouter=True)
             .statement
         )
         return pd.read_sql(query, con=db.engine)
