@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { Formik } from 'formik';
 import {
     FormControl,
@@ -11,15 +12,13 @@ import {
     Checkbox
 } from '@mui/material';
 import ImageUpload from "ui-component/ImageUpload";
-import { useFetchCollections } from 'hooks/useFetchCollections';
+
 
 
 const FaceSearchForm = ({ onSubmit, collection = null }) => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const scriptedRef = useRef(true);
-    const [collections, setCollections] = useState([]); // State to hold collection options
-    const [loading, setLoading] = useState(true);
-    const { fetchCollections } = useFetchCollections()
+    const collections = useSelector(state => state.collections.collections);
 
     const handleSearch = async (values, image) => {
         onSubmit({
@@ -35,21 +34,7 @@ const FaceSearchForm = ({ onSubmit, collection = null }) => {
         { title: "Find all similar", confidence_score: 0 },
     ];
 
-    // Fetch collections from database on component mount
-    useEffect(() => {
-        const getCollections = async () => {
-            try {
-                const result = await fetchCollections(); // Fetch collections from database
-                setCollections(result);
-            } catch (error) {
-                console.error("Error fetching collections", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        getCollections();
-    }, []);
-
+   
     return (
         <>
             <Box
@@ -131,7 +116,6 @@ const FaceSearchForm = ({ onSubmit, collection = null }) => {
                                 }}
                                 onBlur={handleBlur}
                                 label="Collection"
-                                disabled={loading}
                                 multiple // Allow multiple selection
                                 renderValue={(selected) =>
                                     // Render selected collections as comma-separated string

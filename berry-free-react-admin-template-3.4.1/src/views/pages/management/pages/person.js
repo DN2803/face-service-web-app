@@ -11,22 +11,19 @@ import {
     TableRow,
     Paper,
     Typography,
-    Pagination,
-    IconButton
+    IconButton,
+    CircularProgress
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import DialogForm from '../DialogForm';
 import PersonForm from '../forms/person-form';
 import FaceSearchForm from '../forms/face-search-form';
 import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
-import { useFetchCollections } from 'hooks/useFetchCollections';
-import { fetchCollectionsRequest, fetchCollectionsSuccess, fetchCollectionsFailure } from 'store/actions/collectionsActions';
 const PersonManagement = () => {
     const { callAPI } = useCallAPI();
-    const dispatch = useDispatch();
 
     // States for managing persons and UI behaviors
     const [search, setSearch] = useState('');
@@ -34,81 +31,49 @@ const PersonManagement = () => {
     const [openAdd, setOpenAdd] = useState(false);
     const [editPerson, setEditPerson] = useState(null);
     const [persons, setPersons] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-    const { fetchCollections } = useFetchCollections();
-    const [itemsPerPage] = useState(10); // Số mục hiển thị trên mỗi trang
-    const [numPerson, setNumPerson] = useState(0);
-    const [lastIDs, setLastIDs] = useState([]);
+    const [hasMore, setHasMore] = useState(true);
+    const [lastID, setLastID] = useState(null);
+    const observerRef = useRef(null);
     const waitResponseRef = useRef(false);
     // const [searchResult, setSearchResult] = ([]);
-
-    useEffect(() => {
-        const initializeCollections = async () => {
-            dispatch(fetchCollectionsRequest());
-            try {
-                const result = await fetchCollections();
-                dispatch(fetchCollectionsSuccess(result));
-            } catch (error) {
-                dispatch(fetchCollectionsFailure());
-                console.error("Error fetching collections", error);
-            }
-        };
-        initializeCollections();
-    }, [dispatch, fetchCollections]);
+    // TODO: add search result in this page, delete multible person
 
     const { collections, loading } = useSelector((state) => state.collections);
+    const collectionMap = collections.reduce((map, collection) => {
+        map[collection.id] = collection.name;
+        return map;
+    }, {});
+    const loadPersons = async () => {
+        if (loading || !hasMore) return;
+        waitResponseRef.current = true;
+        try {
+            const queryParams = {
+                collection_ids: collections.map((collection) => collection.id).join(','),
+                limit: 10,
+                ...(lastID && { last_id: lastID }),
+            };
 
-    console.log(lastIDs);
-    useEffect(() => {
-        const loadPersonsForPage = async () => {
-            try {
-                console.log(currentPage);
-                // Lấy lastID của trang hiện tại (trang đầu tiên là 0)
-                const lastID = lastIDs[currentPage - 2] || null;
-
-                // Tạo query params cho API
-                const queryParams = {
-                    collection_ids: collections.map(collection => collection.id).join(','),
-                    limit: itemsPerPage,
-                    ...(lastID && {last_id: lastID}) // Thêm lastID vào query để lấy người tiếp theo
-                };
-                waitResponseRef.current = true;
-
-                // Gọi API để lấy dữ liệu cho trang hiện tại
-                const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}`, "GET", null, true, null, queryParams);
-                if (response.data.persons.length === 0) {
-                    console.log("No more persons to load.");
-                    return;
-                }
-                if (!lastIDs[currentPage - 1]){
-                    setNumPerson(numPerson + response.data.count);
-                }
-                
-                //setPersons((prevPersons) => [...prevPersons, ...response.data.persons]);
-                setPersons (response.data.persons)
-                // Cập nhật lastID của trang hiện tại
-                setLastIDs((prevLastIDs) => {
-                    const newLastIDs = [...prevLastIDs];
-                    newLastIDs[currentPage - 1] = response.data.persons[response.data.persons.length - 1]?.id || null;
-                    return newLastIDs;
-                });
-
-            } catch (error) {
-                console.error("Error loading persons for page", error);
-            } finally {
-                waitResponseRef.current = false;
+            const response = await callAPI(`${BACKEND_ENDPOINTS.project.persons}`, "GET", null, true, null, queryParams);
+            console.log(response)
+            if (response.data.persons.length === 0) {
+                setHasMore(false); // Không còn dữ liệu để tải
+            } else {
+                setPersons((prev) => [...prev, ...response.data.persons]);
+                setLastID(response.data.persons[response.data.persons.length - 1]?.id || null);
             }
-        };
-
-        if (!loading && collections.length > 0 && currentPage > 0 && !waitResponseRef.current) {
-            loadPersonsForPage();
+        } catch (error) {
+            console.error("Error loading persons", error);
+            alert(error.response.data.error);
+        } finally {
+            waitResponseRef.current = false;
         }
-    }, [currentPage, collections, loading, itemsPerPage]); // Theo dõi currentPage, collections, loading và lastIDs
+    };
 
-    const goToNextPage = (event, value) => {
-        setCurrentPage(value); // Cập nhật trang
-      };
-    
+    useEffect(() => {
+        if (!collections.length) return;
+
+        loadPersons();
+    }, [collections]);
 
     // Convert image file to base64
     const convertToBase64 = (file) => {
@@ -167,7 +132,9 @@ const PersonManagement = () => {
                     images: values.images,
                     collection_id: values.collection_id,
                 };
-                await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+                const res = await callAPI(BACKEND_ENDPOINTS.project.person, "POST", body, true)
+                const newPerson = res.data.person_info
+                setPersons((prevPersons) => [...prevPersons, newPerson]);
             }
             handleCloseAdd();
         } catch (error) {
@@ -195,20 +162,18 @@ const PersonManagement = () => {
         handleCloseSearch();
     };
 
-    const handleEdit = (id) => {
-        const person = persons.find((p) => p.id === id);
+    const handleEdit = (person) => {
         if (person) {
             setEditPerson(person);
             setOpenAdd(true);
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (person) => {
         if (window.confirm("Are you sure you want to delete this person?")) {
             try {
-                const person = persons.find((p) => p.id === id);
-                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${id}`, "DELETE", {}, true, null, { collection_id: person.collection_id });
-                setPersons((prev) => prev.filter((p) => p.id !== id));
+                await callAPI(`${BACKEND_ENDPOINTS.project.person}/${person.id}`, "DELETE", {}, true, null, { collection_id: person.collection_id });
+                setPersons((prev) => prev.filter((p) => p.id !== person.id));
             } catch (error) {
                 console.error("Error deleting person", id, error);
             }
@@ -281,11 +246,16 @@ const PersonManagement = () => {
             </DialogForm>
 
             {/* Table */}
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead sx={{ backgroundColor: '#a61d24' }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
+                <Table >
+                    <TableHead sx={{
+                        position: 'sticky',
+                        top: 0,
+                        backgroundColor: '#a61d24',
+                        zIndex: 2
+                    }}>
                         <TableRow>
-                            {["Photo", "Name", "ID", "Birthday", "Nationality", "Modified Date", "Collection", "Actions"].map((head) => (
+                            {["Photo", "Name", "ID", "Birthday", "Nationality", "Collection", "Actions"].map((head) => (
                                 <TableCell key={head} sx={{ color: '#fff' }}>{head}</TableCell>
                             ))}
                         </TableRow>
@@ -293,7 +263,7 @@ const PersonManagement = () => {
                     <TableBody>
                         {persons.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center">
+                                <TableCell colSpan={6} align="center">
                                     <Typography>No persons found</Typography>
                                 </TableCell>
                             </TableRow>
@@ -301,29 +271,35 @@ const PersonManagement = () => {
                             persons.map((person) => (
                                 <TableRow key={person.id}>
                                     <TableCell>
-                                        <img src={person.images[0].img_url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} /> </TableCell>
+                                        <img src={person.images[0].img_url} alt={person.id} width="24" height="24" style={{ borderRadius: '50%' }} />
+                                    </TableCell>
                                     <TableCell>{person.name}</TableCell>
                                     <TableCell>{person.id}</TableCell>
                                     <TableCell>{person.birth}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
-                                    <TableCell>{person.updated_at}</TableCell>
-                                    <TableCell>{person.collection_id}</TableCell>
+                                    <TableCell>{collectionMap[person.collection_id]}</TableCell>
                                     <TableCell>
-                                        <IconButton color="primary" onClick={() => handleEdit(person.id)}><EditIcon /></IconButton>
-                                        <IconButton color="secondary" onClick={() => handleDelete(person.id)}><DeleteIcon /></IconButton>
+                                        <IconButton color="primary" onClick={() => handleEdit(person)}>
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton color="secondary" onClick={() => handleDelete(person)}>
+                                            <DeleteIcon />
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             ))
                         )}
+                        {waitResponseRef.current && (
+                            <TableRow>
+                                <TableCell colSpan={6} align="center">
+                                    <CircularProgress />
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
-                <Pagination
-                    count={numPerson % 5 == 0? Math.ceil(numPerson / itemsPerPage) + 1 : Math.ceil(numPerson / itemsPerPage)}
-                    page={currentPage}
-                    onChange={goToNextPage} // Cập nhật trang
-                    color="primary"
-                />
             </TableContainer>
+            <div ref={observerRef} style={{ height: "1px" }}></div>
         </Box >
     );
 };

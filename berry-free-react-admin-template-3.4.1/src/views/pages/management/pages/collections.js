@@ -1,42 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Pagination, IconButton } from '@mui/material';
 import FolderSharedIcon from '@mui/icons-material/FolderShared';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { ClipLoader } from 'react-spinners';
 import DialogForm from '../DialogForm';
 import CollectionForm from '../forms/collection-form';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 import { useCallAPI } from 'hooks/useCallAPI';
-import { useFetchCollections } from 'hooks/useFetchCollections';
 import { useNavigate } from 'react-router-dom';
+
+
+import { addCollection, removeCollection, updateCollection } from 'store/actions/collectionsActions';
 const CollectionManagement = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
     const [editCollection, setEditCollection] = useState(null);
-    const [collections, setCollections] = useState([]);
+    const [collections, setCollections] = useState(useSelector(state => state.collections.collections));
     const { callAPI } = useCallAPI();
-    const { fetchCollections } = useFetchCollections();
     const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
     const [itemsPerPage] = useState(5); // Số mục hiển thị trên mỗi trang
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const getCollections = async () => {
-            try {
-                const result = await fetchCollections(); // Fetch collections from database
-                setCollections(result);
-            } catch (error) {
-                console.error("Error fetching collections", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        getCollections();
-    }, []);
-
 
 
     // Function to handle dialog open
@@ -51,19 +37,34 @@ const CollectionManagement = () => {
 
     const handleSubmit = async (values) => {
         // Handle the form submission logic here
-        console.log(values);
         const body = {
-            ...(editCollection &&{id: editCollection.id}),
             name: values.name,
             description: values.description
         }
-        if (editCollection) {
-            await callAPI(BACKEND_ENDPOINTS.project.collection, "PATCH", body, true);
+        try {
+            if (editCollection) {
+                const res = await callAPI(`${BACKEND_ENDPOINTS.project.collection}/${editCollection.id}`, "PATCH", body, true);
+                
+                const updatedCol = res.data.collection;
+                setCollections(prevCollections =>
+                    prevCollections.map(col =>
+                        col.id === editCollection.id ? updatedCol : col
+                    )
+                );
+                dispatch(updateCollection(editCollection.id, updatedCol));
+            }
+            else {
+                const res = await callAPI(BACKEND_ENDPOINTS.project.collection, "POST", body, true)
+                const newCol = res.data.collection_info;
+                setCollections((prevCollections) => [...prevCollections, newCol]);
+                dispatch(addCollection(newCol));
+            }
+            handleClose(); // Close dialog after submission
+        } catch (error){
+            console.error("Error submitting collection", error);
+            alert(error.response.data.error);
         }
-        else {
-            await callAPI(BACKEND_ENDPOINTS.project.collection, "POST", body, true)
-        }
-        handleClose(); // Close dialog after submission
+        
     };
     const onEdit = (id) => {
         const collectionToEdit = collections.find((collection) => collection.id === id);
@@ -76,7 +77,8 @@ const CollectionManagement = () => {
         if (window.confirm("Are you sure you want to delete this person?")) {
             try {
                 await callAPI(`${BACKEND_ENDPOINTS.project.collection}/${id}`, "DELETE", true);
-                setCollections((prev) => prev.filter((collection) => collection.id !== id)); // Remove deleted item from state
+                setCollections((prev) => prev.filter((collection) => collection.id !== id)); 
+                dispatch(removeCollection(id));
             } catch (error) {
                 console.error("Error deleting collection", error);
             }
@@ -160,7 +162,6 @@ const CollectionManagement = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {loading && <ClipLoader size={50} color={"#123abc"} />}
                         {currentCollections.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} align="center">

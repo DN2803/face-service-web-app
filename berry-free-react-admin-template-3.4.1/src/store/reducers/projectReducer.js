@@ -17,6 +17,8 @@ const projectReducer = (state = initialState, action) => {
           name: action.payload, // Cập nhật tên dự án mới
         },
       };
+      case 'LOGOUT':
+        return { ...state, selectedProject: null };
     default:
       return state;
   }

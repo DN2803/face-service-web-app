@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, IconButton } from '@mui/material';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -9,58 +9,113 @@ import DialogForm from '../DialogForm';
 import DeveloperForm from '../forms/developer-form';
 import ApiKeyDisplay from 'ui-component/APIKeyDisplay';
 import { useCallAPI } from 'hooks/useCallAPI';
-
+import { BACKEND_ENDPOINTS } from 'services/constant';
 const DeveloperManagement = () => {
     const { callAPI } = useCallAPI();
     const admin_info = useSelector(state => state.auth);
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
-    const [developers, setDevelopers] = useState([]); 
+    const [developers, setDevelopers] = useState([]);
     const [editDeveloper, setEditDeveloper] = useState(null);
-    // Function to handle dialog open
+    const collections = useSelector((state) => state.collections.collections);
+    const collectionMap = collections.reduce((map, collection) => {
+        map[collection.id] = collection.name;
+        return map;
+    }, {});
+    useEffect(() => {
+        const fetchDevelopers = async () => {
+            try {
+                const res = await callAPI(`${BACKEND_ENDPOINTS.user.project.team}`, "GET", null, true);
+                console.log(res);
+                if (res && res.data) {
+
+                    setDevelopers(res.data.team || []);
+                }
+            } catch (error) {
+                console.error("Error fetching developers", error);
+            }
+        };
+
+        fetchDevelopers();
+    }, []);
+
     const handleOpen = () => {
         setEditDeveloper(null)
         setOpen(true);
     };
 
-    // Function to handle dialog close
     const handleClose = () => {
         setOpen(false);
     };
 
     const handleSubmit = async (values) => {
-        // Handle the form submission logic here
-        const body = {
-            "dev-email": values.email,
-            "scopes": values.collection_id
+        try {
+            if (editDeveloper) {
+                // TODO: Update develop feature
+                const newScope = new Set(values.collection_id);
+                const oldScope = new Set(JSON.parse(editDeveloper.scope));
+                const body = {
+                    dev_key: editDeveloper.key, 
+                    scope: {
+                        'new_col_ids': [...newScope.difference(oldScope)],
+                        'removed_col_ids': [...oldScope.difference(newScope)]
+                       }
+                }
+                if (body.scope.new_col_ids.length === 0 && body.scope.removed_col_ids.length === 0) {
+                    throw new Error("new_col_ids and removed_col_ids cannot both be empty.");
+                }
+                console.log(body);
+                const res =  await callAPI(BACKEND_ENDPOINTS.user.project.team, "PATCH", body, true);
+                setDevelopers(prevDevelopers =>
+                    prevDevelopers.map(dev =>
+                        dev.id === editDeveloper.id ? { ...dev, scope: JSON.stringify(res.data.new_scope) } : dev
+                    )
+                );
+    
+            }
+            else {
+                const body = {
+                    "dev_token": values.devToken,
+                    "scope": values.collection_id
+                }
+                const res = await callAPI(BACKEND_ENDPOINTS.user.project.team, "POST", body, true);
+                console.log(res);
+                if (res) {
+                    const newDev =
+                    {
+                        key: res.data.dev_key,
+                        name: values.devName,
+                        email: values.email,
+                        scope: values.collection_id
+                    }
+                    setDevelopers((prevDevelopers) => [...prevDevelopers, newDev]);
+                }
+            }
+            handleClose();
+        } catch (error){
+            console.error("Error submiting developers", error);
+            alert(error.response.data.error);
         }
-        if (editDeveloper) {
-            await callAPI(BACKEND_ENDPOINTS.project.team, "PATCH", body, true);
-        }
-        else {
-            await callAPI(BACKEND_ENDPOINTS.project.team, "POST", body, true)
-        }
-        handleClose(); // Close dialog after submission
+
     };
     const onEdit = (developerToEdit) => {
-        if ( developerToEdit) {
-            setEditCollection(collectionToEdit);
+        if (developerToEdit) {
+            setEditDeveloper(developerToEdit);
             setOpen(true);
         }
     }
     const onDelete = async (deletedDeveloper) => {
         if (window.confirm("Are you sure you want to delete this developer?")) {
             const param = {
-                'dev-key': deletedDeveloper.key
+                'dev_key': deletedDeveloper.key
             }
             try {
-                await callAPI(`${BACKEND_ENDPOINTS.project.team}`, "DELETE", true, null, param);
+                await callAPI(`${BACKEND_ENDPOINTS.user.project.team}`, "DELETE", null, true, null, param);
                 setDevelopers((prev) => prev.filter((developer) => developer.key !== deletedDeveloper.key)); // Remove deleted item from state
             } catch (error) {
                 console.error("Error deleting developer", error);
             }
         }
-
     };
 
 
@@ -68,7 +123,7 @@ const DeveloperManagement = () => {
         <Box sx={{ padding: '20px' }}>
             <Box sx={{
                 display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' }, // Chuyển sang cột trên thiết bị nhỏ
+                flexDirection: { xs: 'column', md: 'row' }, 
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
             }}>
@@ -121,14 +176,18 @@ const DeveloperManagement = () => {
                     </Box>
                 </Box>
             </Box>
-            <DialogForm open={open} onClose={handleClose} title="Add Developer details">
-                <DeveloperForm onSubmit={handleSubmit} />
+            <DialogForm open={open} onClose={handleClose} title={editDeveloper ? "Edit Developer Details" : "Add Developer Details"}>
+                <DeveloperForm
+                    onSubmit={handleSubmit}
+                    developer={editDeveloper} // Nếu chỉnh sửa, truyền developer; nếu thêm, truyền null
+                />
             </DialogForm>
             {/* Table Section */}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead sx={{ backgroundColor: '#a61d24' }}>
                         <TableRow>
+                            <TableCell sx={{ color: '#fff' }}>API Key</TableCell>
                             <TableCell sx={{ color: '#fff' }}>Name </TableCell>
                             <TableCell sx={{ color: '#fff' }}>Organizational Email</TableCell>
                             <TableCell sx={{ color: '#fff' }}>Assigned Collection</TableCell>
@@ -138,8 +197,12 @@ const DeveloperManagement = () => {
                     </TableHead>
                     <TableBody>
                         <TableRow>
-                            <TableCell><ApiKeyDisplay apiKey={admin_info.apiKey}/></TableCell>
+                            <TableCell><ApiKeyDisplay apiKey={admin_info.apiKey} /></TableCell>
                             <TableCell>{admin_info.user.username}</TableCell>
+                            <TableCell>{admin_info.user.email}</TableCell>
+                            <TableCell>All</TableCell>
+                            <TableCell> </TableCell>
+                            <TableCell> </TableCell>
 
                         </TableRow>
                         {developers.length === 0 ? (
@@ -151,19 +214,22 @@ const DeveloperManagement = () => {
                         ) : (
                             developers.map((developer, index) => (
                                 <TableRow key={index}>
-                                    <TableCell><ApiKeyDisplay apiKey={developer.key}/></TableCell>
+                                    <TableCell><ApiKeyDisplay apiKey={developer.key} /></TableCell>
+                                    <TableCell>{developer.name}</TableCell>
                                     <TableCell>{developer.email}</TableCell>
-                                    <TableCell>{developer.collections}</TableCell>
+                                    <TableCell>{JSON.parse(developer.scope).map(id => collectionMap[id]) 
+                                    .filter(Boolean)
+                                    .join(', ')}</TableCell>
                                     <TableCell> {developer.lastUsed} </TableCell>
-                                    <TableCell> {/* Nút Sửa */}
+                                    <TableCell>
                                         <IconButton onClick={() => onEdit(developer)} color="primary">
                                             <EditIcon />
                                         </IconButton>
 
-                                        {/* Nút Xóa */}
+                                       
                                         <IconButton onClick={() => onDelete(developer)} color="secondary">
                                             <DeleteIcon />
-                                        </IconButton> 
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             ))

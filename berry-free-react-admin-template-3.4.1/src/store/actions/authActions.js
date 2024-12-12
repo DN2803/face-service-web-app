@@ -12,9 +12,9 @@ export const setApiKey = (apiKey) => ({
   payload: { apiKey },
 });
 
-export const logout = () => ({
-  type: LOGOUT,
-});
+// export const logout = () => ({
+//   type: LOGOUT,
+// });
 
 export const setRedirectRoute = (route) => ({
   type: SET_REDIRECT_ROUTE,

@@ -18,8 +18,8 @@ export const BACKEND_ENDPOINTS = {
       },
       info: "/user/my-info",
       project: {
-        get: "/user/my-projects",
-        create: "/user/create-project" 
+        info: "/user/my-project",
+        team: "/user/my-project/team"
       }
     },
     demo_function: {
@@ -34,7 +34,6 @@ export const BACKEND_ENDPOINTS = {
       persons: "/project/persons",
       collections: "/project/collections",
       search: "/project/search",
-      team: "/project/team-management",
     }
   };
   

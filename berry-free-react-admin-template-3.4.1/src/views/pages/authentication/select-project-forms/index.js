@@ -89,6 +89,7 @@ const SelectForm = (...others) => {
                                         title={(
                                             <>
                                                 <div><strong>Project Name:</strong> {project.name}</div>
+                                                {project.original_name && <div><strong>Original Name:</strong>{project.original_name}</div>}
                                                 {project.owner && <div><strong>Project Owner:</strong> {project.owner}</div>}
                                                 <div><strong>Role:</strong> {project.role}</div>
                                             </>

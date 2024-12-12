@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,  useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Grid, Paper, Typography, Button, Box, IconButton, Card, CardContent, TextField, Tooltip} from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -8,14 +8,29 @@ import { useSelector, useDispatch } from "react-redux";
 import { updateProjectName } from "store/actions/projectActions";
 import { useCallAPI } from "hooks/useCallAPI";
 import { BACKEND_ENDPOINTS } from "services/constant";
-
+import { useFetchCollections } from "hooks/useFetchCollections";
+import { fetchCollectionsRequest, fetchCollectionsSuccess, fetchCollectionsFailure } from 'store/actions/collectionsActions';
 const Dashboard = () => {
 
   const { callAPI } = useCallAPI();
+  const { fetchCollections } = useFetchCollections();
   const navigate = useNavigate();
   const projectMetadata = useSelector((state) => state.project.selectedProject);
   const dispatch = useDispatch();
   const isAdmin = projectMetadata.role === "admin";
+  useEffect(() => {
+    const initializeCollections = async () => {
+        dispatch(fetchCollectionsRequest());
+        try {
+            const result = await fetchCollections();
+            dispatch(fetchCollectionsSuccess(result));
+        } catch (error) {
+            dispatch(fetchCollectionsFailure());
+            // console.error("Error fetching collections", error);
+        }
+    };
+    initializeCollections();
+}, [dispatch, fetchCollections]);
 
   // State to manage project name editing
   const [isEditing, setIsEditing] = useState(false);

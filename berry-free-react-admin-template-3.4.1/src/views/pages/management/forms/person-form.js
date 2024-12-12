@@ -11,10 +11,12 @@ import {
     Typography,
     Select,
     MenuItem,
+    Autocomplete, 
+    TextField
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { format } from "date-fns";
-
+import countries from 'assets/data/countries.json'
 
 const PersonForm = ({ onSubmit, person = null }) => {
     const scriptedRef = useRef(true); // Reference to handle async logic
@@ -106,7 +108,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
                         <OutlinedInput
                             id="dob"
                             type="date"
-                            value={values.dob? format(new Date(values.dob), "yyyy-MM-dd"): values.dob}
+                            value={values.dob ? format(new Date(values.dob), "yyyy-MM-dd") : values.dob}
                             name="dob"
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -129,7 +131,7 @@ const PersonForm = ({ onSubmit, person = null }) => {
 
 
                     {/* Nationality Field */}
-                    <FormControl fullWidth error={Boolean(touched.nationality && errors.nationality)} sx={{ mb: 2 }}>
+                    {/* <FormControl fullWidth error={Boolean(touched.nationality && errors.nationality)} sx={{ mb: 2 }}>
                         <InputLabel htmlFor="nationality">Nationality</InputLabel>
                         <OutlinedInput
                             id="nationality"
@@ -145,6 +147,28 @@ const PersonForm = ({ onSubmit, person = null }) => {
                                 {errors.nationality}
                             </FormHelperText>
                         )}
+                    </FormControl> */}
+                    <FormControl fullWidth error={Boolean(touched.nationality && errors.nationality)} sx={{ mb: 2 }}>
+                        <Autocomplete
+                            id="nationality"
+                            options={countries} // countries là danh sách quốc gia từ tệp JSON
+                            getOptionLabel={(option) => option.name || ''} // option.name là tên quốc gia
+                            value={countries.find((country) => country.name === values.nationality) || null}
+                            onChange={(event, newValue) => {
+                                handleChange({
+                                    target: { name: 'nationality', value: newValue?.name || '' },
+                                });
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Nationality"
+                                    onBlur={handleBlur}
+                                    error={Boolean(touched.nationality && errors.nationality)}
+                                    helperText={touched.nationality && errors.nationality ? errors.nationality : ''}
+                                />
+                            )}
+                        />
                     </FormControl>
 
                     {/* Collection Field (Dropdown) */}

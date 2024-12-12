@@ -61,7 +61,8 @@ const FirebaseEmailLogin = ({ ...others }) => {
           if (data) {
             setUserInfo({
                 username: data.info['name'],
-                faceid: data.info['verified']
+                faceid: data.info['verified'],
+                email: email,
               });
             localStorage.setItem('refresh_token', data.refresh_token);
             navigate('/pages/login/login3')

@@ -5,17 +5,18 @@ export const useFetchProjects = () => {
 
     const fetchProjects = async () => {
         try {
-            const response = await callAPI(BACKEND_ENDPOINTS.user.project.get, "GET", {}, { withCredentials: true });
+            const response = await callAPI(BACKEND_ENDPOINTS.user.project.info, "GET", {}, { withCredentials: true });
             console.log(response.data);
             // Kiểm tra dữ liệu trả về từ API
             if (response.data && Array.isArray(response.data.projects)) {
                 // Chuyển đổi dữ liệu như mong muốn
                 return response.data.projects.map((project) => ({
                     name: project.project_name, // Mapping logic
+                    original_name: project.original_name,
                     api: project.key,
                     exp: project.expires_at,
-                    role: project.admin_key_id? "dev":"admin",
-                    ...(project.admin_key_id? owner: project.projectOwner)
+                    role: project.admin? "dev":"admin",
+                    ...(project.admin_key_id && {owner: project.admin})
                 }));
             } else {
                 console.error("projects is not an array:", response.data.projects);
@@ -23,6 +24,7 @@ export const useFetchProjects = () => {
             }
         } catch (error) {
             console.error("Error fetching projects:", error);
+            alert(error.response.data.error);
             return []; // Trả về mảng rỗng khi lỗi xảy ra
         }
     };

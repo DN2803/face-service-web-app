@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ApiKeyDisplay = ({ apiKey = "", numDisplay = 3 }) => {
+const ApiKeyDisplay = ({ apiKey = "", numDisplay = 6 }) => {
     const [copied, setCopied] = useState(false);
 
     const shortenApiKey = (key) => {

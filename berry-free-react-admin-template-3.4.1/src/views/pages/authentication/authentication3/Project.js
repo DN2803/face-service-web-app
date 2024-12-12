@@ -30,7 +30,7 @@ const SelectProject = () => {
       if (projectName) {
         alert(`Project name entered: ${projectName}`);
         // Bạn có thể xử lý thêm ở đây, ví dụ: lưu tên dự án hoặc điều hướng sang trang khác
-        const response = await callAPI(BACKEND_ENDPOINTS.user.project.create, "POST", {project_name: projectName}, true);
+        const response = await callAPI(BACKEND_ENDPOINTS.user.project.info, "POST", {project_name: projectName}, true);
             const data = response.data.info;
             console.log(response)
             const project =  {

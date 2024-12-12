@@ -27,6 +27,8 @@ import { Formik } from 'formik';
 // project imports
 import useScriptRef from 'hooks/useScriptRef';
 import AnimateButton from 'ui-component/extended/AnimateButton';
+import * as faceapi from 'face-api.js';
+
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
@@ -34,7 +36,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
 import { useCallAPI } from 'hooks/useCallAPI';
-import { loadModels, detectFace } from 'utils/face_detection';
+import { loadModels, detectFace, cropImage, isBoxInsideRect} from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 import { useEmailVerified, useUserInfo } from 'hooks';
@@ -52,6 +54,7 @@ const FirebaseLogin = ({ ...others }) => {
   const customization = useSelector((state) => state.customization);
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   // Dùng useRef để lưu trữ intervalId
   const intervalIdRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -112,6 +115,7 @@ const FirebaseLogin = ({ ...others }) => {
     if (modelsLoaded == false) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
       setCameraActive(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -146,20 +150,72 @@ const FirebaseLogin = ({ ...others }) => {
     }
     if (videoRef.current) {
       waitResponseRef.current = true;
-      const detections = await detectFace(videoRef.current);
-      if (!detections) {
-        return;
-      }
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = videoRef.current.videoWidth; // Set canvas width to video width
-      canvas.height = videoRef.current.videoHeight; // Set canvas height to video height
-      context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height); // Draw the current frame
-      // Convert canvas to data URL
-      const imageData = canvas.toDataURL('image/jpeg');
-      // Send the image data to the server
       try {
-        
+        // Lấy ngữ cảnh 2D của canvas
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = videoRef.current.videoWidth; // Set canvas width to video width
+        canvas.height = videoRef.current.videoHeight; // Set canvas height to video height
+        console.log(canvas.width, canvas.height);
+        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height); // Draw the current frame
+
+        // Clear và vẽ hình chữ nhật tùy chỉnh trước khi thực hiện detection
+        const overlay = document.getElementById('overlay');
+        overlay.width = videoRef.current.offsetWidth;
+        overlay.height = videoRef.current.offsetHeight;
+        const overlayContext = overlay.getContext('2d');
+        overlayContext.clearRect(0, 0, overlay.width, overlay.height);
+
+        const rectWidth = (2 / 3) * overlay.width; // Chiều rộng = 2/3 chiều rộng canvas
+        const rectHeight = (2 / 3) * overlay.height; // Chiều cao = 2/3 chiều cao canvas
+        const rectX = (overlay.width - rectWidth) / 2; // Tọa độ X để hình chữ nhật ở giữa
+        const rectY = (overlay.height - rectHeight) / 2; // Tọa độ Y để hình chữ nhật ở giữa
+        const drawRectangle = (context) => {
+          context.beginPath();
+          context.strokeStyle = 'black'; // Màu đường viền
+          context.lineWidth = 2; // Độ dày của đường viền
+          context.rect(rectX, rectY, rectWidth, rectHeight); // Vẽ hình chữ nhật
+          context.stroke();
+        };
+        overlayContext.clearRect(0, 0, overlay.width, overlay.height); // Xóa canvas
+        drawRectangle(overlayContext); // Vẽ hình chữ nhật tùy chỉnh
+
+        // Thực hiện phát hiện khuôn mặt
+        const detections = await detectFace(videoRef.current);
+
+        if (!detections) {
+          waitResponseRef.current = false; // Reset trạng thái nếu không phát hiện khuôn mặt
+          return;
+        }
+
+        // Resize kết quả detection về kích thước canvas video
+        const displaySize = {
+          width: videoRef.current.offsetWidth,
+          height: videoRef.current.offsetHeight,
+        };
+        faceapi.matchDimensions(canvasRef.current, displaySize);
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+
+        // Clear và vẽ lại bounding boxes và landmarks lên canvas overlay
+        overlayContext.clearRect(0, 0, overlay.width, overlay.height);
+
+        // Vẽ bounding box sau khi detection
+        faceapi.draw.drawDetections(overlay, resizedDetections);
+        drawRectangle(overlayContext);
+        if (!isBoxInsideRect(resizedDetections.alignedRect.box, {
+          x: rectX,
+          y: rectY,
+          width: rectWidth,
+          height: rectHeight,
+        })) {
+          console.log('không hợp lệ')
+          return
+        }
+        // Convert canvas (video frame) thành dữ liệu hình ảnh
+        // const imageData = canvas.toDataURL('image/jpeg');
+        const imageData = cropImage(canvas,detections);
+        if (!imageData) return;
         if (countFalseRef.current >= 5) {
           stopCamera();
           setOnlyLogByPassword(true);
@@ -261,12 +317,25 @@ const FirebaseLogin = ({ ...others }) => {
                   </Button>
                 </AnimateButton>
                 {cameraActive && (
-                  <div style={{ marginTop: '20px' }}>
+                  <div style={{ marginTop: '20px', position: 'relative' }}>
                     <Typography>Please look directly at the camera.</Typography>
-                    <video ref={videoRef} width="320" height="240" style={{ border: '1px solid black' }} autoPlay playsInline>
+                    <video id='video' ref={videoRef} width="320" height="240" style={{ border: '1px solid black' }} autoPlay playsInline>
                       {/* Add empty track for accessibility */}
                       <track kind="captions" />
                     </video>
+                    {/* Overlay Canvas on top of the video */}
+                    <canvas
+                      id='overlay'
+                      ref={canvasRef}
+                      width="320"
+                      height="240"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        pointerEvents: 'none',
+                      }}
+                    />
                   </div>
                 )}
                 <Box
