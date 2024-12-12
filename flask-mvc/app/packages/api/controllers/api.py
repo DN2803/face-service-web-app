@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_limiter import Limiter
 
-from app import app
 from app.packages.api.services.KeyAuthService import KeyAuthService
 from app.packages.api.services.PersonService import PersonService
 from app.packages.api.services.CollectionService import CollectionService
@@ -10,16 +8,12 @@ api_bp = Blueprint('api', __name__, url_prefix='/api/project')
 
 def _get_api_key():
     key = request.headers.get('X-API-Key')
-    return key if key else None
 
-__key_limiter = Limiter(
-    key_func=_get_api_key,
-    app=app,
-    default_limits=['200 per day']
-)
+    if not key: raise Exception('API key required!')
+
+    return key
 
 @api_bp.route('/person', methods=['POST'])
-@__key_limiter.limit('20 per minute')
 def person():
     try:
         key = _get_api_key()
@@ -45,7 +39,6 @@ def person():
         return jsonify(error = str(e)), 400
 
 @api_bp.route('/person/<int:person_id>', methods=['PATCH', 'DELETE'])
-@__key_limiter.limit('20 per minute')
 def person_id(person_id):
     try:
         key = _get_api_key()
@@ -77,7 +70,6 @@ def person_id(person_id):
         return jsonify(error = str(e)), 400
 
 @api_bp.route('/persons', methods=['GET'])
-@__key_limiter.limit('20 per minute')
 def persons():
     try:
         key = _get_api_key()
@@ -119,14 +111,10 @@ def persons():
         return jsonify(error=str(e)), 400
 
 @api_bp.route('/collection', methods=['POST'])
-@__key_limiter.limit('20 per minute')
 def collection():
     try:
         key = _get_api_key()
         key_obj, is_admin = KeyAuthService().check_key(key)
-
-        if not key_obj:
-            return jsonify(error='Invalid API Key!'), 401
 
         collection_service = CollectionService()
         data = request.json
@@ -147,7 +135,6 @@ def collection():
         return jsonify(error = str(e)), 400
 
 @api_bp.route('/collection/<int:collection_id>', methods=['PATCH','DELETE'])
-@__key_limiter.limit('20 per minute')
 def collection_id(collection_id):
     try:
         key = _get_api_key()
@@ -174,15 +161,10 @@ def collection_id(collection_id):
         return jsonify(error = str(e)), 400
 
 @api_bp.route('/collections', methods=['GET'])
-@__key_limiter.limit('20 per minute')
 def collections():
     try:
         key = _get_api_key()
         key_obj, _ = KeyAuthService().check_key(key)
-
-        if not key_obj:
-            return jsonify(error='Invalid API Key!'), 401
-
         collections = CollectionService().get_collections(key_obj.id)
 
         response = jsonify(
@@ -195,7 +177,6 @@ def collections():
         return jsonify(error = str(e)), 400
 
 @api_bp.route('/search', methods=['POST'])
-@__key_limiter.limit('20 per minute')
 def search():
     try:
         key = _get_api_key()

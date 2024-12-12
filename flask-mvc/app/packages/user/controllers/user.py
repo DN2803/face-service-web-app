@@ -61,11 +61,7 @@ def user_project():
             if 'new_project_name' not in data:
                 raise Exception('The request lacks new_project_name parameter.')
 
-            key_obj, _ = KeyAuthService().check_key(key)
-
-            if not key_obj: 
-                return jsonify(error='Invalid API Key!'), 401
-
+            key_obj, _ = KeyAuthService().check_key(key, check_rate_limit=False)
             project_service.rename_project(key_obj, data['new_project_name'])
 
             return jsonify(message="The project's name has been changed successfully!"), 200
@@ -80,9 +76,7 @@ def team_management():
 
         key = request.headers.get('X-API-Key')
         key_auth_service = KeyAuthService()
-        admin_key_obj, is_admin = key_auth_service.check_key(key)
-
-        if not admin_key_obj: raise Exception('Invalid API Key!')
+        admin_key_obj, is_admin = key_auth_service.check_key(key, check_rate_limit=False)
 
         if not is_admin: raise Exception('Given API Key is not an admin key!')
 

@@ -1,6 +1,7 @@
 from app.services.BaseService import BaseService
 from app.packages.api.repositories.KeyRepo import KeyRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
+from app.packages.api.controllers.RateLimiter import fixed_window_limit
 
 import time
 
@@ -8,17 +9,24 @@ class KeyAuthService(BaseService):
     def __init__(self):
         self.repository = KeyRepo()
 
-    def check_key(self, key):
+    def check_key(self, key, check_rate_limit=True):
         key_obj = self.repository.check_key_exists(key)
 
-        if key_obj:
-            if int(time.time()) > key_obj.expires_at:
-                raise Exception('The given API-Key has expired!')
+        if not key_obj:
+            raise Exception('Invalid API Key!')
 
-            is_admin = False if key_obj.admin_key_id else True
-            return key_obj, is_admin
+        if int(time.time()) > key_obj.expires_at:
+            raise Exception('The given API-Key has expired!')
 
-        return None, None
+        is_admin = False if key_obj.admin_key_id else True
+        
+        if check_rate_limit:
+            allowed, message = fixed_window_limit(key, is_admin, key_obj.admin_key_id)
+
+            if not allowed:
+                raise Exception(message)
+
+        return key_obj, is_admin
 
     def check_access(self, key_id, collection_ids):
         return AccessCollectionRepo().check_access(key_id, collection_ids)
