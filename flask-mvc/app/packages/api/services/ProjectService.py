@@ -87,7 +87,7 @@ class ProjectService(BaseService):
         removed_obj_indices = []
 
         for i in range(0, len(dev_access_objs)):
-            if dev_access_objs[i].id in removed_ids:
+            if dev_access_objs[i].collection_id in removed_ids:
                 removed_obj_indices.append(i)
 
         if len(new_ids) == 0 and len(dev_access_objs) == len(removed_obj_indices):

@@ -55,11 +55,8 @@ class KeyRepo(BaseRepository):
                 Admin_Key.project_name.label('original_name'),
                 User.name.label('admin')
             )
-            .join(
-                Admin_Key,
-                self.model.user_id == user_id and self.model.admin_key_id == Admin_Key.id,
-                isouter=True
-            )
+            .filter(self.model.user_id == user_id)
+            .join(Admin_Key, self.model.admin_key_id == Admin_Key.id, isouter=True)
             .join(User, User.id == Admin_Key.user_id, isouter=True)
             .statement
         )
