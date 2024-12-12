@@ -178,12 +178,12 @@ def collection_id(collection_id):
 def collections():
     try:
         key = _get_api_key()
-        key_obj, is_admin = KeyAuthService().check_key(key)
+        key_obj, _ = KeyAuthService().check_key(key)
 
         if not key_obj:
             return jsonify(error='Invalid API Key!'), 401
 
-        collections = CollectionService().get_collections(key_obj.id, is_admin)
+        collections = CollectionService().get_collections(key_obj.id)
 
         response = jsonify(
             count=len(collections),

@@ -17,7 +17,7 @@ class CollectionService(BaseService):
 
         validated_data['admin_key_id'] = key_id
         collection_obj = self.repository.add_collection(**validated_data)
-
+        AccessCollectionRepo().add_access(collection_obj.id, key_id)
         res = self.schema.dump(collection_obj)
         return res
 
@@ -36,7 +36,7 @@ class CollectionService(BaseService):
     #----------------------COLLECTIONs----------------------#
     def get_collections(self, key_id):
         access_objs = AccessCollectionRepo().get_accesses(key_id)
-        collection_ids = [access_obj.id for access_obj in access_objs]
+        collection_ids = [access_obj.collection_id for access_obj in access_objs]
         collection_objs = self.repository.get_collections(collection_ids)
         result =  self.schema.dump(collection_objs, many=True)
 
