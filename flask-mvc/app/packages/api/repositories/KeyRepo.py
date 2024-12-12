@@ -35,7 +35,7 @@ class KeyRepo(BaseRepository):
                     literal('['),
                     func.group_concat(AccessCollection.collection_id), # SQL LITE
                     literal("]")
-                ).label('scopes')
+                ).label('scope')
             )
             .filter(self.model.admin_key_id == admin_key_id)
             .join(User, self.model.user_id == User.id)
