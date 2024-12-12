@@ -104,7 +104,7 @@ def team_management():
 
             if len(scope) == 0: raise Exception('A scope must include at least one collection id!')
 
-            if not key_auth_service.check_access(admin_key_obj.id, ):
+            if not key_auth_service.check_access(admin_key_obj.id, scope):
                 raise Exception('Given collection ids in "scope" is inaccessible!')
 
             dev_key = project_service.add_dev(admin_key_obj, dev_id, scope)
