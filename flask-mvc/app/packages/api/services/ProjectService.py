@@ -77,7 +77,7 @@ class ProjectService(BaseService):
         # verify admin-dev relationship
         dev_key_obj = self.repository.check_key_exists(dev_key)
 
-        if admin_key_id != dev_key_obj.id:
+        if admin_key_id != dev_key_obj.admin_key_id:
             raise Exception('The developer key is not under admin key management!')
 
         # get old-access
