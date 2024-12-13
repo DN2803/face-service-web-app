@@ -5,7 +5,7 @@ from app.packages.api.models.AccessCollection import AccessCollection
 from app.config.Database import db
 
 from sqlalchemy.orm import aliased
-from sqlalchemy import func, literal
+from sqlalchemy import func
 import pandas as pd
 
 class KeyRepo(BaseRepository):
@@ -25,25 +25,30 @@ class KeyRepo(BaseRepository):
         return self._update_by_obj(key, **kwargs)
 
     def get_devs_info_df(self, admin_key_id):
+        filter_query = (
+            self.session.query(
+                self.model.id,
+                self.model.key,
+                self.model.user_id
+            )
+            .filter(self.model.admin_key_id == admin_key_id)
+            .subquery('filter_query')
+        )
         query = (
             self.session.query(
-                self.model.key,
+                filter_query.c.key,
                 User.name,
                 User.email,
                 AccessCollection.key_id,
-                func.concat(
-                    literal('['),
-                    func.group_concat(AccessCollection.collection_id), # SQL LITE
-                    literal("]")
-                ).label('scope')
+                func.group_concat(AccessCollection.collection_id).label('scope') # SQL LITE
             )
-            .filter(self.model.admin_key_id == admin_key_id)
-            .join(User, self.model.user_id == User.id)
-            .join(AccessCollection, self.model.id == AccessCollection.key_id)
+            .join(User, filter_query.c.user_id == User.id)
+            .join(AccessCollection, filter_query.c.id == AccessCollection.key_id)
             .group_by(AccessCollection.key_id)
             .statement
         )
-        return pd.read_sql(query, con=db.engine)
+        df = pd.read_sql(query, con=db.engine)
+        df['scope'] = df['scope'].apply(lambda x: list(map(int, x.split(','))))
 
     def get_projects(self, user_id):
         filter_query = (

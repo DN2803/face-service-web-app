@@ -11,15 +11,4 @@ class DeployConfig:
         DeployConfig.PORT = os.getenv('PORT', '8080')
         DeployConfig.DEBUG = os.getenv('DEBUG', 'True')
 
-from dotenv import load_dotenv
-def _get_config():
-    env = os.getenv('ENV', 'local')
-
-    if env == 'production':
-        load_dotenv('.env.production')
-    elif env == 'local':
-        load_dotenv('.env.dev.local')
-    
-    return DeployConfig()
-
-config = _get_config()
+config = DeployConfig()

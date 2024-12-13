@@ -92,8 +92,13 @@ def team_management():
         data = request.json
 
         if request.method == 'POST':
+            user_id = get_jwt_identity()
             verify_jwt_in_request(refresh=True, locations='json')
             dev_id = get_jwt_identity()
+
+            if user_id == dev_id:
+                raise Exception('You cannot add yourself to the team!')
+
             scope = data['scope']
 
             if len(scope) == 0: raise Exception('A scope must include at least one collection id!')
