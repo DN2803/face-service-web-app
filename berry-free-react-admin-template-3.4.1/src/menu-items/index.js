@@ -1,12 +1,12 @@
 import dashboard from './dashboard';
-import pages from './pages';
+import MenuList from './pages';
 // import utilities from './utilities';
 // import other from './other';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, pages]
+  items: [dashboard, { component: MenuList }]
 };
 
 export default menuItems;
