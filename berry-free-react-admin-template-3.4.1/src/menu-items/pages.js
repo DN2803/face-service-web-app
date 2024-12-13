@@ -1,3 +1,4 @@
+import React from 'react';
 // assets
 import { IconKey, IconCode } from '@tabler/icons';
 import PersonIcon from '@mui/icons-material/Person';
@@ -15,69 +16,48 @@ const icons = {
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
 
-const getPersistedState = () => {
-  // Retrieve the persisted state from localStorage
-  const persistedState = localStorage.getItem('persist:root');
+import { useAdminStatus } from 'hooks';
 
-  if (persistedState) {
-    try {
-      // Parse the persisted state to access the project value
-      const parsedState = JSON.parse(persistedState);
-      
-      // Parse the stringified `project` field to get the actual object
-      const project = parsedState.project ? JSON.parse(parsedState.project) : null;
-      
-      // Now access selectedProject
-      if (project && project.selectedProject) {
-        return project.selectedProject.role === 'admin';
-      }
-    } catch (error) {
-      console.error('Error parsing persisted state:', error);
-    }
-  }
-
-  // Default to false if not found or an error occurs
-  return false;
-};
-
-
-const isAdmin = getPersistedState();
-
-
-const pages = {
-  id: 'pages',
-  title: 'Management',
-  type: 'group',
-  children: [
+// Hàm để tạo navItems độc lập
+export const getNavItems = (isAdmin) => {
+  return [
     {
-      id: 'person', 
+      id: 'person',
       title: 'Persons',
-      type: 'item', 
+      type: 'item',
       url: 'pages/poi-management',
       icon: icons.PersonIcon
     },
     {
-      id: 'collection', 
+      id: 'collection',
       title: 'Collections',
-      type: 'item', 
+      type: 'item',
       url: 'pages/collection-management',
       icon: icons.FolderSharedIcon
     },
-    isAdmin && {
-      id: 'developer', 
-      title: 'Developers',
-      type: 'item', 
-      url: 'pages/app/developer-keys',
-      icon: icons.IconCode
-    },
     {
-      id: 'search', 
+      id: 'search',
       title: 'Searchs',
-      type: 'item', 
+      type: 'item',
       url: 'pages/search',
       icon: icons.Search
+    },
+    isAdmin && {
+      id: 'developer',
+      title: 'Developers',
+      type: 'item',
+      url: 'pages/app/developer-keys',
+      icon: icons.IconCode
     }
-  ].filter(Boolean) // Remove any undefined values if isAdmin is false
+  ].filter(Boolean);
 };
 
-export default pages;
+// Component MenuList
+const MenuList = () => {
+  const { isAdmin } = useAdminStatus();
+  const navItems = getNavItems(isAdmin);
+
+  return <>{navItems}</>;
+};
+
+export default MenuList;

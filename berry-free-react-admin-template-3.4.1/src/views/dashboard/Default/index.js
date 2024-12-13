@@ -2,7 +2,7 @@ import React, { useState,  useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Grid, Paper, Typography, Button, Box, IconButton, Card, CardContent, TextField, Tooltip} from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { StarOutline } from "@mui/icons-material";
+
 import { IconEdit } from "@tabler/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { updateProjectName } from "store/actions/projectActions";
@@ -47,17 +47,15 @@ const Dashboard = () => {
 
   const toggleEditMode = async () => {
     if (isEditing) {
-      // Save changes, e.g., call API or update store
-      dispatch(updateProjectName(projectName));
-      console.log('Project name changed to:', projectName);
-
-      // call api here
       try {
-        await callAPI(BACKEND_ENDPOINTS.project.change_name, "POST", { pname: projectName }, true);
+        const res = await callAPI(BACKEND_ENDPOINTS.user.project.info, "PATCH", { new_project_name: projectName }, true);
+        if (res) {
+          dispatch(updateProjectName(projectName));
+          console.log('Project name changed to:', projectName);
+        }
       } catch (err) {
         alert('err');
       }
-
     }
     setIsEditing(!isEditing);
   };
@@ -115,51 +113,18 @@ const Dashboard = () => {
                 </IconButton>
               </Tooltip>
             </Typography>
-          </Paper>
-        </Grid>
-
-        {/* API Developer Key Section */}
-        <Grid item xs={12} sm={6}>
-          <Paper
-            elevation={3}
-            sx={{
-              padding: 3,
-              borderRadius: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h6" color="primary">
+            <Typography variant="h5" color="primary">
               API Developer Key
             </Typography>
             <Typography variant="body1">{projectMetadata.api}</Typography>
           </Paper>
         </Grid>
-        {/* Plan Upgrade Section */}
-        <Grid item xs={12} sm={6}>
-          <Card
-            elevation={3}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              p: 2,
-              borderRadius: 2,
 
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <StarOutline color="primary" sx={{ mr: 2 }} />
-              <Typography variant="h6">Free</Typography>
-            </Box>
-            <Button variant="contained" color="primary" size="small">
-              Upgrade Plan
-            </Button>
-          </Card>
-        </Grid>
+        
 
 
         {/* Plan Details and Days Remaining */}
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <Paper
             elevation={3}
             sx={{
@@ -169,7 +134,7 @@ const Dashboard = () => {
             }}
           >
             <Typography variant="body1">
-              Current plan: <strong>30 Day Trial (15 Free Liveness)</strong>
+              Current plan: <strong>30 Day Trial</strong>
             </Typography>
             <Typography variant="body1">License expiry: 15 Nov 2024 (UTC +07:00)</Typography>
             <Typography variant="h2" color="error" sx={{ marginTop: 2 }}>
@@ -179,7 +144,7 @@ const Dashboard = () => {
               Days remaining
             </Typography>
             <Button variant="contained" color="primary" sx={{ marginTop: 2 }}>
-              Subscribe plan
+              Upgrade Plan
             </Button>
           </Paper>
         </Grid>
@@ -187,7 +152,7 @@ const Dashboard = () => {
 
 
         {/* Credit Usage Section */}
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={8}>
           <Card
             elevation={3}
             sx={{

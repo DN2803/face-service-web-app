@@ -16,7 +16,7 @@ export const useFetchProjects = () => {
                     api: project.key,
                     exp: project.expires_at,
                     role: project.admin? "dev":"admin",
-                    ...(project.admin_key_id && {owner: project.admin})
+                    ...(project.admin && {owner: project.admin})
                 }));
             } else {
                 console.error("projects is not an array:", response.data.projects);

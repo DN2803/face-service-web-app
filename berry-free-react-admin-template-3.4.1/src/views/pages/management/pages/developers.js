@@ -179,7 +179,8 @@ const DeveloperManagement = () => {
             <DialogForm open={open} onClose={handleClose} title={editDeveloper ? "Edit Developer Details" : "Add Developer Details"}>
                 <DeveloperForm
                     onSubmit={handleSubmit}
-                    developer={editDeveloper} // Nếu chỉnh sửa, truyền developer; nếu thêm, truyền null
+                    developer={editDeveloper} 
+                    developers={developers}// Nếu chỉnh sửa, truyền developer; nếu thêm, truyền null
                 />
             </DialogForm>
             {/* Table Section */}

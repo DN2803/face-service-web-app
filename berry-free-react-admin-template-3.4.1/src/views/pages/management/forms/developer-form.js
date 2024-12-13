@@ -19,7 +19,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useCallAPI } from 'hooks/useCallAPI';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
-const DeveloperForm = ({ onSubmit, developer = null }) => {
+const DeveloperForm = ({ onSubmit, developer = null, developers }) => {
     const scriptedRef = useRef(true);
     const [checkDev, setCheckDev] = useState(developer !== null);
     const [devName, setDevName] = useState('');
@@ -28,10 +28,19 @@ const DeveloperForm = ({ onSubmit, developer = null }) => {
     const [isCheckingEmail, setIsCheckingEmail] = useState(developer !== null);
     const { callAPI } = useCallAPI();
     const collections = useSelector(state => state.collections.collections);
-
+    const userEmail = useSelector((state) => state.auth.user?.email);
     const checkEmailExistence = async (email) => {
         setIsCheckingEmail(true);
         try {
+
+
+            if (email === userEmail) {
+                throw new Error("Email matches the admin email.");
+            }
+            const isDeveloper = developers.includes(email);
+            if (!isDeveloper) {
+                throw new Error("Email does not match any developer's email.");
+            }
             const response = await callAPI(
                 BACKEND_ENDPOINTS.auth.login.identify,
                 'POST',
@@ -48,11 +57,19 @@ const DeveloperForm = ({ onSubmit, developer = null }) => {
             }
         } catch (error) {
             console.error("Error:", error);
-            const errorMessage =
-                error.response?.data && typeof error.response.data === 'string'
+            // Handle error responses and set warnings accordingly
+            let errorMessage = "An error occurred.";
+            if (error.response && error.response.data) {
+                // Check if error response has a string message
+                errorMessage = typeof error.response.data === 'string'
                     ? error.response.data
-                    : 'An unexpected error occurred.';
+                    : error.message || "Unknown error occurred";
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
             setWarning(errorMessage);
+
         } finally {
             setIsCheckingEmail(false);
         }
