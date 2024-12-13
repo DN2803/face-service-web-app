@@ -6,7 +6,7 @@ const initialState = {
 const collectionsReducer = (state = initialState, action) => {
   switch (action.type) {
     case 'FETCH_COLLECTIONS_REQUEST':
-      return { ...state, loading: true };
+      return { ...state, collections: [], loading: true };
     case 'FETCH_COLLECTIONS_SUCCESS':
       return { ...state, collections: action.payload, loading: false };
     case 'FETCH_COLLECTIONS_FAILURE':

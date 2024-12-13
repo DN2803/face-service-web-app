@@ -39,6 +39,8 @@ import User1 from 'assets/images/users/user-round.svg';
 
 // assets
 import { IconLogout, IconSearch, IconSettings, IconUser, IconReportSearch } from '@tabler/icons';
+import { fetchCollectionsRequest } from 'store/actions/collectionsActions';
+
 
 // ==============================|| PROFILE MENU ||============================== //
 
@@ -68,6 +70,7 @@ const ProfileSection = () => {
     navigate('./dashboard/setting');
   };
   const handleProjectSetting = () => {
+    dispatch(fetchCollectionsRequest())
     navigate('./pages/project')
   }
   const handleClose = (event) => {

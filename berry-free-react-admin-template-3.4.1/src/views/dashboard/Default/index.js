@@ -1,8 +1,8 @@
-import React, { useState,  useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Grid, Paper, Typography, Button, Box, IconButton, Card, CardContent, TextField, Tooltip} from "@mui/material";
+import { Grid, Paper, Typography, Button, Box, IconButton, Card, CardContent, TextField, Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-
+import { FileCopy } from "@mui/icons-material";
 import { IconEdit } from "@tabler/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { updateProjectName } from "store/actions/projectActions";
@@ -10,6 +10,7 @@ import { useCallAPI } from "hooks/useCallAPI";
 import { BACKEND_ENDPOINTS } from "services/constant";
 import { useFetchCollections } from "hooks/useFetchCollections";
 import { fetchCollectionsRequest, fetchCollectionsSuccess, fetchCollectionsFailure } from 'store/actions/collectionsActions';
+import ApiKeyDisplay from "ui-component/APIKeyDisplay";
 const Dashboard = () => {
 
   const { callAPI } = useCallAPI();
@@ -18,19 +19,28 @@ const Dashboard = () => {
   const projectMetadata = useSelector((state) => state.project.selectedProject);
   const dispatch = useDispatch();
   const isAdmin = projectMetadata.role === "admin";
+  const collections = useSelector((state) => state.collections.collections); // Get collections from Redux store
+
   useEffect(() => {
+    // Check if collections are already fetched or empty before triggering fetch
+    if (collections && collections.length > 0) {
+      return; // Collections already exist, so do not call fetchCollections again
+    }
+
     const initializeCollections = async () => {
-        dispatch(fetchCollectionsRequest());
-        try {
-            const result = await fetchCollections();
-            dispatch(fetchCollectionsSuccess(result));
-        } catch (error) {
-            dispatch(fetchCollectionsFailure());
-            // console.error("Error fetching collections", error);
-        }
+      dispatch(fetchCollectionsRequest());
+      try {
+        const result = await fetchCollections();
+        dispatch(fetchCollectionsSuccess(result));
+      } catch (error) {
+        dispatch(fetchCollectionsFailure());
+        console.error("Error fetching collections", error);
+      }
     };
+
     initializeCollections();
-}, [dispatch, fetchCollections]);
+
+  }, [dispatch, fetchCollectionsSuccess]);
 
   // State to manage project name editing
   const [isEditing, setIsEditing] = useState(false);
@@ -72,55 +82,92 @@ const Dashboard = () => {
       </Typography>
       <Grid container spacing={3} alignItems="flex-start">
         {/* Project Information Section */}
-        <Grid item xs={12}>
-          <Paper elevation={3} sx={{ padding: 3, marginBottom: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h3" color="primary" sx={{ paddingBottom: 2, flexGrow: 1 }}>
-                <strong>Project name: </strong>
-                {/* Editable Project Name */}
-                {isEditing ? (
-                  <TextField
-                    value={projectName}
-                    onChange={handleProjectNameChange}
-                    variant="outlined"
-                    size="small"
-                    sx={{ width: '100%' }}
-                  />
-                ) : (
-                  <span>{projectName}</span>
-                )}
-              </Typography>
-              <IconButton
-                color="primary"
-                onClick={toggleEditMode}
-                aria-label="Edit Project Name"
-              >
-                <IconEdit />
-              </IconButton>
-            </Box>
-            <Typography variant="body1" color="textSecondary">
-              <strong>Role:</strong> {projectMetadata.role}
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              <strong>Scopes:</strong> {isAdmin ? "All" : 'detail'}
-              <Tooltip title="View Details" arrow>
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          <Grid item xs={12} sm={7} sx={{ height: '100%' }}>
+            <Paper elevation={3} sx={{ padding: 3, marginBottom: 3, height: '100%' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h3" color="primary" sx={{ paddingBottom: 2, flexGrow: 1 }}>
+                  <strong>Project name: </strong>
+                  {/* Editable Project Name */}
+                  {isEditing ? (
+                    <TextField
+                      value={projectName}
+                      onChange={handleProjectNameChange}
+                      variant="outlined"
+                      size="small"
+                      sx={{ width: '100%' }}
+                    />
+                  ) : (
+                    <span>{projectName}</span>
+                  )}
+                </Typography>
                 <IconButton
                   color="primary"
-                  onClick={onDetailClick}
-                  aria-label="View Details"
+                  onClick={toggleEditMode}
+                  aria-label="Edit Project Name"
                 >
-                  <InfoOutlinedIcon />
+                  <IconEdit />
                 </IconButton>
-              </Tooltip>
-            </Typography>
-            <Typography variant="h5" color="primary">
-              API Developer Key
-            </Typography>
-            <Typography variant="body1">{projectMetadata.api}</Typography>
-          </Paper>
+              </Box>
+              {projectMetadata.owner &&
+                <Typography variant="body1" color="textSecondary" paddingBottom={"0.75rem"}>
+                  <div><strong>Project Owner:</strong> {projectMetadata.owner}</div>
+                </Typography>
+              }
+              <Typography variant="body1" color="textSecondary">
+                <strong>Role:</strong> {projectMetadata.role}
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                <strong>Scopes:</strong> {isAdmin ? "All" : 'detail'}
+                <Tooltip title="View Details" arrow>
+                  <IconButton
+                    color="primary"
+                    onClick={onDetailClick}
+                    aria-label="View Details"
+                  >
+                    <InfoOutlinedIcon />
+                  </IconButton>
+                </Tooltip>
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* API Developer Key Section */}
+          <Grid item xs={12} sm={5} sx={{ height: '100%' }}>
+            <Paper elevation={3} sx={{ padding: 3, borderRadius: 2, height: '100%' }}>
+              {/* Wrapper Box for horizontal alignment */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h5" color="primary">
+                  API Programming Guide
+                </Typography>
+                {/* Python SDK Button */}
+                <Button
+                  variant="text"
+                  startIcon={<FileCopy />}
+                  sx={{
+                    color: 'blue',
+                    textTransform: 'none',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="h5">Python SDK</Typography>
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1.55rem' }}>
+                <Typography variant="h5" color="primary" sx={{ mt: 2 }}>
+                  API Developer Key
+                </Typography>
+                <Typography variant="body1">
+                  <ApiKeyDisplay apiKey={projectMetadata.api} numDisplay={16} />
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
 
-        
+
 
 
         {/* Plan Details and Days Remaining */}
