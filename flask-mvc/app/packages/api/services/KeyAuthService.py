@@ -11,6 +11,13 @@ class KeyAuthService(BaseService):
         self.repository = KeyRepo()
 
     def check_key(self, key, check_rate_limit=True):
+        """
+        Check if the given key is exists and it has not expired.
+        ----
+        Args:
+        - key (str): API key
+        - check_rate_limit (bool): A flag to check API key rate_limit.
+        """
         key_obj = self.repository.check_key_exists(key)
 
         if not key_obj:

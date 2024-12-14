@@ -1,21 +1,20 @@
 from flask import Blueprint, request, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
-from app import app
+from app.packages.api.services.KeyAuthService import KeyAuthService
 from app.packages.image.services import FaceService
 
-image_bp = Blueprint('image', __name__)
+api_func_bp = Blueprint('api_func', __name__, url_prefix='/api/function')
 
-__demo_limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]  # Đặt giới hạn mặc định
-)
+@api_func_bp.before_request
+def validate_key():
+    key = request.headers.get('X-API-Key')
 
-@image_bp.route('/api/function/detection', methods=['POST'])
-@__demo_limiter.limit("10 per minute")
-def dectection():
+    if not key: raise Exception('API key is required!')
+
+    KeyAuthService.check_key(key)
+
+@api_func_bp.route('/detection', methods=['POST'])
+def api_dectection():
     data = request.json
 
     if 'image' not in data:
@@ -26,9 +25,8 @@ def dectection():
 
     return jsonify(result=result), 200
 
-@image_bp.route('/api/function/anti-spoofing', methods=['POST'])
-@__demo_limiter.limit("10 per minute")
-def anti_spoofing():
+@api_func_bp.route('/anti-spoofing', methods=['POST'])
+def api_anti_spoofing():
     data = request.json
 
     if 'image' not in data:
@@ -46,9 +44,8 @@ def anti_spoofing():
 
     return jsonify(result=result), 200
 
-@image_bp.route('/api/function/comparison', methods=['POST'])
-@__demo_limiter.limit("10 per minute")
-def comparison():
+@api_func_bp.route('/comparison', methods=['POST'])
+def api_comparison():
     data = request.json
     if 'image1' not in data or 'image2' not in data :
         raise Exception('The request lacks sufficient parameters!')
