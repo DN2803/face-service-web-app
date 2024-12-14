@@ -156,6 +156,7 @@ const FaceAuth = () => {
                     return
                 }
                 const imageData = cropImage(canvas, detections);// canvas.toDataURL('image/jpeg');
+                if (!imageData) return;
                 const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", { image: imageData }, true)
                 const data = await response.data;
                 if (data) {
