@@ -7,7 +7,7 @@ MODELS = {
 }
 
 import os
-os.environ["yunet_score_threshold"] = "0.5"
+os.environ["yunet_score_threshold"] = "0.7"
 
 for task, model_name in MODELS.items():
     try:

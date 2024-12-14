@@ -54,7 +54,7 @@ def comparison():
         is_matched, score = FaceService.verify(
             data['image1'],
             data['image2'],
-            data['threshold']
+            threshold=0.66
         )
         result = {
             'is_matched': is_matched,

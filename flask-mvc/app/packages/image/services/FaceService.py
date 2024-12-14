@@ -68,7 +68,7 @@ def extract_faces(
                 "Face could not be detected. Please confirm that the picture is a face photo "
                 "or consider to set enforce_detection param to False."
             )
-    elif only_one:
+    elif only_one and len(facial_areas) != 1:
         raise ValueError("Please confirm that the picture includes only one face.")
 
     face_objs = []
@@ -123,11 +123,11 @@ def extract_faces(
 
     return face_objs
 
-def __anti_spoofing(img_np, facial_area):
+def __anti_spoofing(img_np, facial_area: tuple[int, int, int, int]):
     if not __validate_antispoofing_input(img_np, facial_area):
         raise ValueError('The given picture does not meet our input constraints')
 
-    antispoof_model = build_model(task="spoofing", model_name=MODELS['Fasnet'])
+    antispoof_model = build_model(task="spoofing", model_name=MODELS['spoofing'])
     is_real, antispoof_score = antispoof_model.analyze(img_np, facial_area)
 
     return is_real, antispoof_score
@@ -149,8 +149,8 @@ def represent(img_np):
     return embed_normalize
 
 def verify(img1_path, img2_path, threshold = 0.6):
-    face_obj_1 = extract_faces(img1_path, only_one=True)
-    face_obj_2 = extract_faces(img2_path, only_one=True)
+    face_obj_1 = extract_faces(img1_path, only_one=True, return_faces=True)
+    face_obj_2 = extract_faces(img2_path, only_one=True, return_faces=True)
     embed_1 = represent(face_obj_1[0]['face'])
     embed_2 = represent(face_obj_2[0]['face'])
 
@@ -189,16 +189,17 @@ from math import sqrt
 __AREA_THRESHOLD = 0.75
 __SIDE_RATE = sqrt(__AREA_THRESHOLD)
 
-def __validate_antispoofing_input(img_np, facial_area):
+def __validate_antispoofing_input(img_np, facial_area: tuple[int, int, int, int]):
     h, w,_  = img_np.shape
     w_max, h_max = int(w*__SIDE_RATE), int(h*__SIDE_RATE)
     x_floor = int((w - w_max)/2)
     y_floor = int((h - h_max)/2)
     x_ceil, y_ceil = x_floor+w_max, y_floor+h_max
+    face_x, face_y, face_w, face_h = facial_area
 
     return (
-        facial_area['x'] > x_floor and
-        facial_area['y'] > y_floor and
-        facial_area['x']+facial_area['w']< x_ceil and
-        facial_area['y']+facial_area['h'] < y_ceil
+        face_x > x_floor and
+        face_y > y_floor and
+        face_x + face_w < x_ceil and
+        face_y + face_h < y_ceil
     )
