@@ -1,12 +1,15 @@
 from deepface.modules.modeling import build_model
 
-models = {
+MODELS = {
     'face_detector': 'yunet',
     'spoofing': 'Fasnet',
     'facial_recognition': 'Facenet512'
 }
 
-for task, model_name in models.items():
+import os
+os.environ["yunet_score_threshold"] = "0.5"
+
+for task, model_name in MODELS.items():
     try:
         build_model(task, model_name)
     except Exception as e:
