@@ -98,7 +98,7 @@ const FaceComparisonPage = () => {
                                 {isLoading && <ClipLoader size={50} color={"#123abc"} />}
                                 {comparisonResult !== null && (
                                     <MuiTypography variant="body1" gutterBottom>
-                                        Match Score: {comparisonResult * 100}% {comparisonResult ? '✅ Match' : '❌ No Match'}
+                                        Match Score: {comparisonResult * 100}% {result ? '✅ Match' : '❌ No Match'}
                                     </MuiTypography>
                                 )}
                             </Box>
