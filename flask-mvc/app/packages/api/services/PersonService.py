@@ -17,7 +17,7 @@ class PersonService(BaseService):
 
         for image in images:
             try:
-                face_objs = img_service.extract_face(image, only_one=True)
+                face_objs = img_service.extract_faces(image)
                 face_img = face_objs[0]['face']
 
                 img_obj = img_service.store(face_img, person_id)
@@ -144,7 +144,7 @@ class PersonService(BaseService):
         # Image Encoding:
         embed_service = PersonEmbeddingService()
         img_service = PersonImageService()
-        face_obj = img_service.extract_face(image, only_one=True)
+        face_obj = img_service.extract_faces(image)
         embedding = embed_service.encode(face_obj[0]['face'])
 
         # Get embeddings df by person_ids

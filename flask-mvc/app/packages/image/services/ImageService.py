@@ -1,9 +1,8 @@
 from app.services.BaseService import BaseService
 from app.packages.image.repositories.ImageRepo import ImageRepo
-from app.packages.embedding.services.EmbeddingService import EmbeddingService
 from app.cloud_storage.StorageApp import storage_app
+from app.packages.image.services import FaceService
 
-from deepface import DeepFace
 import cv2
 
 class ImageService(BaseService):
@@ -11,10 +10,10 @@ class ImageService(BaseService):
         super().__init__(repository)
         self.IMG_DIR = None
 
-    @staticmethod 
-    def extract_face(img_path, anti_spoofing=False, only_one = False):
+    @staticmethod
+    def extract_faces(img_path, anti_spoofing=False):
         """
-        Extract faces from a given image
+        Extract the face from a given image that includes only one face.
 
         Args:
         ----
@@ -40,28 +39,14 @@ class ImageService(BaseService):
             * "antispoof_score" (float): score of antispoofing analyze result. this key is
                 just available in the result only if anti_spoofing is set to True in input arguments.
         """
-        face_objs = DeepFace.extract_faces(
-            img_path = img_path, 
-            detector_backend = 'yunet',
-            align = True,
-            color_face = 'bgr',
-            normalize_face = False,
-            anti_spoofing = anti_spoofing,
+
+        return FaceService.extract_faces(
+            img_path,
+            anti_spoofing=anti_spoofing,
+            only_one=True,
+            align=True,
+            return_faces=True
         )
-
-        if only_one and len(face_objs) != 1:
-            raise Exception(f'There is not exactly one person in this image! ({len(face_objs)})')
-
-        return face_objs
-
-    @staticmethod
-    def compare(img1_path, img2_path, threshold = 0.6):
-        face_obj_1 = ImageService.extract_face(img1_path, only_one=True)
-        face_obj_2 = ImageService.extract_face(img2_path, only_one=True)
-        embed_1 = EmbeddingService.encode(face_obj_1[0]['face'])
-        embed_2 = EmbeddingService.encode(face_obj_2[0]['face'])
-
-        return EmbeddingService.compare(embed_1, embed_2, threshold)
 
     def __compress(self, img_np, quality=85):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]

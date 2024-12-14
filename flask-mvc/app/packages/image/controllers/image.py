@@ -3,7 +3,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from app import app
-from app.packages.image.services.ImageService import ImageService
+from app.packages.image.services import FaceService
 
 image_bp = Blueprint('image', __name__)
 
@@ -13,12 +13,12 @@ __demo_limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]  # Đặt giới hạn mặc định
 )
 
-@image_bp.route('/api/demo/detection', methods=['POST'])
+@image_bp.route('/api/function/detection', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
-def demo_dectection():
+def dectection():
     try:
         data = request.json
-        face_objs = ImageService.extract_face(data['image'])
+        face_objs = FaceService.extract_faces(data['image'])
         result = [face_obj['facial_area'] for face_obj in face_objs]
 
         return jsonify(result=result), 200
@@ -26,16 +26,19 @@ def demo_dectection():
         print(e)
         return jsonify(error=str(e)), 400
 
-@image_bp.route('/api/demo/anti-spoofing', methods=['POST'])
+@image_bp.route('/api/function/anti-spoofing', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
-def demo_anti_spoofing():
+def anti_spoofing():
     try:
         data = request.json
-        face_objs = ImageService.extract_face(data['image'],anti_spoofing=True, only_one=True)
-        face_obj = face_objs[0]
+        face_objs = FaceService.extract_faces(
+            data['image'],
+            anti_spoofing=True,
+            only_one=True
+        )
         result = {
-            'is_real': face_obj['is_real'],
-            'antispoof_score': face_obj['antispoof_score']   
+            'is_real': face_objs[0]['is_real'],
+            'antispoof_score': face_objs[0]['antispoof_score']   
         }
 
         return jsonify(result=result), 200
@@ -43,12 +46,16 @@ def demo_anti_spoofing():
         print(e)
         return jsonify(error=str(e)), 400
 
-@image_bp.route('/api/demo/comparison', methods=['POST'])
+@image_bp.route('/api/function/comparison', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
 def comparison():
     try:
         data = request.json
-        is_matched, score = ImageService.compare(data['image1'], data['image2'], threshold=0.66)
+        is_matched, score = FaceService.verify(
+            data['image1'],
+            data['image2'],
+            data['threshold']
+        )
         result = {
             'is_matched': is_matched,
             'score': score   

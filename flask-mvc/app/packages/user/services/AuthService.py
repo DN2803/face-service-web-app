@@ -62,7 +62,12 @@ class AuthService(BaseService):
         if user.verified:
             face_service = UserImageService()
             embed_service = UserEmbeddingService()
-            face_objs = face_service.extract_face(img, only_one=True)
+            face_objs = face_service.extract_faces(img, anti_spoofing=True)
+            is_real, antispoof_score = face_objs['is_real'], face_objs['antispoof_score']
+
+            if is_real and antispoof_score > 0.66:
+                raise Exception('The given image did not pass the anti-spoofing check!')
+
             embedding = embed_service.encode(face_objs[0]['face'])
             user_embedding = embed_service.get_embedding(user.face_embed_id)
 
