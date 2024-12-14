@@ -49,6 +49,7 @@ class KeyRepo(BaseRepository):
         )
         df = pd.read_sql(query, con=db.engine)
         df['scope'] = df['scope'].apply(lambda x: list(map(int, x.split(','))))
+        return df
 
     def get_projects(self, user_id):
         filter_query = (
