@@ -84,10 +84,10 @@ def extract_faces(
 
         # align original image, then find projection of detected face area after alignment
         if align is True:  # and left_eye is not None and right_eye is not None:
-            processed_face = __align_preprocess(img_np, x, y, w, h)
+            processed_face, new_x, new_y = __align_preprocess(img_np, x, y, w, h)
             aligned_img, angle = align_img_wrt_eyes(img=processed_face, left_eye=left_eye, right_eye=right_eye)
             rotated_x1, rotated_y1, rotated_x2, rotated_y2 = project_facial_area(
-                facial_area=(x, y, x + w, y + h),
+                facial_area=(new_x, new_y, new_x + w, new_y + h),
                 angle=angle,
                 size=(processed_face.shape[0], processed_face.shape[1])
             )
@@ -117,13 +117,13 @@ def extract_faces(
     if anti_spoofing:
         face_obj = face_objs[0]
         x,y,w,h,_,_ = face_obj['facial_area'].values()
-        is_real, antispoof_score = anti_spoofing(img_np, (x,y,w,h))
+        is_real, antispoof_score = __anti_spoofing(img_np, (x,y,w,h))
         face_obj['is_real'] = is_real
         face_obj['antispoof_score'] = antispoof_score
 
     return face_objs
 
-def anti_spoofing(img_np, facial_area):
+def __anti_spoofing(img_np, facial_area):
     if not __validate_antispoofing_input(img_np, facial_area):
         raise ValueError('The given picture does not meet our input constraints')
 
@@ -161,7 +161,6 @@ def verify(img1_path, img2_path, threshold = 0.6):
     else:
         return False, sim
 
-
 def __align_preprocess(img_np, x, y, w, h):
     PERCENTAGE = 0.5
     height_border = int(PERCENTAGE * w)
@@ -175,8 +174,8 @@ def __align_preprocess(img_np, x, y, w, h):
     # get all pixel from original img
     x1 = max(0, x - width_border)
     y1 = max(0, y - height_border)
-    x2 = min(img_np.shape[0], x + w + width_border)
-    y2 = min(img_np.shape[1], y + h + height_border)
+    x2 = min(img_np.shape[1], x + w + width_border)
+    y2 = min(img_np.shape[0], y + h + height_border)
     img_cropped = img_np[y1:y2, x1:x2]
 
     # map to new start point in result
@@ -184,7 +183,7 @@ def __align_preprocess(img_np, x, y, w, h):
     start_y = max(0, height_border - y)
     # copy pixels
     result[start_y:start_y + img_cropped.shape[0], start_x:start_x + img_cropped.shape[1]] = img_cropped
-    return result
+    return result, width_border, height_border
 
 from math import sqrt
 __AREA_THRESHOLD = 0.75
