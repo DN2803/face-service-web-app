@@ -16,52 +16,51 @@ __demo_limiter = Limiter(
 @image_bp.route('/api/function/detection', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
 def dectection():
-    try:
-        data = request.json
-        face_objs = FaceService.extract_faces(data['image'])
-        result = [face_obj['facial_area'] for face_obj in face_objs]
+    data = request.json
 
-        return jsonify(result=result), 200
-    except Exception as e:
-        print(e)
-        return jsonify(error=str(e)), 400
+    if 'image' not in data:
+        raise Exception('The request is missing the <image> parameter!')
+
+    face_objs = FaceService.extract_faces(data['image'])
+    result = [face_obj['facial_area'] for face_obj in face_objs]
+
+    return jsonify(result=result), 200
 
 @image_bp.route('/api/function/anti-spoofing', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
 def anti_spoofing():
-    try:
-        data = request.json
-        face_objs = FaceService.extract_faces(
-            data['image'],
-            anti_spoofing=True,
-            only_one=True
-        )
-        result = {
-            'is_real': face_objs[0]['is_real'],
-            'antispoof_score': face_objs[0]['antispoof_score']   
-        }
+    data = request.json
 
-        return jsonify(result=result), 200
-    except Exception as e:
-        print(e)
-        return jsonify(error=str(e)), 400
+    if 'image' not in data:
+        raise Exception('The request is missing the <image> parameter!')
+
+    face_objs = FaceService.extract_faces(
+        data['image'],
+        anti_spoofing=True,
+        only_one=True
+    )
+    result = {
+        'is_real': face_objs[0]['is_real'],
+        'antispoof_score': face_objs[0]['antispoof_score']   
+    }
+
+    return jsonify(result=result), 200
 
 @image_bp.route('/api/function/comparison', methods=['POST'])
 @__demo_limiter.limit("10 per minute")
 def comparison():
-    try:
-        data = request.json
-        is_matched, score = FaceService.verify(
-            data['image1'],
-            data['image2'],
-            threshold=0.66
-        )
-        result = {
-            'is_matched': is_matched,
-            'score': score   
-        }
+    data = request.json
+    if 'image1' not in data or 'image2' not in data :
+        raise Exception('The request lacks sufficient parameters!')
+    
+    is_matched, score = FaceService.verify(
+        data['image1'],
+        data['image2'],
+        threshold=0.66
+    )
+    result = {
+        'is_matched': is_matched,
+        'score': score   
+    }
 
-        return jsonify(result=result), 200
-    except Exception as e:
-        print(e)
-        return jsonify(error=str(e)), 400
+    return jsonify(result=result), 200

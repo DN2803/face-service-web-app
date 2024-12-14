@@ -3,6 +3,7 @@ from app.packages.api.repositories.KeyRepo import KeyRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
 from app.packages.api.controllers.RateLimiter import fixed_window_limit
 
+from werkzeug.exceptions import Unauthorized, Forbidden
 import time
 
 class KeyAuthService(BaseService):
@@ -13,36 +14,28 @@ class KeyAuthService(BaseService):
         key_obj = self.repository.check_key_exists(key)
 
         if not key_obj:
-            raise Exception('Invalid API Key!')
+            raise Unauthorized('The given API Key does not exist!')
 
         if int(time.time()) > key_obj.expires_at:
-            raise Exception('The given API-Key has expired!')
+            raise Forbidden('The given API-Key has expired!')
 
         is_admin = False if key_obj.admin_key_id else True
-        
+
         if check_rate_limit:
             allowed, message = fixed_window_limit(key, is_admin, key_obj.admin_key_id)
 
             if not allowed:
-                raise Exception(message)
+                raise Forbidden(message)
 
         return key_obj, is_admin
 
     def check_access(self, key_id, collection_ids):
-        return AccessCollectionRepo().check_access(key_id, collection_ids)
+        if not AccessCollectionRepo().check_access(key_id, collection_ids):
+            raise Forbidden(
+                'At least one of the given collections is inaccessible with your API key!'
+            )
 
     def validate(self, key, collection_ids):
         """Check key and access collection permission"""
         key_obj, _ = self.check_key(key)
-
-        if key_obj == None: return False
-
-        return self.check_access(key_obj.id, collection_ids)
-
-    def update_key(self, key, **kwargs):
-        key_obj = self.repository.check_key_exists(key)
-
-        if not key_obj:
-            raise Exception('Given API Key does not exist!')
-
-        self.repository.update_key(key_obj, **kwargs)
+        self.check_access(key_obj.id, collection_ids)
