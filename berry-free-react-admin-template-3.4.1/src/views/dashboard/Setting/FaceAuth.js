@@ -10,7 +10,7 @@ import * as faceapi from 'face-api.js';
 
 import { gridSpacing } from 'store/constant';
 import { useCallAPI } from 'hooks/useCallAPI';
-import { loadModels, detectFace, isBoxInsideRect} from 'utils/face_detection';
+import { loadModels, detectFace, isBoxInsideRect, cropImage} from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 const FaceAuth = () => {
     const { callAPI } = useCallAPI();
@@ -155,7 +155,7 @@ const FaceAuth = () => {
                     console.log('không hợp lệ')
                     return
                 }
-                const imageData = canvas.toDataURL('image/jpeg');
+                const imageData = cropImage(canvas, detections);// canvas.toDataURL('image/jpeg');
                 const response = await callAPI(BACKEND_ENDPOINTS.user.register.faceid, "POST", { image: imageData }, true)
                 const data = await response.data;
                 if (data) {
