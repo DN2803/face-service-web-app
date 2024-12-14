@@ -77,8 +77,8 @@ export const cropImage = (canvas, detection) => {
         const areaCrop = cropWidth * cropHeight;
 
         // Kiểm tra nếu diện tích của hộp cắt chiếm ít nhất 60% diện tích của vùng cắt
-        if (areaBox / areaCrop < 0.6) {
-            console.log("Diện tích của hộp cắt phải chiếm ít nhất 60% diện tích của vùng cắt.");
+        if (areaBox / areaCrop < 0.75) {
+            console.log("Diện tích của hộp cắt phải chiếm ít nhất 75% diện tích của vùng cắt.");
             return;
         }
     }
