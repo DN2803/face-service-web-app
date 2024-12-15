@@ -42,7 +42,8 @@ def person_id(person_id):
 
     collection_ids = [data['collection_id']]
 
-    if 'old_collection_id' in data: collection_ids.append(data['old_collection_id'])
+    if 'old_collection_id' in data and data['old_collection_id'] != data['collection_id']: 
+        collection_ids.append(data['old_collection_id'])
 
     KeyAuthService().validate(key, collection_ids)
 
