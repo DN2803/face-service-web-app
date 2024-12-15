@@ -38,7 +38,7 @@ const DeveloperForm = ({ onSubmit, developer = null, developers }) => {
                 throw new Error("Email matches the admin email.");
             }
             const isDeveloper = developers.includes(email);
-            if (!isDeveloper) {
+            if (isDeveloper) {
                 throw new Error("Email does not match any developer's email.");
             }
             const response = await callAPI(

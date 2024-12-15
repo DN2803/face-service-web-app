@@ -29,7 +29,7 @@ const FaceLivenessPage = () => {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [approved, setApproved] = useState(false);
     const [result, setResult] = useState(false);
-
+    const [score, setScore] = useState(0)
 
     const [isLoading, setIsLoading] = useState(false); 
     const handleLiveness = async (imageData) => {
@@ -40,13 +40,15 @@ const FaceLivenessPage = () => {
             if (response) {
                 console.log(response.data);
                 setResult(true);
-                setApproved(response.data["result"]["is_real"] && response.data["result"]["antispoof_score"] > 0.66);
+                setApproved(response.data["result"]["is_real"] );
+                setScore(parseFloat(response.data["result"]["antispoof_score"].toFixed(2)));
             }
         } catch (error) {
             console.error("Error:", error);
             alert(error.response.data.error);
             setResult(true);
             setApproved(false);
+            setScore(0);
         } finally {
             // Kết thúc trạng thái loading
             setIsLoading(false);
@@ -57,6 +59,7 @@ const FaceLivenessPage = () => {
         setUploadedImage(null)
         setApproved(false)
         setResult(false)
+        setScore(0)
     };
     return (
         <>
@@ -141,7 +144,7 @@ const FaceLivenessPage = () => {
                                                 marginBottom: '20px'   // Khoảng cách dưới
                                             }}
                                         >
-                                            Liveness passed
+                                            Liveness passed,  score: {score}
                                         </Typography>
                                         <img
                                             src={trueImage}
@@ -170,7 +173,7 @@ const FaceLivenessPage = () => {
                                                 marginBottom: '20px'   // Khoảng cách dưới
                                             }}
                                         >
-                                            Spoofing detected
+                                            Spoofing detected, score: {score}
                                         </Typography>
                                         <img
                                             src={falseImage}

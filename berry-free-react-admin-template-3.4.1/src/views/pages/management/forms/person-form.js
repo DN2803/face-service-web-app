@@ -182,7 +182,6 @@ const PersonForm = ({ onSubmit, person = null }) => {
                             onBlur={handleBlur}
                             label="Collection"
                         >
-                            <MenuItem value=''>None</MenuItem>  {/* Use an empty string as the default value */}
                             {collections.map((collection) => (
                                 <MenuItem key={collection.id} value={collection.id}>
                                     {collection.name}

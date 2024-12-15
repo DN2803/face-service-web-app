@@ -153,7 +153,7 @@ const Dashboard = () => {
                   }}
                   onClick={() => window.open('https://dn2803.github.io/doc-for-face-service/', '_blank')}
                 >
-                  <Typography variant="h5">Python SDK</Typography>
+                  <Typography variant="h5">REST API</Typography>
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1.55rem' }}>

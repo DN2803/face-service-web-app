@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 import { addCollection, removeCollection, updateCollection } from 'store/actions/collectionsActions';
+
 const CollectionManagement = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -27,6 +28,7 @@ const CollectionManagement = () => {
 
     // Function to handle dialog open
     const handleOpen = () => {
+        setEditCollection(null);
         setOpen(true);
     };
 
@@ -44,14 +46,16 @@ const CollectionManagement = () => {
         try {
             if (editCollection) {
                 const res = await callAPI(`${BACKEND_ENDPOINTS.project.collection}/${editCollection.id}`, "PATCH", body, true);
+                if (res){
+                    const updatedCol = {id: editCollection.id, name: values.name, description: values.description};
+                    setCollections(prevCollections =>
+                        prevCollections.map(col =>
+                            col.id === editCollection.id ? updatedCol : col
+                        )
+                    );
+                    dispatch(updateCollection(editCollection.id, updatedCol));
+                }
                 
-                const updatedCol = res.data.collection;
-                setCollections(prevCollections =>
-                    prevCollections.map(col =>
-                        col.id === editCollection.id ? updatedCol : col
-                    )
-                );
-                dispatch(updateCollection(editCollection.id, updatedCol));
             }
             else {
                 const res = await callAPI(BACKEND_ENDPOINTS.project.collection, "POST", body, true)
