@@ -65,7 +65,7 @@ class AuthService(BaseService):
             face_obj = face_service.extract_faces(img, anti_spoofing=True)
             is_real, antispoof_score = face_obj['is_real'], face_obj['antispoof_score']
 
-            if not is_real or antispoof_score > 0.66:
+            if not is_real or antispoof_score < 0.66:
                 return False
 
             embedding = embed_service.encode(face_obj['face'])
