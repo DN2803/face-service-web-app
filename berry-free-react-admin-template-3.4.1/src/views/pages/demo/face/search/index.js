@@ -49,7 +49,7 @@ const FaceSearchPage = () => {
             });
 
             if (response) {
-                if (response.data.result.lenght > 0){
+                if (response.data.result[0]){
                     setResult(response.data.result[0])
                 } else {
                     alert("Not found in this system, you can try with your account")
@@ -60,11 +60,13 @@ const FaceSearchPage = () => {
             console.error("Error: ", error);
         } finally {
             setIsLoading(false);
+            
         }
     };
     const handleReset = () => {
         // Reset the uploaded image to allow re-upload
         setUploadedImage(null);
+        setResult(null);
     };
     return (
         <>
@@ -169,7 +171,7 @@ const FaceSearchPage = () => {
 
                             {!result &&
                                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <ImageUpload handleUpload={handleSearch} uploadedImage={uploadedImage} />
+                                    <ImageUpload handleUpload={handleSearch} uploadedImage={uploadedImage}  sizeAccept={{ width: 800, height: 800 }} />
 
                                 </Box>}
                             <Box sx={{ mt: 2, width: '75%' }}>

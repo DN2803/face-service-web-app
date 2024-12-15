@@ -19,6 +19,7 @@ const FaceComparisonPage = () => {
     const [comparisonResult, setComparisonResult] = useState(null); // Store the comparison result
     const [result, setResult] = useState(false);
     const [isLoading, setIsLoading] = useState(false); 
+    const [reset, setReset] = useState(false);
     const handleCompare = async () => {
         // Simulate face comparison process
         if (uploadedImage1 && uploadedImage2) {
@@ -31,6 +32,7 @@ const FaceComparisonPage = () => {
                 // const data = await response.data;
                 if (response) {
                     console.log (response.data)
+                    setReset(true);
                     setComparisonResult(response.data["result"]["score"]);
                     setResult(response.data["result"]["is_matched"]);
                 }
@@ -51,6 +53,7 @@ const FaceComparisonPage = () => {
         setUploadedImage1(null);
         setUploadedImage2(null);
         setComparisonResult(null);
+        setReset(false);
     };
 
     return (
@@ -103,7 +106,7 @@ const FaceComparisonPage = () => {
                                 )}
                             </Box>
 
-                            {!result && (<Box sx={{ mt: 2, width: '100%' }}>
+                            {!reset && (<Box sx={{ mt: 2, width: '100%' }}>
                                 <AnimateButton>
                                     <Button
                                         disableElevation
@@ -120,7 +123,7 @@ const FaceComparisonPage = () => {
                             </Box>
 )}
                             {
-                                result && (<Box sx={{ mt: 2, width: '100%' }}>
+                                reset && (<Box sx={{ mt: 2, width: '100%' }}>
                                     <AnimateButton>
                                         <Button
                                             disableElevation
