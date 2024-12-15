@@ -23,7 +23,6 @@ class Key(BaseModel):
         'Key', 
         backref='admin_key',
         remote_side='Key.id',
-        cascade='all, delete-orphan',
         single_parent=True
     )
     collections = db.relationship('Collection', backref='key', cascade='all, delete-orphan')

@@ -4,6 +4,7 @@ from app.packages.api.repositories.KeyRepo import KeyRepo
 from app.packages.api.repositories.CollectionRepo import CollectionRepo
 from app.packages.api.repositories.AccessCollectionRepo import AccessCollectionRepo
 
+from werkzeug.exceptions import Forbidden
 import time
 import secrets
 
@@ -78,7 +79,7 @@ class ProjectService(BaseService):
         dev_key_obj = self.repository.check_key_exists(dev_key)
 
         if admin_key_id != dev_key_obj.admin_key_id:
-            raise Exception('The developer key is not under admin key management!')
+            raise Forbidden('The developer key is not under admin key management!')
 
         # get old-access
         access_col_repo = AccessCollectionRepo()
@@ -108,6 +109,6 @@ class ProjectService(BaseService):
         dev_key_obj = self.repository.check_key_exists(dev_key)
 
         if admin_key_id != dev_key_obj.admin_key_id:
-            raise Exception('The developer key is not under admin key management!')
+            raise Forbidden('The developer key is not under admin key management!')
 
         self.repository.remove_key(dev_key_obj) # automatically detele access permission

@@ -74,6 +74,7 @@ def team_management():
 
     if request.method == 'DELETE':
         project_service.delete_dev(admin_key_obj.id, request.args['dev_key'])
+        return jsonify(message='Deleted the dev key successfully!'), 200
 
     data = request.json
 
