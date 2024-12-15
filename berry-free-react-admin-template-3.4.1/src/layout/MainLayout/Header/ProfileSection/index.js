@@ -60,7 +60,7 @@ const ProfileSection = () => {
   const anchorRef = useRef(null);
   const dispatch = useDispatch();
 
-  const username = useSelector(state => state.auth.user.username);
+  const username = useSelector(state => state.auth.user?.username);
   const handleLogout = async () => {
     console.log('Logout');
     dispatch({ type: 'LOGOUT' });
