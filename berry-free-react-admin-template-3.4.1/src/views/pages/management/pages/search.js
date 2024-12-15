@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Button, TextField, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Pagination, IconButton} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -19,7 +20,11 @@ const SearchManagement = () => {
     const [itemsPerPage] = useState(5); 
     const [editPerson, setEditPerson] = useState(null);
 
-
+    const collections = useSelector((state) => state.collections.collections);
+    const collectionMap = collections.reduce((map, collection) => {
+        map[collection.id] = collection.name;
+        return map;
+    }, {});
     // Function to handle dialog open
     const handleOpenSearch = () => {
         setOpenSearch(true);
@@ -212,7 +217,7 @@ const SearchManagement = () => {
                                     <TableCell>{person.birth}</TableCell>
                                     <TableCell>{person.nationality}</TableCell>
                                     <TableCell>{person.updated_at}</TableCell>
-                                    <TableCell>{person.collection_id}</TableCell>
+                                    <TableCell>{collectionMap[person.collection_id]}</TableCell>
                                     <TableCell>
                                         <IconButton color="primary" onClick={() => handleEdit(person.id)}><EditIcon /></IconButton>
                                         <IconButton color="secondary" onClick={() => handleDelete(person.id)}><DeleteIcon /></IconButton>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import axios from "axios";
 // material-ui
-import { Grid, Divider, Box, Button, Typography } from '@mui/material';
+import { Grid, Divider, Box, Button } from '@mui/material';
 import MuiTypography from '@mui/material/Typography';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -15,32 +16,48 @@ import ImageListItem from '@mui/material/ImageListItem';
 
 
 import search_demo_img from 'assets/images/data_test_image/search';
-import { useCallAPI } from 'hooks/useCallAPI';
 import { convertAndCacheImage } from 'utils/imageCache'
 import { BACKEND_ENDPOINTS } from 'services/constant';
+const URL_SERVER = process.env.REACT_APP_PUBLIC_BACKEND_URL;
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const FaceSearchPage = () => {
-    const { callAPI } = useCallAPI();
     const [uploadedImage, setUploadedImage] = useState(null);
-    const [isLoading, setIsLoading] = useState(false); 
+    const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState(null);
     const handleSearch = async (imageData) => {
         // Perform actions with the uploaded file or imageData (base64)
         const body = {
-            collection_id: 0,
+            collection_ids: [1],
             image: imageData,
             limit: 1,
             score: 0.7,
         }
         try {
             setIsLoading(true);
-            const response = await callAPI(BACKEND_ENDPOINTS.demo_function.search, "POST", body)
+            // const response = 
+            const headers = {
+                "Content-Type": "application/json",
+                "x-api-key": '79b90dacd255fa1f0fc5712e9201f567b72c33ec6cecb5e1796f1b87abe89b26',
+            };
+            const response = await axios({
+                method: "POST",
+                url: `${URL_SERVER}${BACKEND_ENDPOINTS.project.search}`,
+                headers: headers,
+                data: body,
+                withCredentials: true
+            });
+
             if (response) {
-                setResult({name: response.data.name, url: response.data.url})
+                if (response.data.result.lenght > 0){
+                    setResult(response.data.result[0])
+                } else {
+                    alert("Not found in this system, you can try with your account")
+                }
+                
             }
         } catch (error) {
-            console.error("Error: ", error );
+            console.error("Error: ", error);
         } finally {
             setIsLoading(false);
         }
@@ -95,11 +112,11 @@ const FaceSearchPage = () => {
                                                     style={{ width: '100%', height: 'auto', borderRadius: '8px' }}
                                                 />
                                                 <p style={{
-                                                     marginTop: '8px', // Khoảng cách phía trên tên
-                                                     textAlign: 'center',
-                                                     fontSize: '14px',
-                                                     fontWeight: 'bold',
-                                                     color: '#333',
+                                                    marginTop: '8px', // Khoảng cách phía trên tên
+                                                    textAlign: 'center',
+                                                    fontSize: '14px',
+                                                    fontWeight: 'bold',
+                                                    color: '#333',
                                                 }}>{item.title}</p>
                                             </ImageListItem>
                                         )
@@ -126,7 +143,7 @@ const FaceSearchPage = () => {
                         >
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 {isLoading && <ClipLoader size={50} color={"#123abc"} />}
-                                {result && 
+                                {result &&
                                     (<div
                                         className='match'
                                         style={{
@@ -136,12 +153,8 @@ const FaceSearchPage = () => {
                                             textAlign: 'center'        // Canh giữa nội dung
                                         }}
                                     >
-                                        <Typography
-                                            variant='h2'
-                                        >
-                                        </Typography>
-                                        {/* <img
-                                            src={trueImage}
+                                        <img
+                                            src={result.images[0].img_url}
                                             alt=''
                                             style={{
                                                 width: '150px',        // Chiều rộng ảnh
@@ -149,27 +162,30 @@ const FaceSearchPage = () => {
                                                 objectFit: 'cover',    // Cắt ảnh vừa khung
                                                 borderRadius: '50%'    // Bo tròn ảnh
                                             }}
-                                        /> */}
+                                        />
                                     </div>)}
+
                             </Box>
 
-                            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <ImageUpload handleUpload={handleSearch} uploadedImage={uploadedImage} />
-                                <Box sx={{ mt: 2, width: '75%' }}>
-                                    <AnimateButton>
-                                        <Button
-                                            disableElevation
-                                            fullWidth
-                                            size="large"
-                                            type="button"
-                                            variant="contained"
-                                            color="secondary"
-                                            onClick={handleReset}
-                                        >
-                                            Reset
-                                        </Button>
-                                    </AnimateButton>
-                                </Box>
+                            {!result &&
+                                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <ImageUpload handleUpload={handleSearch} uploadedImage={uploadedImage} />
+
+                                </Box>}
+                            <Box sx={{ mt: 2, width: '75%' }}>
+                                <AnimateButton>
+                                    <Button
+                                        disableElevation
+                                        fullWidth
+                                        size="large"
+                                        type="button"
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={handleReset}
+                                    >
+                                        Reset
+                                    </Button>
+                                </AnimateButton>
                             </Box>
                         </Box>
                     </Grid>

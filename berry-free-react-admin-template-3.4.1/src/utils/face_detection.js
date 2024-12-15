@@ -69,16 +69,16 @@ export const cropImage = (canvas, detection) => {
     const cropY = Math.max(0, y - (cropHeight - height) / 2);
     if (!isBoxInsideRect({ x, y, width, height }, {x: cropX, y: cropY, width: cropWidth, height: cropHeight })) {
 
-        console.log ("cắt không hợp lệ")
+        console.log ("Invalid crop size")
         return;
     }
     else {
         const areaBox = width * height;
         const areaCrop = cropWidth * cropHeight;
 
-        // Kiểm tra nếu diện tích của hộp cắt chiếm ít nhất 60% diện tích của vùng cắt
-        if (areaBox / areaCrop < 0.75) {
-            console.log("Diện tích của hộp cắt phải chiếm ít nhất 75% diện tích của vùng cắt.");
+        // 
+        if (areaBox / areaCrop > 0.75 && areaBox / areaCrop < 0.6) {
+            console.log("Warning: The crop size is out of the acceptable range (0.6 - 0.75).");
             return;
         }
     }

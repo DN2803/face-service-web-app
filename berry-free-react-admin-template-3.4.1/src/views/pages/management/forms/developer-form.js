@@ -87,7 +87,7 @@ const DeveloperForm = ({ onSubmit, developer = null, developers }) => {
         <Formik
             initialValues={{
                 email: developer?.email || '',
-                collection_id: developer ? JSON.parse(developer.scope) || [] : [],
+                collection_id: developer ? developer.scope : [],
                 submit: null,
             }}
             validationSchema={Yup.object().shape({

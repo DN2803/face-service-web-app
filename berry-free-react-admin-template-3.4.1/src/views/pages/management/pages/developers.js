@@ -53,7 +53,7 @@ const DeveloperManagement = () => {
             if (editDeveloper) {
                 // TODO: Update develop feature
                 const newScope = new Set(values.collection_id);
-                const oldScope = new Set(JSON.parse(editDeveloper.scope));
+                const oldScope = new Set(editDeveloper.scope);
                 const body = {
                     dev_key: editDeveloper.key, 
                     scope: {
@@ -68,7 +68,7 @@ const DeveloperManagement = () => {
                 const res =  await callAPI(BACKEND_ENDPOINTS.user.project.team, "PATCH", body, true);
                 setDevelopers(prevDevelopers =>
                     prevDevelopers.map(dev =>
-                        dev.id === editDeveloper.id ? { ...dev, scope: JSON.stringify(res.data.new_scope) } : dev
+                        dev.id === editDeveloper.id ? { ...dev, scope: res.data.new_scope } : dev
                     )
                 );
     
@@ -218,7 +218,7 @@ const DeveloperManagement = () => {
                                     <TableCell><ApiKeyDisplay apiKey={developer.key} /></TableCell>
                                     <TableCell>{developer.name}</TableCell>
                                     <TableCell>{developer.email}</TableCell>
-                                    <TableCell>{JSON.parse(developer.scope).map(id => collectionMap[id]) 
+                                    <TableCell>{developer.scope.map(id => collectionMap[id]) 
                                     .filter(Boolean)
                                     .join(', ')}</TableCell>
                                     <TableCell> {developer.lastUsed} </TableCell>

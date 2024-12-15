@@ -36,7 +36,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
 import { useCallAPI } from 'hooks/useCallAPI';
-import { loadModels, detectFace, cropImage, isBoxInsideRect} from 'utils/face_detection';
+import { loadModels, detectFace, isBoxInsideRect} from 'utils/face_detection';
 import { BACKEND_ENDPOINTS } from 'services/constant';
 
 import { useEmailVerified, useUserInfo } from 'hooks';
@@ -213,8 +213,8 @@ const FirebaseLogin = ({ ...others }) => {
           return
         }
         // Convert canvas (video frame) thành dữ liệu hình ảnh
-        // const imageData = canvas.toDataURL('image/jpeg');
-        const imageData = cropImage(canvas,detections);
+        const imageData = canvas.toDataURL('image/jpeg');
+        //const imageData = cropImage(canvas,detections);
         if (!imageData) return;
         if (countFalseRef.current >= 5) {
           stopCamera();

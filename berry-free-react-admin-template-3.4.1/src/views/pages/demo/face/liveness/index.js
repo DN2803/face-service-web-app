@@ -44,6 +44,7 @@ const FaceLivenessPage = () => {
             }
         } catch (error) {
             console.error("Error:", error);
+            alert(error.response.data.error);
             setResult(true);
             setApproved(false);
         } finally {
