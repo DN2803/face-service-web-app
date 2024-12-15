@@ -40,13 +40,14 @@ class ImageService(BaseService):
                 just available in the result only if anti_spoofing is set to True in input arguments.
         """
 
-        return FaceService.extract_faces(
+        face_objs = FaceService.extract_faces(
             img_path,
             anti_spoofing=anti_spoofing,
             only_one=True,
             align=True,
             return_faces=True
         )
+        return face_objs[0]
 
     def __compress(self, img_np, quality=85):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]

@@ -27,13 +27,13 @@ class UserService(BaseService):
 
         try:
             img_np = load_image_from_base64(img)
-            face_objs = face_service.extract_faces(img_np, anti_spoofing=True)
-            is_real, antispoof_score = face_objs['is_real'], face_objs['antispoof_score']
+            face_obj = face_service.extract_faces(img_np, anti_spoofing=True)
+            is_real, antispoof_score = face_obj['is_real'], face_obj['antispoof_score']
 
             if is_real and antispoof_score > 0.66:
                 raise Exception('The given image did not pass the anti-spoofing check!')
 
-            face_img = face_objs[0]['face']
+            face_img = face_obj['face']
             embedding = embed_service.encode(face_img)
 
             img_obj = face_service.store(face_img, user.id)
